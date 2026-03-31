@@ -1,0 +1,35 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "smartphone-repair",
+      "description": "Technician repairing a smartphone screen",
+      "imageUrl": "https://picsum.photos/seed/gadget1/800/600",
+      "imageHint": "smartphone repair"
+    },
+    {
+      "id": "laptop-internals",
+      "description": "Close up of laptop motherboard and battery",
+      "imageUrl": "https://picsum.photos/seed/gadget2/800/600",
+      "imageHint": "laptop hardware"
+    },
+    {
+      "id": "tablet-fix",
+      "description": "Fixing a tablet device",
+      "imageUrl": "https://picsum.photos/seed/gadget3/800/600",
+      "imageHint": "tablet fixing"
+    },
+    {
+      "id": "tools-set",
+      "description": "Professional electronics repair tool kit",
+      "imageUrl": "https://picsum.photos/seed/tools1/800/600",
+      "imageHint": "repair tools"
+    },
+    {
+      "id": "appliance-repair",
+      "description": "Fixing a home appliance",
+      "imageUrl": "https://picsum.photos/seed/appliance1/800/600",
+      "imageHint": "home appliance"
+    }
+  ]
+}
