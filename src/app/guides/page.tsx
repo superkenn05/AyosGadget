@@ -3,7 +3,7 @@
 import RepairCard from '@/components/repair/RepairCard';
 import { FEATURED_REPAIRS, REPAIR_CATEGORIES } from '@/lib/repair-data';
 import { Input } from '@/components/ui/input';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Cpu } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
@@ -19,60 +19,79 @@ export default function GuidesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto mb-12 text-center pt-8">
-          <h1 className="text-4xl font-extrabold mb-4">Mga Gabay sa Pag-aayos</h1>
-          <p className="text-xl text-muted-foreground">
-            Hanapin ang tamang tutorial para sa iyong gadget.
-          </p>
-        </div>
+    <div className="min-h-screen bg-background pb-24">
+      {/* Search HUD Header */}
+      <section className="pt-20 pb-6 px-6 sticky top-0 z-30 bg-background/80 backdrop-blur-md">
+        <div className="container mx-auto max-w-4xl">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">Protocols</h1>
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mt-1">Hardware Library v4.2</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl glass flex items-center justify-center text-primary">
+                <Cpu className="w-5 h-5" />
+              </div>
+            </div>
 
-        <div className="flex flex-col md:flex-row gap-6 mb-12">
-          <div className="relative flex-grow">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-            <Input
-              placeholder="Maghanap ng device o sira..."
-              className="pl-12 h-14 rounded-2xl border-none shadow-sm bg-white dark:bg-card"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 group-focus-within:text-primary transition-colors" />
+              <Input
+                placeholder="SEARCH SYSTEM LOGS..."
+                className="pl-12 h-12 rounded-2xl border-none shadow-sm bg-white dark:bg-white/5 font-bold uppercase tracking-widest text-[10px] placeholder:opacity-50"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
+        </div>
+      </section>
+
+      {/* Horizontal Category Chips */}
+      <section className="container mx-auto px-6 mb-8 overflow-x-auto no-scrollbar">
+        <div className="flex gap-2 min-w-max pb-2">
+          <Button
+            variant={selectedCategory === null ? "default" : "outline"}
+            className={`rounded-full h-9 px-6 text-[10px] font-black uppercase tracking-widest transition-all ${selectedCategory === null ? 'neon-glow' : 'border-black/5 dark:border-white/10'}`}
+            onClick={() => setSelectedCategory(null)}
+          >
+            All Logs
+          </Button>
+          {REPAIR_CATEGORIES.map((cat) => (
             <Button
-              variant={selectedCategory === null ? "default" : "outline"}
-              className="rounded-xl h-14 whitespace-nowrap"
-              onClick={() => setSelectedCategory(null)}
+              key={cat.name}
+              variant={selectedCategory === cat.name ? "default" : "outline"}
+              className={`rounded-full h-9 px-6 text-[10px] font-black uppercase tracking-widest transition-all ${selectedCategory === cat.name ? 'neon-glow' : 'border-black/5 dark:border-white/10'}`}
+              onClick={() => setSelectedCategory(cat.name)}
             >
-              Lahat
+              {cat.name}
             </Button>
-            {REPAIR_CATEGORIES.map((cat) => (
-              <Button
-                key={cat.name}
-                variant={selectedCategory === cat.name ? "default" : "outline"}
-                className="rounded-xl h-14 whitespace-nowrap"
-                onClick={() => setSelectedCategory(cat.name)}
-              >
-                {cat.name}
-              </Button>
-            ))}
-          </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Results Grid */}
+      <section className="container mx-auto px-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
+          <span className="text-[8px] font-black uppercase tracking-[0.4em] opacity-40">Filtered Results ({filteredGuides.length})</span>
+          <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
         </div>
 
         {filteredGuides.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredGuides.map((guide) => (
               <RepairCard key={guide.id} guide={guide} />
             ))}
           </div>
         ) : (
-          <div className="text-center py-20 bg-white dark:bg-card rounded-3xl border border-dashed">
-            <Filter className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-bold mb-2">Walang nahanap na gabay</h3>
-            <p className="text-muted-foreground">Subukang baguhin ang iyong search o kategorya.</p>
+          <div className="text-center py-24 glass rounded-[2.5rem] border-dashed border-2 border-black/5 dark:border-white/5">
+            <Filter className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
+            <h3 className="text-lg font-black uppercase tracking-tighter mb-2">No Protocols Found</h3>
+            <p className="text-xs text-muted-foreground font-medium">Try adjusting your neural search parameters.</p>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
