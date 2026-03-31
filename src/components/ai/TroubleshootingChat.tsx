@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, Sparkles } from 'lucide-react';
+import { Send, Bot, User, Loader2, Sparkles, Cpu, Terminal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -18,7 +18,7 @@ export default function TroubleshootingChat() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'model',
-      content: 'Kamusta! Ako si Ayos AI. Anong gadget ang may problema at ano ang nangyayari dito?',
+      content: 'System Initialized. I am Ayos AI, your neural repair assistant. Please provide device specifications or describe the hardware fault to begin diagnosis.',
     },
   ]);
   const [input, setInput] = useState('');
@@ -48,10 +48,10 @@ export default function TroubleshootingChat() {
 
       let responseContent = response.diagnosis;
       if (response.questionsToAsk && response.questionsToAsk.length > 0) {
-        responseContent += "\n\n" + response.questionsToAsk.join("\n");
+        responseContent += "\n\nCRITICAL QUESTIONS:\n" + response.questionsToAsk.map(q => `> ${q}`).join("\n");
       }
       if (response.suggestedSolutions && response.suggestedSolutions.length > 0) {
-        responseContent += "\n\nTry these:\n" + response.suggestedSolutions.map(s => `- ${s}`).join("\n");
+        responseContent += "\n\nREPAIR STEPS:\n" + response.suggestedSolutions.map((s, idx) => `${idx + 1}. ${s}`).join("\n");
       }
 
       setMessages((prev) => [
@@ -61,7 +61,7 @@ export default function TroubleshootingChat() {
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        { role: 'model', content: "Pasensya na, nagkaroon ng error sa pagkonekta sa AI. Pakisubukan muli." },
+        { role: 'model', content: "SYSTEM ERROR: Connection to neural engine lost. Please retry the handshake." },
       ]);
     } finally {
       setIsLoading(false);
@@ -69,48 +69,65 @@ export default function TroubleshootingChat() {
   };
 
   return (
-    <Card className="w-full max-w-3xl mx-auto glass border-white/10 rounded-[2.5rem] overflow-hidden flex flex-col shadow-[0_32px_64px_rgba(0,0,0,0.5)]">
-      <CardHeader className="p-8 border-b border-white/5 bg-primary/5">
-        <CardTitle className="flex items-center gap-4 text-primary text-2xl font-black">
-          <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center neon-glow">
-            <Bot className="w-7 h-7 text-primary-foreground" />
+    <Card className="w-full max-w-4xl mx-auto glass border-white/10 rounded-[3.5rem] overflow-hidden flex flex-col shadow-2xl relative">
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
+      
+      <CardHeader className="p-10 border-b border-white/5 bg-primary/[0.02]">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-6 text-primary text-3xl font-black tracking-tighter">
+            <div className="w-16 h-16 bg-primary rounded-[1.5rem] flex items-center justify-center neon-glow">
+              <Cpu className="w-9 h-9 text-primary-foreground" />
+            </div>
+            <div className="flex flex-col">
+              <span>AYOS NEURAL ENGINE</span>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] font-black text-emerald-500 tracking-[0.3em] uppercase">Core: Active</span>
+              </div>
+            </div>
+          </CardTitle>
+          <div className="hidden sm:flex items-center gap-3 px-5 py-2 glass rounded-full border-white/10">
+            <Terminal className="w-4 h-4 text-primary" />
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">v2.4.0-STABLE</span>
           </div>
-          <div className="flex flex-col">
-            <span>Ayos AI Assistant</span>
-            <span className="text-xs font-bold text-primary/60 tracking-widest uppercase">Online & Ready to Help</span>
-          </div>
-        </CardTitle>
+        </div>
       </CardHeader>
       
-      <CardContent className="p-0 flex-grow">
-        <ScrollArea className="h-[600px] p-8">
-          <div className="space-y-8">
+      <CardContent className="p-0 flex-grow bg-grid">
+        <ScrollArea className="h-[650px] p-10">
+          <div className="space-y-12">
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''} animate-in fade-in slide-in-from-bottom-2 duration-500`}
+                className={`flex gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : ''} animate-in fade-in slide-in-from-bottom-4 duration-700`}
               >
-                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${
-                  msg.role === 'user' ? 'bg-secondary' : 'glass border-white/10'
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${
+                  msg.role === 'user' ? 'bg-secondary neon-glow' : 'glass border-white/10'
                 }`}>
-                  {msg.role === 'user' ? <User className="w-5 h-5 text-white" /> : <Sparkles className="w-5 h-5 text-primary" />}
+                  {msg.role === 'user' ? <User className="w-6 h-6 text-white" /> : <Sparkles className="w-6 h-6 text-primary" />}
                 </div>
-                <div className={`p-6 rounded-[2rem] max-w-[85%] text-base leading-relaxed font-medium ${
+                <div className={`p-8 rounded-[2.5rem] max-w-[80%] text-lg leading-relaxed font-medium shadow-2xl ${
                   msg.role === 'user' 
-                    ? 'bg-primary text-primary-foreground rounded-tr-none neon-glow shadow-primary/20' 
-                    : 'glass text-foreground rounded-tl-none'
+                    ? 'bg-primary text-primary-foreground rounded-tr-none border-glow' 
+                    : 'glass text-foreground rounded-tl-none border-l-4 border-l-primary'
                 }`}>
-                  {msg.content}
+                  <pre className="whitespace-pre-wrap font-body">
+                    {msg.content}
+                  </pre>
                 </div>
               </div>
             ))}
             {isLoading && (
-              <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-2xl glass border-white/10 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-primary animate-pulse" />
+              <div className="flex gap-6">
+                <div className="w-12 h-12 rounded-2xl glass border-white/10 flex items-center justify-center">
+                  <Cpu className="w-6 h-6 text-primary animate-spin" />
                 </div>
-                <div className="glass p-6 rounded-[2rem] rounded-tl-none">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <div className="glass p-8 rounded-[2.5rem] rounded-tl-none border-l-4 border-l-primary">
+                  <div className="flex gap-2">
+                    <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
+                    <div className="w-3 h-3 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
+                    <div className="w-3 h-3 bg-primary rounded-full animate-bounce" />
+                  </div>
                 </div>
               </div>
             )}
@@ -119,22 +136,22 @@ export default function TroubleshootingChat() {
         </ScrollArea>
       </CardContent>
 
-      <CardFooter className="p-8 bg-white/5 border-t border-white/5">
-        <div className="flex w-full gap-4 items-center">
-          <div className="relative flex-grow">
+      <CardFooter className="p-10 bg-white/[0.02] border-t border-white/5">
+        <div className="flex w-full gap-6 items-center">
+          <div className="relative flex-grow group">
             <Input
-              placeholder="Sabihin ang problema ng iyong gadget..."
+              placeholder="ENTER COMMAND OR DATA DESCRIPTION..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              className="rounded-[1.5rem] border-white/10 bg-white/5 focus:ring-primary h-16 pl-6 pr-16 text-lg font-medium glass"
+              className="rounded-full border-white/10 bg-white/5 focus:border-primary/50 h-20 pl-10 pr-24 text-xl font-bold glass tracking-tight placeholder:text-muted-foreground/30 uppercase"
             />
             <Button 
               onClick={handleSend} 
               disabled={isLoading}
-              className="absolute right-2 top-2 rounded-xl h-12 w-12 p-0 bg-primary neon-glow hover:scale-105 active:scale-95 transition-all"
+              className="absolute right-3 top-3 rounded-full h-14 w-14 p-0 bg-primary neon-glow hover:scale-110 active:scale-95 transition-all shadow-primary/20 shadow-xl"
             >
-              <Send className="w-6 h-6" />
+              <Send className="w-7 h-7" />
             </Button>
           </div>
         </div>
