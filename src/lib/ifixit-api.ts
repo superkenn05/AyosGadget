@@ -59,7 +59,9 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
 
 export function mapIFixitToInternal(ifixit: any) {
   // Handles both search result structure and full guide structure
-  const guideId = ifixit.guideid || ifixit.id;
+  // Fallback to a random ID or '0' to avoid .toString() on undefined
+  const rawId = ifixit.guideid ?? ifixit.id ?? Math.floor(Math.random() * 1000000);
+  const guideId = rawId.toString();
   
   // Extract steps instructions more robustly
   const mappedSteps = (ifixit.steps || []).map((s: any) => {
@@ -77,7 +79,7 @@ export function mapIFixitToInternal(ifixit: any) {
   });
 
   return {
-    id: guideId.toString(),
+    id: guideId,
     title: ifixit.title || 'Untitled Guide',
     device: ifixit.subject || ifixit.type || 'Hardware Device',
     category: mapCategory(ifixit.type || ifixit.subject || 'Appliances'),
