@@ -44,7 +44,7 @@ export default function SettingsPage() {
                 { id: 'appearance', label: t('settings_appearance'), icon: Sun },
                 { id: 'language', label: t('settings_language'), icon: Globe },
                 { id: 'account', label: t('settings_account'), icon: User },
-                { id: 'security', label: 'Security', icon: Shield },
+                { id: 'security', label: t('settings_security'), icon: Shield },
                 { id: 'about', label: t('settings_about'), icon: Info },
               ].map((item) => (
                 <Button
@@ -136,10 +136,10 @@ export default function SettingsPage() {
 
               <div className="p-8 glass rounded-[2.5rem] border-black/5 dark:border-white/5 flex items-center justify-between">
                 <div>
-                  <p className="font-black text-lg tracking-tight uppercase">Software Version</p>
+                  <p className="font-black text-lg tracking-tight uppercase">{t('settings_version')}</p>
                   <p className="text-sm text-muted-foreground font-bold">AyosGadget Engine v4.2.1-stable</p>
                 </div>
-                <Button variant="outline" className="rounded-xl font-bold border-black/10 dark:border-white/10">Check Updates</Button>
+                <Button variant="outline" className="rounded-xl font-bold border-black/10 dark:border-white/10">{t('settings_check_updates')}</Button>
               </div>
             </div>
           </div>

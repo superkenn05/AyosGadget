@@ -189,7 +189,9 @@ export default function GuideDetailPage() {
                         <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground font-black text-2xl shadow-lg shadow-primary/20">
                           {index + 1}
                         </div>
-                        <h3 className="text-2xl md:text-3xl font-black tracking-tight uppercase">{step.title}</h3>
+                        <h3 className="text-2xl md:text-3xl font-black tracking-tight uppercase">
+                          {step.title || t('guides_step_title')}
+                        </h3>
                       </div>
                       <div className="text-muted-foreground text-lg mb-8 leading-relaxed font-medium whitespace-pre-wrap">
                         {step.description}
@@ -197,7 +199,7 @@ export default function GuideDetailPage() {
                       <div className="relative aspect-video rounded-[2rem] overflow-hidden shadow-xl border border-black/5 dark:border-white/5">
                         <Image
                           src={step.imageUrl}
-                          alt={step.title}
+                          alt={step.title || t('guides_step_title')}
                           fill
                           className="object-cover"
                         />

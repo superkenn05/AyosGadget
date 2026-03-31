@@ -82,11 +82,11 @@ export default function TroubleshootingChat() {
               <Cpu className="w-6 h-6 md:w-12 md:h-12 text-primary-foreground" />
             </div>
             <div className="flex flex-col text-left">
-              <span className="text-primary text-xl md:text-4xl font-black tracking-tighter leading-tight">NEURAL ANALYZER</span>
+              <span className="text-primary text-xl md:text-4xl font-black tracking-tighter leading-tight">{t('chat_analyzer')}</span>
               <div className="flex items-center gap-2 md:gap-3">
                 <span className="px-2 py-0.5 md:px-3 md:py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[6px] md:text-[8px] font-black uppercase tracking-[0.3em] rounded-full border border-emerald-500/20 flex items-center gap-1.5 md:gap-2">
                   <div className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Stable
+                  {t('chat_stable')}
                 </span>
                 <span className="px-2 py-0.5 md:px-3 md:py-1 bg-primary/10 text-primary text-[6px] md:text-[8px] font-black uppercase tracking-[0.3em] rounded-full border border-primary/20">
                   v4.1.0-AI
@@ -97,11 +97,11 @@ export default function TroubleshootingChat() {
           <div className="hidden lg:grid grid-cols-2 gap-4 text-[9px] font-black uppercase tracking-widest text-muted-foreground">
              <div className="glass px-5 py-3 rounded-2xl border-black/5 dark:border-white/5 flex items-center gap-2">
                 <Shield className="w-3 h-3 text-primary" />
-                Auth: verified
+                {t('chat_auth_verified')}
              </div>
              <div className="glass px-5 py-3 rounded-2xl border-black/5 dark:border-white/5 flex items-center gap-2">
                 <Zap className="w-3 h-3 text-amber-500" />
-                Power: optimal
+                {t('chat_power_optimal')}
              </div>
           </div>
         </div>

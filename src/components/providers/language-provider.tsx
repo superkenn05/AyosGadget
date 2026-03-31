@@ -33,6 +33,7 @@ export const translations: TranslationDict = {
   home_auxiliary: { en: 'Auxiliary Directory', fil: 'Karagdagang Directory' },
   home_trending: { en: 'Trending Protocols', fil: 'Trending na Gabay' },
   home_refresh: { en: 'Refresh Data', fil: 'I-refresh ang Data' },
+  home_neural_active: { en: 'Neural Diagnostic Link: Active', fil: 'Neural Diagnostic Link: Aktibo' },
 
   // Guides
   guides_title: { en: 'Protocols', fil: 'Mga Gabay' },
@@ -54,6 +55,7 @@ export const translations: TranslationDict = {
   guides_tools: { en: 'Tools Required', fil: 'Mga Gamit na Kailangan' },
   guides_parts: { en: 'Parts Required', fil: 'Mga Piyesang Kailangan' },
   guides_steps: { en: 'Step-by-Step Instructions', fil: 'Mga Hakbang sa Paggawa' },
+  guides_step_title: { en: 'Step', fil: 'Hakbang' },
   guides_buy_kit: { en: 'Buy Repair Kit', fil: 'Bumili ng Repair Kit' },
   guides_order_parts: { en: 'Order Parts', fil: 'Mag-order ng Piyesa' },
   guides_save: { en: 'Save Guide', fil: 'I-save itong Guide' },
@@ -84,6 +86,10 @@ export const translations: TranslationDict = {
   chat_error: { en: 'CRITICAL: NEURAL LINK SEVERED. ATTEMPTING RECONNECT...', fil: 'CRITICAL: NAPUTOL ANG KONEKSYON. SINUSUBUKANG MAG-RECONNECT...' },
   chat_running: { en: 'Running Neural Simulation...', fil: 'Sinisiyasat ng AI...' },
   chat_linked_protocols: { en: 'Linked Protocols Found:', fil: 'Mga Nakitang Gabay:' },
+  chat_analyzer: { en: 'NEURAL ANALYZER', fil: 'NEURAL ANALYZER' },
+  chat_stable: { en: 'Stable', fil: 'Stable' },
+  chat_auth_verified: { en: 'Auth: verified', fil: 'Auth: verified' },
+  chat_power_optimal: { en: 'Power: optimal', fil: 'Power: optimal' },
 
   // Bookmarks
   bookmarks_title: { en: 'Saved Vault', fil: 'Mga Naka-save' },
@@ -97,8 +103,14 @@ export const translations: TranslationDict = {
   settings_appearance: { en: 'Appearance', fil: 'Tema at Kulay' },
   settings_language: { en: 'Language', fil: 'Wika' },
   settings_account: { en: 'Account', fil: 'Account' },
+  settings_security: { en: 'Security', fil: 'Seguridad' },
   settings_about: { en: 'About', fil: 'Tungkol sa App' },
   settings_terminate: { en: 'Terminate Session', fil: 'Mag-Logout' },
+  settings_version: { en: 'Software Version', fil: 'Bersyon ng Software' },
+  settings_check_updates: { en: 'Check Updates', fil: 'I-check ang Updates' },
+
+  // Cards
+  card_priority_task: { en: 'Priority Task', fil: 'Priority Task' },
 };
 
 interface LanguageContextProps {

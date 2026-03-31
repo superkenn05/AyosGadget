@@ -42,7 +42,7 @@ export default function Home() {
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary font-black uppercase tracking-[0.3em] text-[10px]">
                   <Activity className="w-4 h-4 animate-pulse" />
-                  Neural Diagnostic Link: Active
+                  {t('home_neural_active')}
                 </div>
                 <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-none text-foreground uppercase">
                   {t('home_title')}

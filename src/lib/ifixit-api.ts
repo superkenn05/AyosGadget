@@ -95,7 +95,7 @@ export function mapIFixitToInternal(ifixit: any) {
     }).filter(Boolean);
 
     return {
-      title: s.title || 'Hakbang',
+      title: s.title || '', // Leave empty to let UI handle "Step" label translation
       description: stepLines.join('\n\n'),
       imageUrl: s.media?.data?.[0]?.original || 'https://picsum.photos/seed/step/600/400'
     };

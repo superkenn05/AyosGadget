@@ -43,7 +43,7 @@ export default function RepairCard({ guide }: RepairCardProps) {
           
           <div className="absolute bottom-4 left-6 flex items-center gap-1 text-[8px] font-black text-primary uppercase tracking-widest bg-primary/20 backdrop-blur-md px-2 py-1 rounded-lg border border-primary/30">
             <Zap className="w-3 h-3" />
-            Priority Task
+            {t('card_priority_task')}
           </div>
         </div>
         
