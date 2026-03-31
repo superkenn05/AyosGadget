@@ -3,7 +3,7 @@
 import { FEATURED_REPAIRS } from '@/lib/repair-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Wrench, Package, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
+import { CheckCircle2, Wrench, Package, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc } from '@/firebase';
@@ -12,9 +12,10 @@ import { useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { useLanguage, translations } from '@/components/providers/language-provider';
+import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState } from 'react';
 import { getIFixitGuide, mapIFixitToInternal } from '@/lib/ifixit-api';
+import { translateGuide } from '@/ai/flows/translate-guide-flow';
 
 export default function GuideDetailPage() {
   const params = useParams();
@@ -22,10 +23,12 @@ export default function GuideDetailPage() {
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   const [guide, setGuide] = useState<any>(null);
+  const [originalGuide, setOriginalGuide] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const bookmarkRef = user && guide ? doc(db, 'users', user.uid, 'bookmarks', guide.id) : null;
   const { data: bookmark } = useDoc(bookmarkRef);
@@ -36,19 +39,59 @@ export default function GuideDetailPage() {
       if (!id) return;
       setLoading(true);
       
+      let fetchedGuide = null;
       const local = FEATURED_REPAIRS.find((g) => g.id === id);
       if (local) {
-        setGuide(local);
+        fetchedGuide = local;
       } else if (/^\d+$/.test(id as string)) {
         const ifixit = await getIFixitGuide(id as string);
         if (ifixit) {
-          setGuide(mapIFixitToInternal(ifixit));
+          fetchedGuide = mapIFixitToInternal(ifixit);
         }
       }
+      
+      setGuide(fetchedGuide);
+      setOriginalGuide(fetchedGuide);
       setLoading(false);
     }
     fetchGuide();
   }, [id]);
+
+  // Handle live translation when language changes to Filipino
+  useEffect(() => {
+    async function handleTranslation() {
+      if (language === 'fil' && guide && guide.language !== 'fil') {
+        setIsTranslating(true);
+        try {
+          const translated = await translateGuide({
+            title: guide.title,
+            description: guide.description,
+            steps: guide.steps.map((s: any) => ({ title: s.title, description: s.description })),
+          });
+
+          setGuide((prev: any) => ({
+            ...prev,
+            title: translated.title,
+            description: translated.description,
+            steps: prev.steps.map((s: any, i: number) => ({
+              ...s,
+              title: translated.steps[i].title,
+              description: translated.steps[i].description,
+            })),
+            language: 'fil'
+          }));
+        } catch (error) {
+          console.error("Translation failed", error);
+        } finally {
+          setIsTranslating(false);
+        }
+      } else if (language === 'en' && guide && guide.language === 'fil') {
+        // Revert to original English if user switches back
+        setGuide(originalGuide);
+      }
+    }
+    handleTranslation();
+  }, [language, originalGuide]);
 
   const handleBookmark = () => {
     if (!user) {
@@ -137,6 +180,19 @@ export default function GuideDetailPage() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
+      {/* AI Translation Overlay */}
+      {isTranslating && (
+        <div className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm flex items-center justify-center">
+          <div className="glass p-8 rounded-3xl flex flex-col items-center gap-4 border-primary/30">
+            <div className="relative">
+              <Sparkles className="w-10 h-10 text-primary animate-pulse" />
+              <Loader2 className="w-10 h-10 text-primary animate-spin absolute inset-0 opacity-40" />
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">{t('chat_running')}</p>
+          </div>
+        </div>
+      )}
+
       {/* Header HUD */}
       <div className="fixed top-14 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-black/5 dark:border-white/5 md:hidden">
         <div className="px-4 h-12 flex items-center justify-between">
