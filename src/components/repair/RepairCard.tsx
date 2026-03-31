@@ -10,9 +10,9 @@ interface RepairCardProps {
 
 export default function RepairCard({ guide }: RepairCardProps) {
   const difficultyColor = {
-    easy: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10',
-    medium: 'text-amber-600 dark:text-amber-400 bg-amber-500/10',
-    hard: 'text-rose-600 dark:text-rose-400 bg-rose-500/10',
+    easy: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/20',
+    medium: 'text-amber-600 dark:text-amber-400 bg-amber-500/20',
+    hard: 'text-rose-600 dark:text-rose-400 bg-rose-500/20',
   }[guide.difficulty];
 
   return (
@@ -28,19 +28,20 @@ export default function RepairCard({ guide }: RepairCardProps) {
             className="object-cover transition-transform duration-700 group-hover:scale-110"
             data-ai-hint="gadget repair"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
+          {/* Always dark gradient for text readability on images */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           
           <Badge className={`absolute top-4 right-4 ${difficultyColor} font-black uppercase tracking-[0.2em] text-[7px] border-none px-3 py-1 rounded-full backdrop-blur-md shadow-sm`}>
             {guide.difficulty}
           </Badge>
           
-          <div className="absolute bottom-4 left-6 flex items-center gap-1 text-[8px] font-black text-primary uppercase tracking-widest bg-primary/10 backdrop-blur-md px-2 py-1 rounded-lg border border-primary/20">
+          <div className="absolute bottom-4 left-6 flex items-center gap-1 text-[8px] font-black text-primary uppercase tracking-widest bg-primary/20 backdrop-blur-md px-2 py-1 rounded-lg border border-primary/30">
             <Zap className="w-3 h-3" />
             Priority Task
           </div>
         </div>
         
-        <div className="p-6 md:p-8 flex flex-col gap-4 flex-grow relative">
+        <div className="p-6 md:p-8 flex flex-col gap-4 flex-grow relative bg-card">
           <div className="flex items-center justify-between">
             <span className="text-[9px] font-black text-primary uppercase tracking-[0.3em]">{guide.category}</span>
             <div className="flex items-center gap-1.5 text-amber-500 dark:text-amber-400 font-black text-[10px] tracking-tighter">
@@ -65,7 +66,7 @@ export default function RepairCard({ guide }: RepairCardProps) {
           </div>
         </div>
 
-        <div className="px-6 pb-6 md:px-8 md:pb-8 flex justify-end">
+        <div className="px-6 pb-6 md:px-8 md:pb-8 flex justify-end bg-card">
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl glass flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground group-hover:scale-110 transition-all duration-300 shadow-lg border-primary/10">
             <ArrowRight className="w-5 h-5 md:w-6 md:h-6" />
           </div>

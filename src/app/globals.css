@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
+    --background: 210 20% 97%;
     --foreground: 235 45% 10%;
     --card: 0 0% 100%;
     --card-foreground: 235 45% 10%;
@@ -14,14 +14,14 @@
     --primary-foreground: 190 100% 98%;
     --secondary: 260 80% 50%;
     --secondary-foreground: 260 80% 98%;
-    --muted: 235 20% 90%;
-    --muted-foreground: 235 20% 35%;
+    --muted: 235 20% 92%;
+    --muted-foreground: 235 20% 40%;
     --accent: 190 100% 35%;
     --accent-foreground: 190 100% 98%;
     --destructive: 0 84% 50%;
     --destructive-foreground: 210 40% 98%;
-    --border: 235 20% 85%;
-    --input: 235 20% 85%;
+    --border: 235 20% 88%;
+    --input: 235 20% 88%;
     --ring: 190 100% 35%;
     --radius: 1.5rem;
   }
@@ -57,8 +57,8 @@
   body {
     @apply bg-background text-foreground font-body antialiased min-h-screen relative overflow-x-hidden transition-colors duration-300;
     background-image: 
-      linear-gradient(to bottom, hsla(190, 100%, 40%, 0.05) 1px, transparent 1px),
-      linear-gradient(to right, hsla(190, 100%, 40%, 0.05) 1px, transparent 1px);
+      linear-gradient(to bottom, hsla(190, 100%, 40%, 0.03) 1px, transparent 1px),
+      linear-gradient(to right, hsla(190, 100%, 40%, 0.03) 1px, transparent 1px);
     background-size: 40px 40px;
   }
   .dark body {
@@ -76,19 +76,19 @@
     padding-top: env(safe-area-inset-top, 0rem);
   }
   .glass {
-    @apply bg-white/80 dark:bg-black/40 backdrop-blur-2xl border border-black/5 dark:border-white/10 shadow-lg;
+    @apply bg-white/95 dark:bg-black/60 backdrop-blur-2xl border border-black/10 dark:border-white/10 shadow-xl;
   }
   .glass-card {
-    @apply bg-white/60 dark:bg-white/[0.03] backdrop-blur-md border border-black/5 dark:border-white/10 hover:border-primary/50 transition-all duration-300 active:scale-[0.98] shadow-sm;
+    @apply bg-white dark:bg-white/[0.03] backdrop-blur-md border border-black/5 dark:border-white/10 hover:border-primary/50 transition-all duration-300 active:scale-[0.98] shadow-md;
   }
   .neon-glow {
-    box-shadow: 0 0 20px hsla(190, 100%, 40%, 0.2);
+    box-shadow: 0 0 20px hsla(190, 100%, 40%, 0.15);
   }
   .dark .neon-glow {
     box-shadow: 0 0 20px hsla(190, 100%, 50%, 0.3);
   }
   .neon-text {
-    text-shadow: 0 0 10px hsla(190, 100%, 40% , 0.3);
+    text-shadow: 0 0 10px hsla(190, 100%, 40% , 0.2);
   }
   .dark .neon-text {
     text-shadow: 0 0 10px hsla(190, 100%, 50% , 0.5);
@@ -101,7 +101,7 @@
 }
 
 .scan-line {
-  @apply absolute inset-0 pointer-events-none overflow-hidden opacity-[0.05] dark:opacity-20;
+  @apply absolute inset-0 pointer-events-none overflow-hidden opacity-[0.03] dark:opacity-20;
   background: linear-gradient(to bottom, transparent, var(--primary), transparent);
   height: 2px;
   animation: scan 6s linear infinite;
