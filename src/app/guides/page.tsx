@@ -6,8 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Search, Filter, Cpu } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/components/providers/language-provider';
 
 export default function GuidesPage() {
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -26,8 +28,8 @@ export default function GuidesPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">Protocols</h1>
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mt-1">Hardware Library v4.2</p>
+                <h1 className="text-2xl font-black tracking-tighter uppercase leading-none">{t('guides_title')}</h1>
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mt-1">{t('guides_subtitle')}</p>
               </div>
               <div className="w-10 h-10 rounded-xl glass flex items-center justify-center text-primary">
                 <Cpu className="w-5 h-5" />
@@ -37,7 +39,7 @@ export default function GuidesPage() {
             <div className="relative group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4 group-focus-within:text-primary transition-colors" />
               <Input
-                placeholder="SEARCH SYSTEM LOGS..."
+                placeholder={t('guides_search')}
                 className="pl-12 h-12 rounded-2xl border-none shadow-sm bg-white dark:bg-white/5 font-bold uppercase tracking-widest text-[10px] placeholder:opacity-50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -55,7 +57,7 @@ export default function GuidesPage() {
             className={`rounded-full h-9 px-6 text-[10px] font-black uppercase tracking-widest transition-all ${selectedCategory === null ? 'neon-glow' : 'border-black/5 dark:border-white/10'}`}
             onClick={() => setSelectedCategory(null)}
           >
-            All Logs
+            {t('guides_all')}
           </Button>
           {REPAIR_CATEGORIES.map((cat) => (
             <Button
@@ -74,7 +76,7 @@ export default function GuidesPage() {
       <section className="container mx-auto px-6">
         <div className="flex items-center gap-3 mb-6">
           <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
-          <span className="text-[8px] font-black uppercase tracking-[0.4em] opacity-40">Filtered Results ({filteredGuides.length})</span>
+          <span className="text-[8px] font-black uppercase tracking-[0.4em] opacity-40">{t('guides_results')} ({filteredGuides.length})</span>
           <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
         </div>
 
@@ -87,8 +89,8 @@ export default function GuidesPage() {
         ) : (
           <div className="text-center py-24 glass rounded-[2.5rem] border-dashed border-2 border-black/5 dark:border-white/5">
             <Filter className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-20" />
-            <h3 className="text-lg font-black uppercase tracking-tighter mb-2">No Protocols Found</h3>
-            <p className="text-xs text-muted-foreground font-medium">Try adjusting your neural search parameters.</p>
+            <h3 className="text-lg font-black uppercase tracking-tighter mb-2">{t('guides_not_found')}</h3>
+            <p className="text-xs text-muted-foreground font-medium">{t('guides_adjust')}</p>
           </div>
         )}
       </section>

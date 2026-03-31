@@ -12,6 +12,7 @@ import { useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useLanguage } from '@/components/providers/language-provider';
 
 export default function GuideDetailPage() {
   const params = useParams();
@@ -19,6 +20,7 @@ export default function GuideDetailPage() {
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   const guide = FEATURED_REPAIRS.find((g) => g.id === id) || FEATURED_REPAIRS[0];
 
@@ -81,6 +83,7 @@ export default function GuideDetailPage() {
     }
   };
 
+  const difficultyLabel = t(`guides_difficulty_${guide.difficulty}`);
   const difficultyColor = {
     easy: 'bg-green-100 text-green-700',
     medium: 'bg-amber-100 text-amber-700',
@@ -93,7 +96,7 @@ export default function GuideDetailPage() {
         <Link href="/guides">
           <Button variant="ghost" className="mb-6 gap-2 rounded-xl text-muted-foreground">
             <ArrowLeft className="w-4 h-4" />
-            Bumalik sa mga Gabay
+            {t('guides_back')}
           </Button>
         </Link>
 
@@ -104,7 +107,7 @@ export default function GuideDetailPage() {
               <div className="flex flex-wrap items-center gap-3 mb-6">
                 <Badge variant="secondary" className="rounded-lg">{guide.category}</Badge>
                 <Badge className={`rounded-lg ${difficultyColor} border-none`}>
-                  {guide.difficulty === 'easy' ? 'Madali' : guide.difficulty === 'medium' ? 'Katamtaman' : 'Mahirap'}
+                  {difficultyLabel}
                 </Badge>
                 <div className="flex items-center gap-1 text-sm font-medium text-amber-500 ml-auto">
                   <Star className="w-4 h-4 fill-amber-500" />
@@ -125,13 +128,13 @@ export default function GuideDetailPage() {
               </div>
 
               <div className="p-8 bg-white dark:bg-card rounded-3xl border border-slate-100 dark:border-white/10 shadow-sm mb-12">
-                <h3 className="text-xl font-bold mb-4">Mungkahing Oras: {guide.timeEstimate}</h3>
+                <h3 className="text-xl font-bold mb-4">{t('guides_time')}: {guide.timeEstimate}</h3>
                 <p className="text-muted-foreground leading-relaxed text-lg">
                   {guide.description}
                 </p>
               </div>
 
-              <h2 className="text-3xl font-bold mb-8">Step-by-Step Instructions</h2>
+              <h2 className="text-3xl font-bold mb-8">{t('guides_steps')}</h2>
               <div className="space-y-12">
                 {guide.steps.map((step, index) => (
                   <div key={index} className="bg-white dark:bg-card rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-white/10">
@@ -169,7 +172,7 @@ export default function GuideDetailPage() {
                 className={`flex-1 rounded-2xl h-14 font-bold text-lg gap-2 shadow-lg ${isBookmarked ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80' : 'shadow-primary/20'}`}
               >
                 {isBookmarked ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
-                {isBookmarked ? 'Naka-save na' : 'I-save Gabay'}
+                {isBookmarked ? t('guides_saved') : t('guides_save')}
               </Button>
               <Button onClick={handleShare} variant="outline" size="icon" className="rounded-2xl h-14 w-14 shrink-0 border-2">
                 <Share2 className="w-5 h-5" />
@@ -182,7 +185,7 @@ export default function GuideDetailPage() {
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                   <Wrench className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-lg">Mga Kailangang Tools</h3>
+                <h3 className="font-bold text-lg">{t('guides_tools')}</h3>
               </div>
               <div className="p-6">
                 <ul className="space-y-4">
@@ -193,7 +196,7 @@ export default function GuideDetailPage() {
                     </li>
                   ))}
                 </ul>
-                <Button variant="secondary" className="w-full mt-6 rounded-xl font-bold" onClick={() => toast({ title: "Coming Soon", description: "Repair kit shop will be available soon." })}>Bumili ng Repair Kit</Button>
+                <Button variant="secondary" className="w-full mt-6 rounded-xl font-bold" onClick={() => toast({ title: "Coming Soon", description: "Repair kit shop will be available soon." })}>{t('guides_buy_kit')}</Button>
               </div>
             </div>
 
@@ -203,7 +206,7 @@ export default function GuideDetailPage() {
                 <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary-foreground">
                   <Package className="w-4 h-4" />
                 </div>
-                <h3 className="font-bold text-lg">Parts na Kailangan</h3>
+                <h3 className="font-bold text-lg">{t('guides_parts')}</h3>
               </div>
               <div className="p-6">
                 <div className="space-y-4">
@@ -214,7 +217,7 @@ export default function GuideDetailPage() {
                     </div>
                   ))}
                 </div>
-                <Button className="w-full mt-6 rounded-xl font-bold" onClick={() => toast({ title: "Coming Soon", description: "Part ordering system will be available soon." })}>Mag-order ng Parts</Button>
+                <Button className="w-full mt-6 rounded-xl font-bold" onClick={() => toast({ title: "Coming Soon", description: "Part ordering system will be available soon." })}>{t('guides_order_parts')}</Button>
               </div>
             </div>
 
@@ -222,13 +225,13 @@ export default function GuideDetailPage() {
             <div className="p-6 bg-primary/5 rounded-3xl border border-primary/10">
               <div className="flex items-center gap-3 mb-4 text-primary">
                 <MessageCircle className="w-5 h-5" />
-                <h3 className="font-bold text-lg">Kailangan ng tulong?</h3>
+                <h3 className="font-bold text-lg">{t('guides_help_title')}</h3>
               </div>
               <p className="text-sm text-primary/80 mb-6 font-medium">
-                Kung hirap sa tutorial, pwedeng magtanong sa aming community forum o gamitin ang AI Troubleshooter.
+                {t('guides_help_desc')}
               </p>
               <Link href="/troubleshoot">
-                <Button className="w-full rounded-xl bg-primary shadow-lg shadow-primary/20">Ask Ayos AI</Button>
+                <Button className="w-full rounded-xl bg-primary shadow-lg shadow-primary/20">{t('guides_ask_ai')}</Button>
               </Link>
             </div>
           </div>

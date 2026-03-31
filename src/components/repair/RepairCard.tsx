@@ -3,12 +3,16 @@ import Image from 'next/image';
 import { Star, Clock, ShieldCheck, ArrowRight, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { RepairGuide } from '@/lib/repair-data';
+import { useLanguage } from '@/components/providers/language-provider';
 
 interface RepairCardProps {
   guide: RepairGuide;
 }
 
 export default function RepairCard({ guide }: RepairCardProps) {
+  const { t } = useLanguage();
+  
+  const difficultyLabel = t(`guides_difficulty_${guide.difficulty}`);
   const difficultyColor = {
     easy: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/20',
     medium: 'text-amber-600 dark:text-amber-400 bg-amber-500/20',
@@ -32,7 +36,7 @@ export default function RepairCard({ guide }: RepairCardProps) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           
           <Badge className={`absolute top-4 right-4 ${difficultyColor} font-black uppercase tracking-[0.2em] text-[7px] border-none px-3 py-1 rounded-full backdrop-blur-md shadow-sm`}>
-            {guide.difficulty}
+            {difficultyLabel}
           </Badge>
           
           <div className="absolute bottom-4 left-6 flex items-center gap-1 text-[8px] font-black text-primary uppercase tracking-widest bg-primary/20 backdrop-blur-md px-2 py-1 rounded-lg border border-primary/30">
