@@ -1,4 +1,3 @@
-
 import CategoryIcon from '@/components/repair/CategoryIcon';
 import RepairCard from '@/components/repair/RepairCard';
 import { REPAIR_CATEGORIES, FEATURED_REPAIRS } from '@/lib/repair-data';
@@ -19,9 +18,14 @@ export default function Home() {
             </div>
             
             <div className="space-y-4 md:space-y-6">
-              <h1 className="text-4xl md:text-8xl font-black tracking-tighter leading-none text-foreground">
-                <span className="text-primary neon-text">AyosGadget</span> <br />
-                Modern Repair Engine.
+              <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-none text-foreground">
+                <span className="relative inline-block">
+                  <span className="text-primary neon-text italic">Ayos</span>
+                  <span className="text-foreground">Gadget</span>
+                  <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-primary to-transparent rounded-full" />
+                </span>
+                <br />
+                <span className="text-muted-foreground/60">Modern Repair Engine.</span>
               </h1>
               <p className="text-muted-foreground text-sm md:text-xl font-medium leading-relaxed max-w-sm md:max-w-xl">
                 AI-driven diagnostics and professional repair protocols for your hardware. High-fidelity guides for everyone.
@@ -35,7 +39,7 @@ export default function Home() {
                 </Button>
               </Link>
               <Link href="/troubleshoot" className="w-full">
-                <Button variant="outline" className="w-full rounded-2xl h-14 md:h-20 font-black uppercase tracking-[0.15em] text-xs md:text-sm border-black/10 dark:border-white/10 glass active:scale-95 transition-all gap-3">
+                <Button variant="outline" className="w-full rounded-2xl h-14 md:h-20 font-black uppercase tracking-[0.15em] text-xs md:text-sm border-black/10 dark:border-white/10 glass active:scale-95 transition-all gap-3 text-foreground">
                   <Cpu className="w-5 h-5 text-secondary" />
                   Run Analyzer
                 </Button>
@@ -60,7 +64,7 @@ export default function Home() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 md:gap-6">
           {REPAIR_CATEGORIES.map((cat) => (
             <Link key={cat.name} href={`/guides?category=${cat.name.toLowerCase()}`}>
-              <div className="glass-card p-6 md:p-8 rounded-[2rem] flex flex-col items-center gap-4 transition-all active:scale-90 shadow-sm">
+              <div className="glass-card p-6 md:p-8 rounded-[2rem] flex flex-col items-center gap-4 transition-all active:scale-90 shadow-sm border-white/5">
                 <div className="w-12 h-12 md:w-16 md:h-16 bg-primary/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-primary shadow-inner">
                   <CategoryIcon name={cat.icon} className="w-6 h-6 md:w-8 md:h-8" />
                 </div>
