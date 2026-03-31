@@ -1,23 +1,23 @@
-
 "use client";
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Wrench, Cpu, Bookmark } from 'lucide-react';
+import { Home, Wrench, Cpu, Bookmark, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { label: 'Neural', href: '/', icon: Home },
-  { label: 'Protocols', href: '/guides', icon: Wrench },
+  { label: 'Guides', href: '/guides', icon: Wrench },
   { label: 'Analyze', href: '/troubleshoot', icon: Cpu },
   { label: 'Vault', href: '/bookmarks', icon: Bookmark },
+  { label: 'Config', href: '/settings', icon: Settings },
 ];
 
 export default function BottomNavbar() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/80 backdrop-blur-xl border-t border-white/5 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-background/80 backdrop-blur-xl border-t border-black/5 dark:border-white/5 pb-safe">
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
@@ -36,7 +36,7 @@ export default function BottomNavbar() {
                 "w-6 h-6 mb-1",
                 isActive && "drop-shadow-[0_0_8px_hsla(190,100%,50%,0.8)]"
               )} />
-              <span className="text-[10px] font-bold uppercase tracking-tight">
+              <span className="text-[9px] font-black uppercase tracking-tighter">
                 {item.label}
               </span>
               
