@@ -4,12 +4,31 @@ import CategoryIcon from '@/components/repair/CategoryIcon';
 import RepairCard from '@/components/repair/RepairCard';
 import { REPAIR_CATEGORIES, FEATURED_REPAIRS } from '@/lib/repair-data';
 import { Button } from '@/components/ui/button';
-import { Activity, Cpu, Zap, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Activity, Cpu, Zap, ArrowRight, ShieldCheck, Loader2, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
+import { useState, useEffect } from 'react';
+import { getTrendingGuides, mapIFixitToInternal } from '@/lib/ifixit-api';
 
 export default function Home() {
   const { t } = useLanguage();
+  const [trendingGuides, setTrendingGuides] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchTrending() {
+      setIsLoading(true);
+      try {
+        const trending = await getTrendingGuides(0, 6);
+        setTrendingGuides(trending.map(mapIFixitToInternal));
+      } catch (error) {
+        console.error("Failed to load trending guides", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchTrending();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -46,9 +65,9 @@ export default function Home() {
                     {t('home_start_scan')}
                   </Button>
                 </Link>
-                <div className="w-full sm:w-14 h-14 rounded-2xl glass border-primary/20 flex items-center justify-center text-primary">
-                   <ShieldCheck className="w-6 h-6" />
-                </div>
+                <Link href="/guides" className="w-full sm:w-14 h-14 rounded-2xl glass border-primary/20 flex items-center justify-center text-primary hover:bg-primary/5 transition-colors">
+                   <Globe className="w-6 h-6" />
+                </Link>
               </div>
             </div>
           </div>
@@ -64,14 +83,14 @@ export default function Home() {
           </Link>
         </div>
         
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-4">
           {REPAIR_CATEGORIES.map((cat) => (
             <Link key={cat.name} href={`/guides?category=${cat.name.toLowerCase()}`}>
               <div className="glass-card p-6 rounded-[2rem] flex flex-col items-center gap-4 transition-all hover:-translate-y-2 active:scale-95 group">
-                <div className="w-12 h-12 bg-primary/5 dark:bg-white/5 rounded-2xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
-                  <CategoryIcon name={cat.icon} className="w-6 h-6" />
+                <div className="w-10 h-10 bg-primary/5 dark:bg-white/5 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-300">
+                  <CategoryIcon name={cat.icon} className="w-5 h-5" />
                 </div>
-                <span className="font-black text-[10px] uppercase tracking-tighter text-foreground/70 group-hover:text-primary transition-colors text-center">{cat.name}</span>
+                <span className="font-black text-[9px] uppercase tracking-tighter text-foreground/70 group-hover:text-primary transition-colors text-center">{cat.name}</span>
               </div>
             </Link>
           ))}
@@ -82,39 +101,41 @@ export default function Home() {
          <div className="h-px w-full bg-black/5 dark:bg-white/5" />
       </div>
 
-      {/* Priority List - Only show if there are featured repairs */}
-      {FEATURED_REPAIRS.length > 0 && (
-        <section className="container mx-auto px-6 pb-24">
-          <div className="flex items-center gap-3 mb-6">
+      {/* Dynamic Trending Section */}
+      <section className="container mx-auto px-6 pb-24">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
             <Zap className="w-4 h-4 text-amber-500" />
-            <h2 className="text-[10px] font-black uppercase tracking-[0.5em] opacity-40">{t('home_priority')}</h2>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.5em] opacity-40">Trending Protocols</h2>
           </div>
-          
+          <Link href="/guides">
+            <Button variant="ghost" className="h-8 rounded-full text-[9px] font-black uppercase tracking-widest gap-2">
+              Browse More <ArrowRight className="w-3 h-3" />
+            </Button>
+          </Link>
+        </div>
+        
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20 bg-white/5 dark:bg-white/[0.02] rounded-[3rem] border border-dashed border-black/5 dark:border-white/10">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-50">Syncing Global Datastreams...</p>
+          </div>
+        ) : trendingGuides.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {FEATURED_REPAIRS.map((guide) => (
+            {trendingGuides.map((guide) => (
               <RepairCard key={guide.id} guide={guide} />
             ))}
           </div>
-        </section>
-      )}
-      
-      {/* If no featured repairs, show a CTA to the global library */}
-      {FEATURED_REPAIRS.length === 0 && (
-        <section className="container mx-auto px-6 pb-24 text-center">
-          <div className="p-12 glass rounded-[3rem] border-primary/5 max-w-2xl mx-auto">
+        ) : (
+          <div className="p-12 glass rounded-[3rem] border-primary/5 max-w-2xl mx-auto text-center">
             <Activity className="w-12 h-12 text-primary/40 mx-auto mb-6" />
-            <h2 className="text-2xl font-black uppercase tracking-tighter mb-4">Wala pang Priority Protocols</h2>
+            <h2 className="text-2xl font-black uppercase tracking-tighter mb-4">Wala pang Trending</h2>
             <p className="text-muted-foreground mb-8">
-              Ang aming system ay kasalukuyang nag-uupdate. Samantala, maaari mong i-browse ang aming Global Repair Library para sa libo-libong gabay.
+              Hindi kami makakonekta sa iFixit library sa ngayon. Pakisuyong i-refresh ang iyong browser.
             </p>
-            <Link href="/guides">
-              <Button variant="outline" className="rounded-2xl h-12 px-8 font-black uppercase tracking-widest text-[10px] border-primary/20">
-                Buksan ang Global Library
-              </Button>
-            </Link>
           </div>
-        </section>
-      )}
+        )}
+      </section>
     </div>
   );
 }
