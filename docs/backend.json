@@ -1,0 +1,27 @@
+
+{
+  "entities": {
+    "Bookmark": {
+      "title": "Bookmark",
+      "description": "A saved repair guide for a user.",
+      "type": "object",
+      "properties": {
+        "guideId": { "type": "string" },
+        "title": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "category": { "type": "string" },
+        "savedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["guideId", "title", "savedAt"]
+    }
+  },
+  "auth": {
+    "providers": ["google.com"]
+  },
+  "firestore": {
+    "/users/{userId}/bookmarks/{bookmarkId}": {
+      "schema": "Bookmark",
+      "description": "User's bookmarked repair guides."
+    }
+  }
+}

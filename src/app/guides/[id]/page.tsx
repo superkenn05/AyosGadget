@@ -1,15 +1,86 @@
+'use client';
 
 import Navbar from '@/components/layout/Navbar';
 import { FEATURED_REPAIRS } from '@/lib/repair-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Clock, Wrench, Package, ArrowLeft, Star, MessageCircle, Share2, Bookmark } from 'lucide-react';
+import { CheckCircle2, Clock, Wrench, Package, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useUser, useFirestore, useDoc } from '@/firebase';
+import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { useParams } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
-export default function GuideDetailPage({ params }: { params: { id: string } }) {
-  const guide = FEATURED_REPAIRS.find((g) => g.id === params.id) || FEATURED_REPAIRS[0];
+export default function GuideDetailPage() {
+  const params = useParams();
+  const { id } = params;
+  const { user } = useUser();
+  const db = useFirestore();
+  const { toast } = useToast();
+  
+  const guide = FEATURED_REPAIRS.find((g) => g.id === id) || FEATURED_REPAIRS[0];
+
+  const bookmarkRef = user ? doc(db, 'users', user.uid, 'bookmarks', guide.id) : null;
+  const { data: bookmark } = useDoc(bookmarkRef);
+  const isBookmarked = !!bookmark;
+
+  const handleBookmark = () => {
+    if (!user) {
+      toast({
+        title: "Login Required",
+        description: "Please login to save guides.",
+      });
+      return;
+    }
+
+    if (isBookmarked) {
+      deleteDoc(bookmarkRef!)
+        .catch(async () => {
+          const permissionError = new FirestorePermissionError({
+            path: bookmarkRef!.path,
+            operation: 'delete',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
+      toast({ title: "Removed from bookmarks" });
+    } else {
+      const data = {
+        guideId: guide.id,
+        title: guide.title,
+        thumbnail: guide.thumbnail,
+        category: guide.category,
+        savedAt: serverTimestamp(),
+      };
+      setDoc(bookmarkRef!, data)
+        .catch(async () => {
+          const permissionError = new FirestorePermissionError({
+            path: bookmarkRef!.path,
+            operation: 'create',
+            requestResourceData: data,
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        });
+      toast({ title: "Saved to bookmarks" });
+    }
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: guide.title,
+        text: guide.description,
+        url: window.location.href,
+      }).catch(() => {
+        toast({ title: "Couldn't share", description: "Something went wrong with sharing." });
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast({ title: "Link copied!", description: "Guide link has been copied to clipboard." });
+    }
+  };
 
   const difficultyColor = {
     easy: 'bg-green-100 text-green-700',
@@ -22,10 +93,10 @@ export default function GuideDetailPage({ params }: { params: { id: string } }) 
       <Navbar />
       
       <div className="container mx-auto px-4 pt-8">
-        <Link href="/">
+        <Link href="/guides">
           <Button variant="ghost" className="mb-6 gap-2 rounded-xl text-muted-foreground">
             <ArrowLeft className="w-4 h-4" />
-            Bumalik sa Home
+            Bumalik sa mga Gabay
           </Button>
         </Link>
 
@@ -96,17 +167,20 @@ export default function GuideDetailPage({ params }: { params: { id: string } }) 
           <div className="space-y-8">
             {/* Actions */}
             <div className="flex gap-2">
-              <Button className="flex-1 rounded-2xl h-14 font-bold text-lg gap-2 shadow-lg shadow-primary/20">
-                <Bookmark className="w-5 h-5" />
-                I-save Gabay
+              <Button 
+                onClick={handleBookmark}
+                className={`flex-1 rounded-2xl h-14 font-bold text-lg gap-2 shadow-lg ${isBookmarked ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80' : 'shadow-primary/20'}`}
+              >
+                {isBookmarked ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
+                {isBookmarked ? 'Naka-save na' : 'I-save Gabay'}
               </Button>
-              <Button variant="outline" size="icon" className="rounded-2xl h-14 w-14 shrink-0 border-2">
+              <Button onClick={handleShare} variant="outline" size="icon" className="rounded-2xl h-14 w-14 shrink-0 border-2">
                 <Share2 className="w-5 h-5" />
               </Button>
             </div>
 
             {/* Tools Required */}
-            <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-white">
+            <div className="border rounded-3xl border-none shadow-sm overflow-hidden bg-white">
               <div className="p-6 bg-slate-50 border-b flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                   <Wrench className="w-4 h-4" />
@@ -122,12 +196,12 @@ export default function GuideDetailPage({ params }: { params: { id: string } }) 
                     </li>
                   ))}
                 </ul>
-                <Button variant="secondary" className="w-full mt-6 rounded-xl font-bold">Bumili ng Repair Kit</Button>
+                <Button variant="secondary" className="w-full mt-6 rounded-xl font-bold" onClick={() => toast({ title: "Coming Soon", description: "Repair kit shop will be available soon." })}>Bumili ng Repair Kit</Button>
               </div>
-            </Card>
+            </div>
 
             {/* Parts Required */}
-            <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-white">
+            <div className="border rounded-3xl border-none shadow-sm overflow-hidden bg-white">
               <div className="p-6 bg-slate-50 border-b flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary-foreground">
                   <Package className="w-4 h-4" />
@@ -143,9 +217,9 @@ export default function GuideDetailPage({ params }: { params: { id: string } }) 
                     </div>
                   ))}
                 </div>
-                <Button className="w-full mt-6 rounded-xl font-bold">Mag-order ng Parts</Button>
+                <Button className="w-full mt-6 rounded-xl font-bold" onClick={() => toast({ title: "Coming Soon", description: "Part ordering system will be available soon." })}>Mag-order ng Parts</Button>
               </div>
-            </Card>
+            </div>
 
             {/* FAQ/Community help */}
             <div className="p-6 bg-primary/5 rounded-3xl border border-primary/10">
@@ -165,9 +239,4 @@ export default function GuideDetailPage({ params }: { params: { id: string } }) 
       </div>
     </div>
   );
-}
-
-// Local helper card
-function Card({ children, className }: any) {
-  return <div className={`border rounded-xl bg-card text-card-foreground ${className}`}>{children}</div>
 }

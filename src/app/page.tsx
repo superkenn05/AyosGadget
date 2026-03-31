@@ -1,4 +1,3 @@
-
 import Navbar from '@/components/layout/Navbar';
 import CategoryIcon from '@/components/repair/CategoryIcon';
 import RepairCard from '@/components/repair/RepairCard';
@@ -129,7 +128,6 @@ export default function Home() {
   );
 }
 
-// Minimal Badge helper locally since UI badge is already provided
 function Badge({ children, variant, className }: any) {
   return (
     <div className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${className}`}>

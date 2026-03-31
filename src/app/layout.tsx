@@ -1,6 +1,9 @@
-
-import type {Metadata} from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
+import { initializeFirebase, FirebaseClientProvider } from '@/firebase';
+import { Toaster } from '@/components/ui/toaster';
+
+const { firebaseApp, firestore, auth } = initializeFirebase();
 
 export const metadata: Metadata = {
   title: 'AyosGadget | Repair Anything',
@@ -20,7 +23,10 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased selection:bg-primary selection:text-primary-foreground">
-        {children}
+        <FirebaseClientProvider firebaseApp={firebaseApp} firestore={firestore} auth={auth}>
+          {children}
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );
