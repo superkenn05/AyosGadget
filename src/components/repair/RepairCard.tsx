@@ -19,6 +19,8 @@ export default function RepairCard({ guide }: RepairCardProps) {
     hard: 'text-rose-600 dark:text-rose-400 bg-rose-500/20',
   }[guide.difficulty];
 
+  const localizedTitle = t(`${guide.id}_title`) || guide.title;
+
   return (
     <Link href={`/guides/${guide.id}`}>
       <div className="glass-card group overflow-hidden rounded-[2.5rem] flex flex-col h-full relative">
@@ -27,7 +29,7 @@ export default function RepairCard({ guide }: RepairCardProps) {
         <div className="relative aspect-[21/10] overflow-hidden">
           <Image
             src={guide.thumbnail}
-            alt={guide.title}
+            alt={localizedTitle}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-110"
             data-ai-hint="gadget repair"
@@ -55,7 +57,7 @@ export default function RepairCard({ guide }: RepairCardProps) {
           </div>
           
           <h3 className="text-xl md:text-2xl font-black leading-tight tracking-tighter text-foreground group-hover:text-primary transition-colors">
-            {guide.title}
+            {localizedTitle}
           </h3>
           
           <div className="grid grid-cols-2 gap-4 mt-2">

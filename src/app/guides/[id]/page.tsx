@@ -71,8 +71,8 @@ export default function GuideDetailPage() {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: guide.title,
-        text: guide.description,
+        title: t(`${guide.id}_title`) || guide.title,
+        text: t(`${guide.id}_desc`) || guide.description,
         url: window.location.href,
       }).catch(() => {
         toast({ title: "Couldn't share", description: "Something went wrong with sharing." });
@@ -89,6 +89,10 @@ export default function GuideDetailPage() {
     medium: 'bg-amber-100 text-amber-700',
     hard: 'bg-rose-100 text-rose-700',
   }[guide.difficulty];
+
+  // Localized Content
+  const localizedTitle = t(`${guide.id}_title`) || guide.title;
+  const localizedDescription = t(`${guide.id}_desc`) || guide.description;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -115,12 +119,12 @@ export default function GuideDetailPage() {
                 </div>
               </div>
               
-              <h1 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">{guide.title}</h1>
+              <h1 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">{localizedTitle}</h1>
               
               <div className="relative aspect-video rounded-3xl overflow-hidden mb-8 shadow-xl">
                 <Image
                   src={guide.thumbnail}
-                  alt={guide.title}
+                  alt={localizedTitle}
                   fill
                   className="object-cover"
                   priority
@@ -130,7 +134,7 @@ export default function GuideDetailPage() {
               <div className="p-8 bg-white dark:bg-card rounded-3xl border border-slate-100 dark:border-white/10 shadow-sm mb-12">
                 <h3 className="text-xl font-bold mb-4">{t('guides_time')}: {guide.timeEstimate}</h3>
                 <p className="text-muted-foreground leading-relaxed text-lg">
-                  {guide.description}
+                  {localizedDescription}
                 </p>
               </div>
 

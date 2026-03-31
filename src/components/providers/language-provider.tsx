@@ -26,7 +26,7 @@ const translations: TranslationDict = {
   guides_results: { en: 'Filtered Results', fil: 'Nakita naming Guides' },
   guides_not_found: { en: 'No Protocols Found', fil: 'Walang Nakitang Guide' },
   guides_adjust: { en: 'Try adjusting your neural search parameters.', fil: 'Subukang baguhin ang iyong hinahanap.' },
-  // Guide Detail
+  // Guide Detail Labels
   guides_back: { en: 'Back to Guides', fil: 'Bumalik sa Listahan' },
   guides_difficulty_easy: { en: 'Easy', fil: 'Madali' },
   guides_difficulty_medium: { en: 'Medium', fil: 'Katamtaman' },
@@ -42,6 +42,17 @@ const translations: TranslationDict = {
   guides_help_title: { en: 'Need help?', fil: 'Kailangan ng tulong?' },
   guides_help_desc: { en: 'If you find it hard, ask our community or use AI.', fil: 'Kung nahihirapan, magtanong sa community o gamitin ang Ayos AI.' },
   guides_ask_ai: { en: 'Ask Ayos AI', fil: 'Magtanong sa Ayos AI' },
+  
+  // Specific Guide Content (Localized Titles and Descriptions)
+  'iphone-13-screen_title': { en: 'iPhone 13 Screen Replacement', fil: 'Pag-aayos ng Screen ng iPhone 13' },
+  'iphone-13-screen_desc': { en: 'A comprehensive guide to replacing a cracked or non-functional display on your iPhone 13.', fil: 'Gabay para palitan ang basag o sirang screen ng iyong iPhone 13.' },
+  
+  'macbook-pro-battery_title': { en: 'MacBook Pro 14" Battery Replacement', fil: 'Pag-aayos ng Battery ng MacBook Pro' },
+  'macbook-pro-battery_desc': { en: 'Replace the aging battery in your 14-inch MacBook Pro for better portable performance.', fil: 'Palitan ang lumang battery ng MacBook Pro mo para mas tumagal ang gamit.' },
+  
+  'switch-joycon-drift_title': { en: 'Nintendo Switch Joy-Con Drift Repair', fil: 'Pag-aayos ng Joy-Con ng Nintendo Switch' },
+  'switch-joycon-drift_desc': { en: 'Fix the common "drift" issue by replacing the analog stick module.', fil: 'Ayusin ang "joy-con drift" sa pamamagitan ng pagpapalit ng joystick module.' },
+
   // Troubleshoot
   troubleshoot_title: { en: 'Interactive Troubleshooter', fil: 'AI Chat Assistant' },
   troubleshoot_subtitle: { en: 'Identify your gadget problem by chatting with Ayos AI.', fil: 'Pag-usapan natin ang sira ng gadget mo para malaman ang gagawin.' },
