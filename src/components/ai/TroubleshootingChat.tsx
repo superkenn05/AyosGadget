@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { aiTroubleshootingAssistant } from '@/ai/flows/ai-troubleshooting-assistant';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import Link from 'next/link';
 
 type Message = {
   role: 'user' | 'model';
@@ -69,23 +70,23 @@ export default function TroubleshootingChat() {
   };
 
   return (
-    <Card className="w-full max-w-5xl mx-auto glass border-white/10 rounded-[4rem] overflow-hidden flex flex-col shadow-[0_0_100px_rgba(0,0,0,0.5)] relative">
+    <Card className="w-full max-w-5xl mx-auto glass border-white/10 rounded-[2.5rem] md:rounded-[4rem] overflow-hidden flex flex-col shadow-[0_0_100px_rgba(0,0,0,0.5)] relative">
       <div className="absolute inset-0 scan-line opacity-20 pointer-events-none" />
       
-      <CardHeader className="p-12 border-b border-white/5 bg-primary/[0.01] relative">
+      <CardHeader className="p-6 md:p-12 border-b border-white/5 bg-primary/[0.01] relative">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-8">
-            <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center neon-glow shadow-2xl">
-              <Cpu className="w-12 h-12 text-primary-foreground" />
+          <CardTitle className="flex items-center gap-4 md:gap-8">
+            <div className="w-12 h-12 md:w-20 md:h-20 bg-primary rounded-2xl md:rounded-3xl flex items-center justify-center neon-glow shadow-2xl">
+              <Cpu className="w-6 h-6 md:w-12 md:h-12 text-primary-foreground" />
             </div>
             <div className="flex flex-col">
-              <span className="text-primary text-4xl font-black tracking-tighter leading-tight">NEURAL ANALYZER</span>
-              <div className="flex items-center gap-3">
-                <span className="px-3 py-1 bg-emerald-500/10 text-emerald-500 text-[8px] font-black uppercase tracking-[0.3em] rounded-full border border-emerald-500/20 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Kernel: Stable
+              <span className="text-primary text-xl md:text-4xl font-black tracking-tighter leading-tight">NEURAL ANALYZER</span>
+              <div className="flex items-center gap-2 md:gap-3">
+                <span className="px-2 py-0.5 md:px-3 md:py-1 bg-emerald-500/10 text-emerald-500 text-[6px] md:text-[8px] font-black uppercase tracking-[0.3em] rounded-full border border-emerald-500/20 flex items-center gap-1.5 md:gap-2">
+                  <div className="w-1 h-1 md:w-1.5 md:h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Stable
                 </span>
-                <span className="px-3 py-1 bg-primary/10 text-primary text-[8px] font-black uppercase tracking-[0.3em] rounded-full border border-primary/20">
+                <span className="px-2 py-0.5 md:px-3 md:py-1 bg-primary/10 text-primary text-[6px] md:text-[8px] font-black uppercase tracking-[0.3em] rounded-full border border-primary/20">
                   v4.1.0-AI
                 </span>
               </div>
@@ -104,44 +105,44 @@ export default function TroubleshootingChat() {
         </div>
       </CardHeader>
       
-      <CardContent className="p-0 flex-grow bg-grid relative">
-        <ScrollArea className="h-[700px] p-12">
-          <div className="space-y-16">
+      <CardContent className="p-0 flex-grow bg-grid relative overflow-hidden">
+        <ScrollArea className="h-[500px] md:h-[700px] p-6 md:p-12">
+          <div className="space-y-10 md:space-y-16">
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex gap-8 ${msg.role === 'user' ? 'flex-row-reverse' : ''} animate-in fade-in slide-in-from-bottom-8 duration-700`}
+                className={`flex gap-4 md:gap-8 ${msg.role === 'user' ? 'flex-row-reverse' : ''} animate-in fade-in slide-in-from-bottom-8 duration-700`}
               >
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-2xl ${
+                <div className={`w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 shadow-2xl ${
                   msg.role === 'user' ? 'bg-secondary neon-glow' : 'glass border-white/10'
                 }`}>
-                  {msg.role === 'user' ? <User className="w-7 h-7 text-white" /> : <Sparkles className="w-7 h-7 text-primary" />}
+                  {msg.role === 'user' ? <User className="w-5 h-5 md:w-7 md:h-7 text-white" /> : <Sparkles className="w-5 h-5 md:w-7 md:h-7 text-primary" />}
                 </div>
-                <div className={`p-10 rounded-[3.5rem] max-w-[85%] text-lg leading-relaxed font-medium shadow-3xl relative overflow-hidden ${
+                <div className={`p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] max-w-[90%] md:max-w-[85%] text-sm md:text-lg leading-relaxed font-medium shadow-3xl relative overflow-hidden ${
                   msg.role === 'user' 
                     ? 'bg-primary text-primary-foreground rounded-tr-none border border-white/10' 
                     : 'glass text-foreground rounded-tl-none border-l-4 border-l-primary'
                 }`}>
                   {msg.role === 'model' && (
                     <div className="absolute top-4 right-6 opacity-10">
-                      <Terminal className="w-12 h-12" />
+                      <Terminal className="w-8 h-8 md:w-12 md:h-12" />
                     </div>
                   )}
-                  <pre className="whitespace-pre-wrap font-body text-lg">
+                  <pre className="whitespace-pre-wrap font-body text-sm md:text-lg">
                     {msg.content}
                   </pre>
                   {msg.data?.recommendedGuides && msg.data.recommendedGuides.length > 0 && (
-                    <div className="mt-8 pt-8 border-t border-white/10">
-                       <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-6 flex items-center gap-2">
-                         <Info className="w-4 h-4" />
+                    <div className="mt-6 md:mt-8 pt-6 md:pt-8 border-t border-white/10">
+                       <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-4 md:mb-6 flex items-center gap-2">
+                         <Info className="w-3 h-3 md:w-4 md:h-4" />
                          Linked Protocols Found:
                        </p>
-                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                           {msg.data.recommendedGuides.map((guide: any) => (
                             <Link key={guide.id} href={guide.url}>
-                              <div className="p-4 glass rounded-2xl border-white/5 hover:border-primary/50 transition-all flex items-center justify-between group/link">
-                                 <span className="text-xs font-bold truncate">{guide.title}</span>
-                                 <Send className="w-4 h-4 opacity-30 group-hover/link:opacity-100 group-hover/link:text-primary transition-all" />
+                              <div className="p-3 md:p-4 glass rounded-xl md:rounded-2xl border-white/5 hover:border-primary/50 transition-all flex items-center justify-between group/link">
+                                 <span className="text-[10px] md:text-xs font-bold truncate">{guide.title}</span>
+                                 <Send className="w-3 h-3 md:w-4 md:h-4 opacity-30 group-hover/link:opacity-100 group-hover/link:text-primary transition-all" />
                               </div>
                             </Link>
                           ))}
@@ -152,17 +153,17 @@ export default function TroubleshootingChat() {
               </div>
             ))}
             {isLoading && (
-              <div className="flex gap-8">
-                <div className="w-14 h-14 rounded-2xl glass border-white/10 flex items-center justify-center">
-                  <Cpu className="w-7 h-7 text-primary animate-spin" />
+              <div className="flex gap-4 md:gap-8">
+                <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl glass border-white/10 flex items-center justify-center">
+                  <Cpu className="w-5 h-5 md:w-7 md:h-7 text-primary animate-spin" />
                 </div>
-                <div className="glass p-10 rounded-[3.5rem] rounded-tl-none border-l-4 border-l-primary">
-                  <div className="flex gap-3">
-                    <div className="w-4 h-4 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
-                    <div className="w-4 h-4 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
-                    <div className="w-4 h-4 bg-primary rounded-full animate-bounce" />
+                <div className="glass p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] rounded-tl-none border-l-4 border-l-primary">
+                  <div className="flex gap-2 md:gap-3">
+                    <div className="w-3 h-3 md:w-4 md:h-4 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]" />
+                    <div className="w-3 h-3 md:w-4 md:h-4 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
+                    <div className="w-3 h-3 md:w-4 md:h-4 bg-primary rounded-full animate-bounce" />
                   </div>
-                  <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-primary animate-pulse">Running Neural Simulation...</p>
+                  <p className="mt-3 md:mt-4 text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary animate-pulse">Running Neural Simulation...</p>
                 </div>
               </div>
             )}
@@ -171,26 +172,26 @@ export default function TroubleshootingChat() {
         </ScrollArea>
       </CardContent>
 
-      <CardFooter className="p-12 bg-white/[0.01] border-t border-white/5 relative">
-        <div className="flex w-full gap-8 items-center">
+      <CardFooter className="p-6 md:p-12 bg-white/[0.01] border-t border-white/5 relative">
+        <div className="flex w-full gap-4 md:gap-8 items-center">
           <div className="relative flex-grow group">
             <Input
-              placeholder="ENTER COMMAND OR HARDWARE TELEMETRY..."
+              placeholder="ENTER COMMAND..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              className="rounded-full border-white/10 bg-white/5 focus:border-primary/50 h-24 pl-12 pr-32 text-2xl font-bold glass tracking-tight placeholder:text-muted-foreground/20 uppercase"
+              className="rounded-full border-white/10 bg-white/5 focus:border-primary/50 h-16 md:h-24 pl-8 md:pl-12 pr-24 md:pr-32 text-lg md:text-2xl font-bold glass tracking-tight placeholder:text-muted-foreground/20 uppercase"
             />
             <Button 
               onClick={handleSend} 
               disabled={isLoading}
-              className="absolute right-4 top-4 rounded-full h-16 w-16 p-0 bg-primary neon-glow hover:scale-110 active:scale-95 transition-all shadow-primary/20 shadow-2xl flex items-center justify-center"
+              className="absolute right-2 top-2 md:right-4 md:top-4 rounded-full h-12 w-12 md:h-16 md:w-16 p-0 bg-primary neon-glow hover:scale-110 active:scale-95 transition-all shadow-primary/20 shadow-2xl flex items-center justify-center"
             >
-              <Send className="w-8 h-8" />
+              <Send className="w-5 h-5 md:w-8 md:h-8" />
             </Button>
           </div>
         </div>
-      </CardHeader>
+      </CardFooter>
     </Card>
   );
 }
