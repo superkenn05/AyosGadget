@@ -1,3 +1,4 @@
+
 import CategoryIcon from '@/components/repair/CategoryIcon';
 import RepairCard from '@/components/repair/RepairCard';
 import { REPAIR_CATEGORIES, FEATURED_REPAIRS } from '@/lib/repair-data';
@@ -9,18 +10,18 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile-Optimized HUD Hero */}
-      <section className="relative pt-20 pb-12 md:pt-40 md:pb-24 overflow-hidden px-6">
+      <section className="relative pt-24 pb-12 md:pt-40 md:pb-24 overflow-hidden px-6">
         <div className="container mx-auto relative z-10">
           <div className="flex flex-col gap-6 md:gap-10 items-start">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">
               <Activity className="w-3 h-3" />
-              Neural Link: Active
+              Neural Link: Connected
             </div>
             
             <div className="space-y-4 md:space-y-6">
               <h1 className="text-4xl md:text-8xl font-black tracking-tighter leading-none text-foreground">
-                Modern <br />
-                <span className="text-primary neon-text">Repair Engine.</span>
+                <span className="text-primary neon-text">AyosGadget</span> <br />
+                Modern Repair Engine.
               </h1>
               <p className="text-muted-foreground text-sm md:text-xl font-medium leading-relaxed max-w-sm md:max-w-xl">
                 AI-driven diagnostics and professional repair protocols for your hardware. High-fidelity guides for everyone.
