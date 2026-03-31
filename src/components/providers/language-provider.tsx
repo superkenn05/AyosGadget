@@ -14,29 +14,29 @@ interface TranslationDict {
 const translations: TranslationDict = {
   // Home
   home_title: { en: 'Neural Analyzer', fil: 'Neural Analyzer' },
-  home_subtitle: { en: 'Ready for hardware maintenance protocols and AI-driven troubleshooting.', fil: 'Handa para sa hardware maintenance at AI-driven troubleshooting.' },
-  home_start_scan: { en: 'Start Scan', fil: 'Simulan ang Scan' },
-  home_modules: { en: 'Available Modules', fil: 'Mga Modulo' },
-  home_priority: { en: 'Priority Protocols', fil: 'Pangunahing Protocol' },
+  home_subtitle: { en: 'Ready for hardware maintenance protocols and AI-driven troubleshooting.', fil: 'Handa na sa pag-aayos at pag-check ng gadget gamit ang AI.' },
+  home_start_scan: { en: 'Start Scan', fil: 'Simulan ang Check-up' },
+  home_modules: { en: 'Available Modules', fil: 'Mga Gamit' },
+  home_priority: { en: 'Priority Protocols', fil: 'Importanteng Ayusin' },
   // Guides
   guides_title: { en: 'Protocols', fil: 'Mga Gabay' },
-  guides_subtitle: { en: 'Hardware Library v4.2', fil: 'Hardware Library v4.2' },
-  guides_search: { en: 'SEARCH SYSTEM LOGS...', fil: 'MAGHANAP NG LOGS...' },
-  guides_all: { en: 'All Logs', fil: 'Lahat ng Gabay' },
+  guides_subtitle: { en: 'Hardware Library v4.2', fil: 'Library ng mga Sira' },
+  guides_search: { en: 'SEARCH SYSTEM LOGS...', fil: 'MAGHANAP DITO...' },
+  guides_all: { en: 'All Logs', fil: 'Lahat' },
   // Troubleshoot
-  troubleshoot_title: { en: 'Interactive Troubleshooter', fil: 'Interaktibong Troubleshooter' },
-  troubleshoot_subtitle: { en: 'Identify your gadget problem by chatting with Ayos AI.', fil: 'Tukuyin ang problema ng iyong gadget sa pamamagitan ng Ayos AI.' },
+  troubleshoot_title: { en: 'Interactive Troubleshooter', fil: 'AI Chat Assistant' },
+  troubleshoot_subtitle: { en: 'Identify your gadget problem by chatting with Ayos AI.', fil: 'Pag-usapan natin ang sira ng gadget mo para malaman ang gagawin.' },
   troubleshoot_how_to: { en: 'How to use?', fil: 'Paano gamitin?' },
   // Bookmarks
   bookmarks_title: { en: 'Saved Vault', fil: 'Mga Naka-save' },
-  bookmarks_subtitle: { en: 'Your collection of repair guides.', fil: 'Ang iyong koleksyon ng mga gabay.' },
+  bookmarks_subtitle: { en: 'Your collection of repair guides.', fil: 'Dito makikita ang mga itinabi mong guides.' },
   // Settings
-  settings_title: { en: 'System Config', fil: 'System Config' },
-  settings_appearance: { en: 'Appearance', fil: 'Hitsura' },
+  settings_title: { en: 'System Config', fil: 'Settings' },
+  settings_appearance: { en: 'Appearance', fil: 'Tema at Kulay' },
   settings_language: { en: 'Language', fil: 'Wika' },
   settings_account: { en: 'Account', fil: 'Account' },
-  settings_about: { en: 'About', fil: 'Tungkol' },
-  settings_terminate: { en: 'Terminate Session', fil: 'I-logout' },
+  settings_about: { en: 'About', fil: 'Tungkol sa App' },
+  settings_terminate: { en: 'Terminate Session', fil: 'Mag-Logout' },
 };
 
 interface LanguageContextProps {
