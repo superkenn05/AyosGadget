@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { Star, Clock, ShieldCheck, ArrowRight, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { RepairGuide } from '@/lib/repair-data';
-import { useLanguage } from '@/components/providers/language-provider';
+import { useLanguage, translations } from '@/components/providers/language-provider';
 
 interface RepairCardProps {
   guide: RepairGuide;
@@ -19,7 +19,7 @@ export default function RepairCard({ guide }: RepairCardProps) {
     hard: 'text-rose-600 dark:text-rose-400 bg-rose-500/20',
   }[guide.difficulty];
 
-  const localizedTitle = t(`${guide.id}_title`) || guide.title;
+  const localizedTitle = translations[`${guide.id}_title`] ? t(`${guide.id}_title`) : guide.title;
 
   return (
     <Link href={`/guides/${guide.id}`}>

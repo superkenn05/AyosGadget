@@ -12,7 +12,7 @@ import { useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
-import { useLanguage } from '@/components/providers/language-provider';
+import { useLanguage, translations } from '@/components/providers/language-provider';
 import { useEffect, useState } from 'react';
 import { getIFixitGuide, mapIFixitToInternal } from '@/lib/ifixit-api';
 
@@ -94,8 +94,8 @@ export default function GuideDetailPage() {
     if (!guide) return;
     if (navigator.share) {
       navigator.share({
-        title: t(`${guide.id}_title`) || guide.title,
-        text: t(`${guide.id}_desc`) || guide.description,
+        title: translations[`${guide.id}_title`] ? t(`${guide.id}_title`) : guide.title,
+        text: translations[`${guide.id}_desc`] ? t(`${guide.id}_desc`) : guide.description,
         url: window.location.href,
       }).catch(() => {
         toast({ title: "Couldn't share", description: "Something went wrong." });
@@ -134,8 +134,8 @@ export default function GuideDetailPage() {
     hard: 'bg-rose-100 text-rose-700',
   }[guide.difficulty as 'easy' | 'medium' | 'hard'];
 
-  const localizedTitle = t(`${guide.id}_title`) || guide.title;
-  const localizedDescription = t(`${guide.id}_desc`) || guide.description;
+  const localizedTitle = translations[`${guide.id}_title`] ? t(`${guide.id}_title`) : guide.title;
+  const localizedDescription = translations[`${guide.id}_desc`] ? t(`${guide.id}_desc`) : guide.description;
 
   return (
     <div className="min-h-screen bg-background pb-24">

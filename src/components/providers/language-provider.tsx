@@ -11,7 +11,7 @@ interface TranslationDict {
   };
 }
 
-const translations: TranslationDict = {
+export const translations: TranslationDict = {
   // Home
   home_title: { en: 'Neural Analyzer', fil: 'Neural Analyzer' },
   home_subtitle: { en: 'Ready for hardware maintenance protocols and AI-driven troubleshooting.', fil: 'Handa na sa pag-aayos at pag-check ng gadget gamit ang AI.' },
