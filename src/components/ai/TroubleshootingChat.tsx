@@ -1,8 +1,7 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, RefreshCw } from 'lucide-react';
+import { Send, Bot, User, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -70,43 +69,48 @@ export default function TroubleshootingChat() {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto shadow-2xl border-none rounded-3xl overflow-hidden bg-white">
-      <CardHeader className="bg-primary p-6">
-        <CardTitle className="flex items-center gap-3 text-primary-foreground text-xl">
-          <Bot className="w-6 h-6" />
-          Ayos AI Troubleshooter
+    <Card className="w-full max-w-3xl mx-auto glass border-white/10 rounded-[2.5rem] overflow-hidden flex flex-col shadow-[0_32px_64px_rgba(0,0,0,0.5)]">
+      <CardHeader className="p-8 border-b border-white/5 bg-primary/5">
+        <CardTitle className="flex items-center gap-4 text-primary text-2xl font-black">
+          <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center neon-glow">
+            <Bot className="w-7 h-7 text-primary-foreground" />
+          </div>
+          <div className="flex flex-col">
+            <span>Ayos AI Assistant</span>
+            <span className="text-xs font-bold text-primary/60 tracking-widest uppercase">Online & Ready to Help</span>
+          </div>
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="p-0">
-        <ScrollArea className="h-[500px] p-6">
-          <div className="space-y-6">
+      <CardContent className="p-0 flex-grow">
+        <ScrollArea className="h-[600px] p-8">
+          <div className="space-y-8">
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''} animate-in fade-in slide-in-from-bottom-2 duration-500`}
               >
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                  msg.role === 'user' ? 'bg-secondary' : 'bg-primary/20'
+                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-lg ${
+                  msg.role === 'user' ? 'bg-secondary' : 'glass border-white/10'
                 }`}>
-                  {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4 text-primary" />}
+                  {msg.role === 'user' ? <User className="w-5 h-5 text-white" /> : <Sparkles className="w-5 h-5 text-primary" />}
                 </div>
-                <div className={`p-4 rounded-2xl max-w-[85%] text-sm leading-relaxed whitespace-pre-wrap ${
+                <div className={`p-6 rounded-[2rem] max-w-[85%] text-base leading-relaxed font-medium ${
                   msg.role === 'user' 
-                    ? 'bg-primary text-primary-foreground rounded-tr-none' 
-                    : 'bg-muted text-foreground rounded-tl-none'
+                    ? 'bg-primary text-primary-foreground rounded-tr-none neon-glow shadow-primary/20' 
+                    : 'glass text-foreground rounded-tl-none'
                 }`}>
                   {msg.content}
                 </div>
               </div>
             ))}
             {isLoading && (
-              <div className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Bot className="w-4 h-4 text-primary" />
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded-2xl glass border-white/10 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-primary animate-pulse" />
                 </div>
-                <div className="bg-muted p-4 rounded-2xl rounded-tl-none">
-                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                <div className="glass p-6 rounded-[2rem] rounded-tl-none">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
               </div>
             )}
@@ -115,22 +119,24 @@ export default function TroubleshootingChat() {
         </ScrollArea>
       </CardContent>
 
-      <CardFooter className="p-4 bg-slate-50 border-t">
-        <div className="flex w-full gap-2">
-          <Input
-            placeholder="Ilarawan ang problema..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            className="rounded-xl border-slate-200 focus:ring-primary h-12"
-          />
-          <Button 
-            onClick={handleSend} 
-            disabled={isLoading}
-            className="rounded-xl h-12 w-12 p-0 bg-primary"
-          >
-            <Send className="w-5 h-5" />
-          </Button>
+      <CardFooter className="p-8 bg-white/5 border-t border-white/5">
+        <div className="flex w-full gap-4 items-center">
+          <div className="relative flex-grow">
+            <Input
+              placeholder="Sabihin ang problema ng iyong gadget..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              className="rounded-[1.5rem] border-white/10 bg-white/5 focus:ring-primary h-16 pl-6 pr-16 text-lg font-medium glass"
+            />
+            <Button 
+              onClick={handleSend} 
+              disabled={isLoading}
+              className="absolute right-2 top-2 rounded-xl h-12 w-12 p-0 bg-primary neon-glow hover:scale-105 active:scale-95 transition-all"
+            >
+              <Send className="w-6 h-6" />
+            </Button>
+          </div>
         </div>
       </CardFooter>
     </Card>
