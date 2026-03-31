@@ -9,11 +9,13 @@ export interface IFixitGuide {
   difficulty: string;
   time_required: string;
   image: { original: string };
+  subject: string;
+  type: string;
   tools: { name: string }[];
   parts: { name: string }[];
   steps: {
     title: string;
-    lines: { text_raw: string; text_rendered: string }[];
+    lines: { text_raw: string; text_rendered: string; bullet: string }[];
     media: { data: { original: string }[] };
   }[];
 }
@@ -63,11 +65,12 @@ export function mapIFixitToInternal(ifixit: any) {
     const stepLines = (s.lines || []).map((l: any) => {
       // Prefer text_rendered (stripped of HTML) or text_raw
       const text = l.text_rendered || l.text_raw || l.text || '';
-      return stripHtml(text).trim();
+      const prefix = l.bullet === 'black' ? '• ' : ''; // Add bullet if applicable
+      return prefix + stripHtml(text).trim();
     }).filter(Boolean);
 
     return {
-      title: s.title || 'Step',
+      title: s.title || 'Hakbang',
       description: stepLines.join('\n\n'),
       imageUrl: s.media?.data?.[0]?.original || 'https://picsum.photos/seed/step/600/400'
     };
@@ -75,9 +78,9 @@ export function mapIFixitToInternal(ifixit: any) {
 
   return {
     id: guideId.toString(),
-    title: ifixit.title,
-    device: ifixit.subject || 'Hardware Device',
-    category: 'Appliances' as any, // Default category
+    title: ifixit.title || 'Untitled Guide',
+    device: ifixit.subject || ifixit.type || 'Hardware Device',
+    category: mapCategory(ifixit.type || ifixit.subject || 'Appliances'),
     difficulty: mapDifficulty(ifixit.difficulty || 'Easy'),
     timeEstimate: ifixit.time_required || '30-60 mins',
     description: stripHtml(ifixit.summary || ifixit.text || ''),
@@ -86,7 +89,7 @@ export function mapIFixitToInternal(ifixit: any) {
     parts: (ifixit.parts || []).map((p: any) => ({ name: p.name })),
     steps: mappedSteps,
     rating: 4.5,
-    reviewsCount: 10,
+    reviewsCount: Math.floor(Math.random() * 100) + 10,
   };
 }
 
@@ -97,7 +100,23 @@ function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
   return 'hard';
 }
 
+function mapCategory(type: string): 'Smartphones' | 'Laptops' | 'Tablets' | 'Consoles' | 'Appliances' {
+  const t = type.toLowerCase();
+  if (t.includes('phone')) return 'Smartphones';
+  if (t.includes('laptop') || t.includes('computer')) return 'Laptops';
+  if (t.includes('tablet') || t.includes('ipad')) return 'Tablets';
+  if (t.includes('console') || t.includes('switch') || t.includes('playstation') || t.includes('xbox')) return 'Consoles';
+  return 'Appliances';
+}
+
 function stripHtml(html: string) {
   if (!html) return '';
-  return html.replace(/<[^>]*>?/gm, '');
+  // Enhanced stripping to handle entities and more tags
+  return html
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"');
 }
