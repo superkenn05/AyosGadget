@@ -9,30 +9,32 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile-Optimized HUD Hero */}
-      <section className="relative pt-24 pb-12 md:pt-40 md:pb-24 overflow-hidden px-6">
+      <section className="relative pt-32 pb-12 md:pt-48 md:pb-24 overflow-hidden px-6">
         <div className="container mx-auto relative z-10">
-          <div className="flex flex-col gap-6 md:gap-10 items-start">
+          <div className="flex flex-col gap-8 md:gap-12 items-start">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">
               <Activity className="w-3 h-3" />
               Neural Link: Connected
             </div>
             
-            <div className="space-y-4 md:space-y-6">
-              <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-none text-foreground">
-                <span className="relative inline-block">
+            <div className="space-y-6 md:space-y-8">
+              <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[1.1] text-foreground">
+                <span className="relative inline-block mb-2">
                   <span className="text-primary neon-text italic">Ayos</span>
                   <span className="text-foreground">Gadget</span>
                   <div className="absolute -bottom-2 left-0 w-full h-1 bg-gradient-to-r from-primary to-transparent rounded-full" />
                 </span>
                 <br />
-                <span className="text-muted-foreground/60">Modern Repair Engine.</span>
+                <span className="inline-block mt-4 text-muted-foreground/60 font-bold text-3xl md:text-6xl">
+                  Modern Repair Engine.
+                </span>
               </h1>
-              <p className="text-muted-foreground text-sm md:text-xl font-medium leading-relaxed max-w-sm md:max-w-xl">
+              <p className="text-muted-foreground text-sm md:text-xl font-medium leading-relaxed max-w-sm md:max-w-xl pt-2">
                 AI-driven diagnostics and professional repair protocols for your hardware. High-fidelity guides for everyone.
               </p>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg mt-4">
               <Link href="/guides" className="w-full">
                 <Button className="w-full rounded-2xl h-14 md:h-20 font-black uppercase tracking-[0.15em] text-xs md:text-sm bg-primary text-primary-foreground shadow-lg shadow-primary/20 active:scale-95 transition-all">
                   Initialize System
