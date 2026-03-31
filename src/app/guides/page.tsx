@@ -1,9 +1,10 @@
 'use client';
 
 import RepairCard from '@/components/repair/RepairCard';
+import CategoryIcon from '@/components/repair/CategoryIcon';
 import { REPAIR_CATEGORIES } from '@/lib/repair-data';
 import { Input } from '@/components/ui/input';
-import { Search, Filter, Loader2, Globe, ArrowRight, Sparkles, LayoutGrid, Box } from 'lucide-react';
+import { Search, Loader2, Sparkles, LayoutGrid, ArrowRight } from 'lucide-react';
 import { useState, useEffect, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -121,6 +122,7 @@ function GuidesContent() {
     const params = new URLSearchParams(window.location.search);
     if (catName) {
       params.set('category', catName);
+      params.delete('search');
     } else {
       params.delete('category');
     }
@@ -164,28 +166,51 @@ function GuidesContent() {
         </div>
       </section>
 
-      {/* Top Level Category Chips */}
-      <section className="container mx-auto px-6 py-8 overflow-x-auto no-scrollbar">
-        <div className="flex gap-2 min-w-max">
-          <Button
-            variant={selectedCategory === null ? "default" : "outline"}
-            className="rounded-full h-10 px-6 text-[10px] font-black uppercase tracking-widest"
-            onClick={() => handleCategoryClick(null)}
-          >
-            {t('guides_all')}
-          </Button>
-          {REPAIR_CATEGORIES.map((cat) => (
-            <Button
-              key={cat.name}
-              variant={selectedCategory === cat.name ? "default" : "outline"}
-              className="rounded-full h-10 px-6 text-[10px] font-black uppercase tracking-widest"
-              onClick={() => handleCategoryClick(cat.name)}
+      {/* Professional Visual Category Cards Grid */}
+      {!selectedCategory && !searchQuery && (
+        <section className="container mx-auto px-6 py-12">
+          <div className="flex items-center gap-4 mb-8">
+             <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Master Modules</span>
+             <div className="h-px flex-grow bg-primary/10" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <button
+              onClick={() => handleCategoryClick(null)}
+              className={`glass group relative overflow-hidden rounded-[2rem] p-6 text-left transition-all hover:border-primary/50 active:scale-95 flex flex-col justify-between h-40 ${selectedCategory === null ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : 'border-black/5 dark:border-white/5'}`}
             >
-              {cat.name}
-            </Button>
-          ))}
-        </div>
-      </section>
+              <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                <LayoutGrid className="w-32 h-32" />
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
+                <LayoutGrid className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-widest leading-none block mb-1">System</span>
+                <span className="text-sm font-black uppercase tracking-tighter">Lahat ng Gabay</span>
+              </div>
+            </button>
+
+            {REPAIR_CATEGORIES.map((cat) => (
+              <button
+                key={cat.name}
+                onClick={() => handleCategoryClick(cat.name)}
+                className={`glass group relative overflow-hidden rounded-[2rem] p-6 text-left transition-all hover:border-primary/50 active:scale-95 flex flex-col justify-between h-40 ${selectedCategory === cat.name ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : 'border-black/5 dark:border-white/5'}`}
+              >
+                <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <CategoryIcon name={cat.icon} className="w-32 h-32" />
+                </div>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${selectedCategory === cat.name ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground group-hover:text-primary'}`}>
+                  <CategoryIcon name={cat.icon} className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest leading-none block mb-1 opacity-50">Module</span>
+                  <span className="text-sm font-black uppercase tracking-tighter">{cat.name}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Category Landing Grid */}
       {categoryWiki && !searchQuery && (
@@ -194,6 +219,11 @@ function GuidesContent() {
             <div className="absolute inset-0 scan-line opacity-5" />
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               <div className="space-y-6">
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" onClick={() => handleCategoryClick(null)} className="h-8 rounded-full px-4 text-[8px] font-black uppercase tracking-widest border border-primary/20 hover:bg-primary/10">
+                    Exit Protocol
+                  </Button>
+                </div>
                 <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">{categoryWiki.title}</h2>
                 <p className="text-muted-foreground font-medium leading-relaxed max-w-xl">{categoryWiki.description}</p>
               </div>
@@ -232,7 +262,7 @@ function GuidesContent() {
       <section className="container mx-auto px-6">
         <div className="flex items-center gap-4 mb-10">
           <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">
-            {searchQuery ? `Results for "${searchQuery}"` : 'Library Protocols'}
+            {searchQuery ? `Results for "${searchQuery}"` : selectedCategory ? `Protocols in "${selectedCategory}"` : 'Library Protocols'}
           </h3>
           <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
         </div>
