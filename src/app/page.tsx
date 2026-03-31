@@ -82,19 +82,39 @@ export default function Home() {
          <div className="h-px w-full bg-black/5 dark:bg-white/5" />
       </div>
 
-      {/* Priority List */}
-      <section className="container mx-auto px-6 pb-24">
-        <div className="flex items-center gap-3 mb-6">
-          <Zap className="w-4 h-4 text-amber-500" />
-          <h2 className="text-[10px] font-black uppercase tracking-[0.5em] opacity-40">{t('home_priority')}</h2>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {FEATURED_REPAIRS.map((guide) => (
-            <RepairCard key={guide.id} guide={guide} />
-          ))}
-        </div>
-      </section>
+      {/* Priority List - Only show if there are featured repairs */}
+      {FEATURED_REPAIRS.length > 0 && (
+        <section className="container mx-auto px-6 pb-24">
+          <div className="flex items-center gap-3 mb-6">
+            <Zap className="w-4 h-4 text-amber-500" />
+            <h2 className="text-[10px] font-black uppercase tracking-[0.5em] opacity-40">{t('home_priority')}</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {FEATURED_REPAIRS.map((guide) => (
+              <RepairCard key={guide.id} guide={guide} />
+            ))}
+          </div>
+        </section>
+      )}
+      
+      {/* If no featured repairs, show a CTA to the global library */}
+      {FEATURED_REPAIRS.length === 0 && (
+        <section className="container mx-auto px-6 pb-24 text-center">
+          <div className="p-12 glass rounded-[3rem] border-primary/5 max-w-2xl mx-auto">
+            <Activity className="w-12 h-12 text-primary/40 mx-auto mb-6" />
+            <h2 className="text-2xl font-black uppercase tracking-tighter mb-4">Wala pang Priority Protocols</h2>
+            <p className="text-muted-foreground mb-8">
+              Ang aming system ay kasalukuyang nag-uupdate. Samantala, maaari mong i-browse ang aming Global Repair Library para sa libo-libong gabay.
+            </p>
+            <Link href="/guides">
+              <Button variant="outline" className="rounded-2xl h-12 px-8 font-black uppercase tracking-widest text-[10px] border-primary/20">
+                Buksan ang Global Library
+              </Button>
+            </Link>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
