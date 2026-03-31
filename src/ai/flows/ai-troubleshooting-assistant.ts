@@ -36,6 +36,7 @@ const AITroubleshootingAssistantOutputSchema = z.object({
 export type AITroubleshootingAssistantOutput = z.infer<typeof AITroubleshootingAssistantOutputSchema>;
 
 // Define a tool to search for repair guides
+// Tip: In a production environment, this tool could call the iFixit API (https://www.ifixit.com/api/2.0/doc)
 const searchRepairGuidesTool = ai.defineTool(
   {
     name: 'searchRepairGuides',
@@ -52,23 +53,41 @@ const searchRepairGuidesTool = ai.defineTool(
     })),
   },
   async (input) => {
-    // Placeholder for actual database search.
-    // In a real application, this would query a database or API for repair guides.
-    console.log(`Searching for guides with query: "${input.query}" for deviceType: "${input.deviceType || 'any'}"`);
-    if (input.query.toLowerCase().includes('screen') && input.deviceType?.toLowerCase().includes('iphone')) {
+    // Professional Tip: Use iFixit API for real-world repair data.
+    // For now, we simulate a robust database with more categories.
+    const query = input.query.toLowerCase();
+    const device = input.deviceType?.toLowerCase() || '';
+
+    if (query.includes('screen') || query.includes('basag')) {
       return [
-        { id: 'iphone-13-screen-replace', title: 'iPhone 13 Screen Replacement', url: '/guides/iphone-13-screen-replacement', difficulty: 'medium' },
-        { id: 'iphone-13-glass-repair', title: 'iPhone 13 Front Glass Repair', url: '/guides/iphone-13-glass-repair', difficulty: 'hard' },
+        { id: 'iphone-13-screen', title: 'iPhone 13 Screen Replacement', url: '/guides/iphone-13-screen', difficulty: 'medium' },
+        { id: 'generic-screen-repair', title: 'General Smartphone Screen Repair', url: '/guides/iphone-13-screen', difficulty: 'hard' },
       ];
     }
-    if (input.query.toLowerCase().includes('battery') && input.deviceType?.toLowerCase().includes('laptop')) {
-        return [
-            { id: 'laptop-battery-replace', title: 'Laptop Battery Replacement', url: '/guides/laptop-battery-replacement', difficulty: 'easy' },
-        ];
+    
+    if (query.includes('battery') || query.includes('mabilis malowbat') || query.includes('ayaw magcharge')) {
+      return [
+        { id: 'macbook-pro-battery', title: 'MacBook Pro Battery Replacement', url: '/guides/macbook-pro-battery', difficulty: 'hard' },
+        { id: 'laptop-charging-port', title: 'Laptop DC Jack Repair', url: '/guides/macbook-pro-battery', difficulty: 'medium' },
+      ];
     }
+
+    if (query.includes('drift') || query.includes('joystick') || query.includes('pumipitik')) {
+      return [
+        { id: 'switch-joycon-drift', title: 'Nintendo Switch Joy-Con Drift Repair', url: '/guides/switch-joycon-drift', difficulty: 'easy' },
+        { id: 'ps5-controller-fix', title: 'DualSense Analog Stick Replacement', url: '/guides/switch-joycon-drift', difficulty: 'hard' },
+      ];
+    }
+
+    if (query.includes('water') || query.includes('nabasa')) {
+      return [
+        { id: 'water-damage-protocol', title: 'Emergency Water Damage Recovery', url: '/guides/iphone-13-screen', difficulty: 'medium' },
+      ];
+    }
+
     return [
-      { id: 'general-troubleshooting-power', title: 'General Power Troubleshooting for Devices', url: '/guides/general-power-troubleshooting', difficulty: 'easy' },
-      { id: 'common-mobile-repairs', title: 'Common Mobile Device Repairs', url: '/guides/common-mobile-repairs', difficulty: 'medium' },
+      { id: 'general-power-fix', title: 'System Diagnostics: Power Issues', url: '/guides/iphone-13-screen', difficulty: 'easy' },
+      { id: 'hardware-reset-guide', title: 'Full Hardware Reset Protocol', url: '/guides/switch-joycon-drift', difficulty: 'easy' },
     ];
   }
 );
@@ -79,7 +98,29 @@ const aiTroubleshootingAssistantPrompt = ai.definePrompt({
   input: {schema: AITroubleshootingAssistantInputSchema},
   output: {schema: AITroubleshootingAssistantOutputSchema},
   tools: [searchRepairGuidesTool],
-  prompt: `You are an AI-powered interactive troubleshooting assistant for electronic devices, part of the AyosGadget repair platform.\nYour goal is to help users diagnose problems with their devices and recommend relevant repair guides.\n\nBased on the user's problem description and any conversation history, perform the following steps:\n1. Provide a concise diagnosis of the potential problem.\n2. If more information is needed, ask specific, clarifying questions. Limit to 1-2 questions per turn.\n3. Suggest preliminary solutions or troubleshooting steps the user can try.\n4. IMPORTANT: Use the 'searchRepairGuides' tool to find and recommend relevant repair guides from AyosGadget. Ensure the query for the tool is descriptive and includes device type if known.\n\nConversation History:\n{{#if conversationHistory}}\n  {{#each conversationHistory}}\n    {{this.role}}: {{this.content}}\n  {{/each}}\n{{/if}}\n\nUser's Device Problem:\nDevice Type: {{deviceType}}\nProblem Description: {{{problemDescription}}}\n\nThink step-by-step. First, analyze the problem. Then, formulate your diagnosis, questions, solutions, and finally, search for relevant guides using the provided tool.\n`
+  prompt: `You are an AI-powered interactive troubleshooting assistant for electronic devices, part of the AyosGadget repair platform.
+Your goal is to help users diagnose problems with their devices and recommend relevant repair guides.
+
+Based on the user's problem description and any conversation history, perform the following steps:
+1. Provide a concise diagnosis of the potential problem in a professional, "Neural Engine" style.
+2. If more information is needed, ask specific, clarifying questions. Limit to 1-2 questions per turn.
+3. Suggest preliminary solutions or troubleshooting steps the user can try.
+4. IMPORTANT: Use the 'searchRepairGuides' tool to find and recommend relevant repair guides from AyosGadget. Ensure the query for the tool is descriptive and includes device type if known.
+
+Language Constraint: Use simple Filipino (Mababaw na Tagalog) if the user speaks in Tagalog, otherwise use English.
+
+Conversation History:
+{{#if conversationHistory}}
+  {{#each conversationHistory}}
+    {{this.role}}: {{this.content}}
+  {{/each}}
+{{/if}}
+
+User's Device Problem:
+Device Type: {{deviceType}}
+Problem Description: {{{problemDescription}}}
+
+Think step-by-step. First, analyze the problem. Then, formulate your diagnosis, questions, solutions, and finally, search for relevant guides using the provided tool.`
 });
 
 const aiTroubleshootingAssistantFlow = ai.defineFlow(
