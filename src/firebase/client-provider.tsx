@@ -1,17 +1,15 @@
 'use client';
 
-import React, { ReactNode } from 'react';
-import { FirebaseApp } from 'firebase/app';
-import { Firestore } from 'firebase/firestore';
-import { Auth } from 'firebase/auth';
+import React, { ReactNode, useMemo } from 'react';
+import { initializeFirebase } from './index';
 import { FirebaseProvider } from './provider';
 
 export const FirebaseClientProvider: React.FC<{
-  firebaseApp: FirebaseApp;
-  firestore: Firestore;
-  auth: Auth;
   children: ReactNode;
-}> = ({ firebaseApp, firestore, auth, children }) => {
+}> = ({ children }) => {
+  // Initialize Firebase only on the client side using useMemo to ensure it's idempotent
+  const { firebaseApp, firestore, auth } = useMemo(() => initializeFirebase(), []);
+
   return (
     <FirebaseProvider firebaseApp={firebaseApp} firestore={firestore} auth={auth}>
       {children}
