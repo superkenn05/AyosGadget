@@ -3,7 +3,7 @@
 import RepairCard from '@/components/repair/RepairCard';
 import { REPAIR_CATEGORIES } from '@/lib/repair-data';
 import { Input } from '@/components/ui/input';
-import { Search, Filter, Cpu, Loader2, Globe, ArrowRight, Sparkles, LayoutGrid } from 'lucide-react';
+import { Search, Filter, Cpu, Loader2, Globe, ArrowRight, Sparkles, LayoutGrid, Box } from 'lucide-react';
 import { useState, useEffect, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -11,6 +11,7 @@ import { searchIFixitGuides, getTrendingGuides, mapIFixitToInternal, getIFixitWi
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import CategoryIcon from '@/components/repair/CategoryIcon';
 
 function GuidesContent() {
   const { t } = useLanguage();
@@ -27,7 +28,6 @@ function GuidesContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(0);
 
-  // Helper to deduplicate guides by ID
   const deduplicateGuides = (guides: any[]) => {
     const seen = new Set();
     return guides.filter(guide => {
@@ -37,13 +37,11 @@ function GuidesContent() {
     });
   };
 
-  // Sync state with URL params
   useEffect(() => {
     setSelectedCategory(categoryParam);
     if (searchParam) setSearchQuery(searchParam);
   }, [categoryParam, searchParam]);
 
-  // Initial load or category change search
   useEffect(() => {
     async function loadCategoryData() {
       setIsLoading(true);
@@ -69,7 +67,6 @@ function GuidesContent() {
     loadCategoryData();
   }, [selectedCategory, searchQuery]);
 
-  // Search logic (debounced)
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (searchQuery.length > 2) {
@@ -193,12 +190,12 @@ function GuidesContent() {
         </div>
       </section>
 
-      {/* Category Landing Page Content (Neural Redesign) */}
+      {/* Category Landing Page Content (High-End Master Module Layout) */}
       {categoryWiki && !searchQuery && (
-        <section className="container mx-auto px-6 mb-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
-          <div className="glass rounded-[3rem] p-8 md:p-16 border-primary/10 overflow-hidden relative shadow-2xl">
+        <section className="container mx-auto px-6 mb-20 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div className="glass rounded-[3rem] p-8 md:p-16 border-primary/10 overflow-hidden relative shadow-2xl mb-20">
             <div className="absolute inset-0 scan-line opacity-5" />
-            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
             
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
               <div className="lg:col-span-8 space-y-8">
@@ -229,33 +226,48 @@ function GuidesContent() {
             </div>
           </div>
 
-          {/* Sub-categories Grid (Compact Style) */}
+          {/* Sub-categories Grid (Master Module Style - LARGE CARDS) */}
           {categoryWiki.children && categoryWiki.children.length > 0 && (
-            <div className="mt-20">
-              <div className="flex items-center gap-6 mb-10">
-                <h3 className="text-xl font-black uppercase tracking-tighter flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                    <LayoutGrid className="w-4 h-4" />
-                  </div>
-                  {categoryWiki.children.length} Sub-Modules Identified
+            <div className="space-y-12">
+              <div className="flex items-center gap-6 px-4">
+                <h3 className="text-[12px] font-black uppercase tracking-[0.6em] text-primary flex items-center gap-4">
+                  Primary Repair Domains
                 </h3>
                 <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 md:gap-6">
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {categoryWiki.children.map((child, i) => (
                   <Link key={`child-${i}-${child.title}`} href={`/guides?category=${encodeURIComponent(child.title)}`}>
-                    <div className="glass group p-4 md:p-6 rounded-3xl flex flex-col items-center text-center gap-4 transition-all hover:bg-primary/5 hover:border-primary/30 active:scale-95 border-primary/5">
-                      <div className="relative w-12 h-12 md:w-16 md:h-16 mb-2">
-                        <Image 
-                          src={child.image?.thumbnail || 'https://picsum.photos/seed/sub/200/200'} 
-                          alt={child.title} 
-                          fill 
-                          className="object-contain group-hover:scale-110 transition-transform duration-500"
-                        />
+                    <div className="glass group rounded-[2.5rem] p-10 h-64 flex flex-col justify-center relative overflow-hidden transition-all hover:scale-[1.02] active:scale-[0.98] border-primary/5 shadow-xl bg-white/40 dark:bg-white/[0.02]">
+                      <div className="absolute inset-0 scan-line opacity-0 group-hover:opacity-5 transition-opacity" />
+                      
+                      {/* Watermark Icon */}
+                      <div className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity duration-500">
+                         <Box className="w-48 h-48 rotate-12" />
                       </div>
-                      <span className="text-[7px] md:text-[9px] font-black uppercase tracking-tight leading-tight opacity-70 group-hover:opacity-100 transition-opacity">
-                        {child.title}
-                      </span>
+
+                      <div className="space-y-6 relative z-10">
+                        <div className="w-14 h-14 rounded-2xl bg-white dark:bg-card flex items-center justify-center shadow-lg border border-black/5 dark:border-white/10 group-hover:text-primary transition-colors">
+                           <div className="relative w-8 h-8">
+                              <Image 
+                                src={child.image?.thumbnail || 'https://picsum.photos/seed/sub/200/200'} 
+                                alt={child.title} 
+                                fill 
+                                className="object-contain"
+                              />
+                           </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="text-3xl font-black tracking-tighter uppercase leading-none group-hover:text-primary transition-colors">
+                            {child.title}
+                          </h4>
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-3 group-hover:text-primary/60">
+                            {child.title} Hardware Module
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </Link>
                 ))}
