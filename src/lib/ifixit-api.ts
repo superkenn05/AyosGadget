@@ -22,6 +22,13 @@ export interface IFixitGuide {
   }[];
 }
 
+export interface IFixitWiki {
+  title: string;
+  description: string;
+  image: { original: string };
+  children: { title: string; image: { thumbnail: string }; type: string }[];
+}
+
 export async function searchIFixitGuides(query: string) {
   try {
     const res = await fetch(`https://www.ifixit.com/api/2.0/search/${encodeURIComponent(query)}?type=guide&limit=12`);
@@ -57,13 +64,29 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
   }
 }
 
+export async function getIFixitWiki(categoryName: string): Promise<IFixitWiki | null> {
+  try {
+    // Map internal category names to iFixit names if necessary
+    const mappedName = categoryName === 'Smartphones' ? 'Phone' : categoryName;
+    const res = await fetch(`https://www.ifixit.com/api/2.0/wikis/CATEGORY/${encodeURIComponent(mappedName)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      title: data.title,
+      description: stripHtml(data.description_rendered || data.description || ''),
+      image: data.image,
+      children: data.children || [],
+    };
+  } catch (error) {
+    console.error('iFixit wiki error:', error);
+    return null;
+  }
+}
+
 export function mapIFixitToInternal(ifixit: any) {
-  // Handles both search result structure and full guide structure
-  // Fallback to a random ID or '0' to avoid .toString() on undefined
   const rawId = ifixit.guideid ?? ifixit.id ?? Math.floor(Math.random() * 1000000);
   const guideId = rawId.toString();
   
-  // Extract steps instructions more robustly
   const mappedSteps = (ifixit.steps || []).map((s: any) => {
     const stepLines = (s.lines || []).map((l: any) => {
       const text = l.text_rendered || l.text_raw || l.text || '';
