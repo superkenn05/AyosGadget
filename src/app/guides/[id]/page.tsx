@@ -1,6 +1,5 @@
 'use client';
 
-import Navbar from '@/components/layout/Navbar';
 import { FEATURED_REPAIRS } from '@/lib/repair-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -90,8 +89,6 @@ export default function GuideDetailPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <Navbar />
-      
       <div className="container mx-auto px-4 pt-8">
         <Link href="/guides">
           <Button variant="ghost" className="mb-6 gap-2 rounded-xl text-muted-foreground">
@@ -127,7 +124,7 @@ export default function GuideDetailPage() {
                 />
               </div>
 
-              <div className="p-8 bg-white rounded-3xl border border-slate-100 shadow-sm mb-12">
+              <div className="p-8 bg-white dark:bg-card rounded-3xl border border-slate-100 dark:border-white/10 shadow-sm mb-12">
                 <h3 className="text-xl font-bold mb-4">Mungkahing Oras: {guide.timeEstimate}</h3>
                 <p className="text-muted-foreground leading-relaxed text-lg">
                   {guide.description}
@@ -137,7 +134,7 @@ export default function GuideDetailPage() {
               <h2 className="text-3xl font-bold mb-8">Step-by-Step Instructions</h2>
               <div className="space-y-12">
                 {guide.steps.map((step, index) => (
-                  <div key={index} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100">
+                  <div key={index} className="bg-white dark:bg-card rounded-3xl overflow-hidden shadow-sm border border-slate-100 dark:border-white/10">
                     <div className="p-6 md:p-8">
                       <div className="flex items-center gap-4 mb-6">
                         <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
@@ -180,8 +177,8 @@ export default function GuideDetailPage() {
             </div>
 
             {/* Tools Required */}
-            <div className="border rounded-3xl border-none shadow-sm overflow-hidden bg-white">
-              <div className="p-6 bg-slate-50 border-b flex items-center gap-3">
+            <div className="border rounded-3xl border-none shadow-sm overflow-hidden bg-white dark:bg-card">
+              <div className="p-6 bg-slate-50 dark:bg-white/5 border-b dark:border-white/10 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                   <Wrench className="w-4 h-4" />
                 </div>
@@ -201,8 +198,8 @@ export default function GuideDetailPage() {
             </div>
 
             {/* Parts Required */}
-            <div className="border rounded-3xl border-none shadow-sm overflow-hidden bg-white">
-              <div className="p-6 bg-slate-50 border-b flex items-center gap-3">
+            <div className="border rounded-3xl border-none shadow-sm overflow-hidden bg-white dark:bg-card">
+              <div className="p-6 bg-slate-50 dark:bg-white/5 border-b dark:border-white/10 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary-foreground">
                   <Package className="w-4 h-4" />
                 </div>
@@ -211,7 +208,7 @@ export default function GuideDetailPage() {
               <div className="p-6">
                 <div className="space-y-4">
                   {guide.parts.map((part, i) => (
-                    <div key={i} className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div key={i} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10">
                       <span className="text-sm font-medium">{part.name}</span>
                       <span className="text-primary font-bold">{part.price}</span>
                     </div>

@@ -1,6 +1,5 @@
 'use client';
 
-import Navbar from '@/components/layout/Navbar';
 import RepairCard from '@/components/repair/RepairCard';
 import { useUser, useFirestore, useCollection, useAuth } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
@@ -34,7 +33,6 @@ export default function BookmarksPage() {
   if (userLoading || bookmarksLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <Navbar />
         <div className="flex-grow flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
@@ -45,9 +43,8 @@ export default function BookmarksPage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
-        <Navbar />
         <div className="container mx-auto px-4 py-20 text-center">
-          <div className="max-w-md mx-auto p-12 bg-white rounded-3xl shadow-sm">
+          <div className="max-w-md mx-auto p-12 bg-white dark:bg-card rounded-3xl shadow-sm border dark:border-white/10">
             <LogIn className="w-12 h-12 text-primary mx-auto mb-6" />
             <h2 className="text-2xl font-bold mb-4">Kailangang Mag-login</h2>
             <p className="text-muted-foreground mb-8">
@@ -67,10 +64,8 @@ export default function BookmarksPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      
       <div className="container mx-auto px-4 py-12">
-        <div className="flex items-center gap-4 mb-12">
+        <div className="flex items-center gap-4 mb-12 pt-8">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
             <Bookmark className="w-6 h-6" />
           </div>
@@ -87,7 +82,7 @@ export default function BookmarksPage() {
             ))}
           </div>
         ) : (
-          <div className="text-center py-20 bg-white rounded-3xl border border-dashed">
+          <div className="text-center py-20 bg-white dark:bg-card rounded-3xl border border-dashed dark:border-white/20">
             <Bookmark className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-bold mb-2">Wala pang naka-save</h3>
             <p className="text-muted-foreground mb-8">Mag-save ng mga gabay para mabilis mo itong mahanap.</p>

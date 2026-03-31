@@ -1,15 +1,11 @@
-
-import Navbar from '@/components/layout/Navbar';
 import TroubleshootingChat from '@/components/ai/TroubleshootingChat';
 import { HelpCircle, Info, Sparkles } from 'lucide-react';
 
 export default function TroubleshootPage() {
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      
       <div className="container mx-auto px-4 py-12 md:py-20">
-        <div className="max-w-4xl mx-auto mb-12 text-center">
+        <div className="max-w-4xl mx-auto mb-12 text-center pt-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full mb-6 font-bold text-sm">
             <Sparkles className="w-4 h-4" />
             AI-Powered Assistant
@@ -26,7 +22,7 @@ export default function TroubleshootPage() {
           </div>
           
           <div className="lg:col-span-4 space-y-6">
-            <div className="p-8 bg-white rounded-3xl shadow-sm border border-slate-100">
+            <div className="p-8 bg-white dark:bg-card rounded-3xl shadow-sm border border-slate-100 dark:border-white/10">
               <div className="flex items-center gap-3 mb-6 text-primary">
                 <Info className="w-6 h-6" />
                 <h2 className="text-xl font-bold">Paano ito gamitin?</h2>
@@ -38,7 +34,7 @@ export default function TroubleshootPage() {
                   { title: 'Sundin ang Ayos AI', desc: 'Sasagutin ka ng AI ng mga posibleng solusyon o karagdagang tanong.' },
                 ].map((step, i) => (
                   <li key={i} className="flex gap-4">
-                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-50 border flex items-center justify-center font-bold text-sm text-slate-500">
+                    <span className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-50 dark:bg-white/5 border dark:border-white/10 flex items-center justify-center font-bold text-sm text-slate-500">
                       {i + 1}
                     </span>
                     <div>

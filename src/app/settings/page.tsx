@@ -1,13 +1,20 @@
 'use client';
 
-import Navbar from '@/components/layout/Navbar';
 import { useTheme } from '@/components/providers/theme-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Moon, Sun, Monitor, Bell, Shield, User, Globe, Info } from 'lucide-react';
+import { Moon, Sun, Monitor, Bell, Shield, User, Globe, Info, LogOut } from 'lucide-react';
+import { useUser, useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
+  const { user } = useUser();
+  const auth = useAuth();
+
+  const handleLogout = async () => {
+    await signOut(auth);
+  };
 
   const themes = [
     { id: 'light', label: 'Light', icon: Sun },
@@ -16,12 +23,10 @@ export default function SettingsPage() {
   ] as const;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <Navbar />
-      
-      <div className="container mx-auto px-4 pt-24 md:pt-32">
+    <div className="min-h-screen bg-background pb-24">
+      <div className="container mx-auto px-4 pt-12 md:pt-32">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-12 uppercase">System Config</h1>
+          <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-12 uppercase pt-8">System Config</h1>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
             {/* Sidebar Navigation */}
@@ -43,6 +48,17 @@ export default function SettingsPage() {
                   {item.label}
                 </Button>
               ))}
+              
+              {user && (
+                <Button
+                  onClick={handleLogout}
+                  variant="ghost"
+                  className="w-full justify-start h-14 rounded-2xl gap-4 font-bold text-rose-500 hover:bg-rose-500/10 hover:text-rose-500"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Terminate Session
+                </Button>
+              )}
             </div>
 
             {/* Content Area */}

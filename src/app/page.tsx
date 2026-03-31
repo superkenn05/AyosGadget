@@ -1,4 +1,3 @@
-import Navbar from '@/components/layout/Navbar';
 import CategoryIcon from '@/components/repair/CategoryIcon';
 import RepairCard from '@/components/repair/RepairCard';
 import { REPAIR_CATEGORIES, FEATURED_REPAIRS } from '@/lib/repair-data';
@@ -9,10 +8,8 @@ import Link from 'next/link';
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      
       {/* Mobile-Optimized HUD Hero */}
-      <section className="relative pt-24 pb-12 md:pt-40 md:pb-24 overflow-hidden px-6">
+      <section className="relative pt-20 pb-12 md:pt-40 md:pb-24 overflow-hidden px-6">
         <div className="container mx-auto relative z-10">
           <div className="flex flex-col gap-6 md:gap-10 items-start">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">
