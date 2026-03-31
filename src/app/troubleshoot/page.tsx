@@ -1,3 +1,5 @@
+'use client';
+
 import TroubleshootingChat from '@/components/ai/TroubleshootingChat';
 import { HelpCircle, Info, Sparkles } from 'lucide-react';
 
@@ -47,7 +49,7 @@ export default function TroubleshootPage() {
             </div>
 
             <div className="p-8 bg-secondary/10 rounded-3xl border border-secondary/20">
-              <div className="flex items-center gap-3 mb-4 text-secondary-foreground">
+              <div className="flex items-center gap-3 mb-4 text-secondary">
                 <HelpCircle className="w-6 h-6" />
                 <h2 className="text-xl font-bold">Bakit AI?</h2>
               </div>
