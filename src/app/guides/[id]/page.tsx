@@ -33,12 +33,14 @@ export default function GuideDetailPage() {
 
   useEffect(() => {
     async function fetchGuide() {
+      if (!id) return;
       setLoading(true);
+      
       // Check local first
       const local = FEATURED_REPAIRS.find((g) => g.id === id);
       if (local) {
         setGuide(local);
-      } else if (id && /^\d+$/.test(id as string)) {
+      } else if (/^\d+$/.test(id as string)) {
         // Numeric ID means iFixit
         const ifixit = await getIFixitGuide(id as string);
         if (ifixit) {
@@ -173,7 +175,7 @@ export default function GuideDetailPage() {
 
               <div className="p-8 glass rounded-[2.5rem] border-primary/5 shadow-sm mb-12">
                 <h3 className="text-xl font-bold mb-4 uppercase tracking-tight">{t('guides_time')}: {guide.timeEstimate}</h3>
-                <p className="text-muted-foreground leading-relaxed text-lg font-medium">
+                <p className="text-muted-foreground leading-relaxed text-lg font-medium whitespace-pre-wrap">
                   {localizedDescription}
                 </p>
               </div>
@@ -189,9 +191,9 @@ export default function GuideDetailPage() {
                         </div>
                         <h3 className="text-2xl md:text-3xl font-black tracking-tight uppercase">{step.title}</h3>
                       </div>
-                      <p className="text-muted-foreground text-lg mb-8 leading-relaxed font-medium">
+                      <div className="text-muted-foreground text-lg mb-8 leading-relaxed font-medium whitespace-pre-wrap">
                         {step.description}
-                      </p>
+                      </div>
                       <div className="relative aspect-video rounded-[2rem] overflow-hidden shadow-xl border border-black/5 dark:border-white/5">
                         <Image
                           src={step.imageUrl}
@@ -230,12 +232,16 @@ export default function GuideDetailPage() {
               </div>
               <div className="p-8">
                 <ul className="space-y-5">
-                  {guide.tools.map((tool: any, i: number) => (
-                    <li key={i} className="flex items-center gap-4 text-sm font-bold uppercase tracking-tight text-foreground/80">
-                      <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
-                      {tool.name}
-                    </li>
-                  ))}
+                  {guide.tools && guide.tools.length > 0 ? (
+                    guide.tools.map((tool: any, i: number) => (
+                      <li key={i} className="flex items-center gap-4 text-sm font-bold uppercase tracking-tight text-foreground/80">
+                        <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
+                        {tool.name}
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-muted-foreground text-xs italic">No special tools listed</li>
+                  )}
                 </ul>
                 <Button variant="secondary" className="w-full mt-8 rounded-2xl h-12 font-black uppercase tracking-widest text-[10px]" onClick={() => toast({ title: "Coming Soon" })}>{t('guides_buy_kit')}</Button>
               </div>
@@ -250,12 +256,16 @@ export default function GuideDetailPage() {
               </div>
               <div className="p-8">
                 <div className="space-y-4">
-                  {guide.parts.map((part: any, i: number) => (
-                    <div key={i} className="flex justify-between items-center p-4 bg-muted/30 rounded-2xl border border-black/5 dark:border-white/5">
-                      <span className="text-xs font-bold uppercase tracking-tight">{part.name}</span>
-                      <span className="text-primary font-black text-xs">{part.price || 'Market Price'}</span>
-                    </div>
-                  ))}
+                  {guide.parts && guide.parts.length > 0 ? (
+                    guide.parts.map((part: any, i: number) => (
+                      <div key={i} className="flex justify-between items-center p-4 bg-muted/30 rounded-2xl border border-black/5 dark:border-white/5">
+                        <span className="text-xs font-bold uppercase tracking-tight">{part.name}</span>
+                        <span className="text-primary font-black text-xs">{part.price || 'Market Price'}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-muted-foreground text-xs italic">No parts listed</div>
+                  )}
                 </div>
                 <Button className="w-full mt-8 rounded-2xl h-12 font-black uppercase tracking-widest text-[10px]" onClick={() => toast({ title: "Coming Soon" })}>{t('guides_order_parts')}</Button>
               </div>
