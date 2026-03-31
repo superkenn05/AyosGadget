@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/componen
 import { aiTroubleshootingAssistant } from '@/ai/flows/ai-troubleshooting-assistant';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Link from 'next/link';
+import { useLanguage } from '@/components/providers/language-provider';
 
 type Message = {
   role: 'user' | 'model';
@@ -16,10 +17,11 @@ type Message = {
 };
 
 export default function TroubleshootingChat() {
+  const { t } = useLanguage();
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'model',
-      content: 'NEURAL SYSTEM INITIALIZED. UPTIME: 99.9%. READY TO DIAGNOSE HARDWARE FAULTS. PLEASE INPUT DEVICE LOGS OR DESCRIPTION.',
+      content: t('chat_init'),
     },
   ]);
   const [input, setInput] = useState('');
@@ -49,10 +51,10 @@ export default function TroubleshootingChat() {
 
       let responseContent = response.diagnosis;
       if (response.questionsToAsk && response.questionsToAsk.length > 0) {
-        responseContent += "\n\nREQUIRED TELEMETRY:\n" + response.questionsToAsk.map(q => `> ${q}`).join("\n");
+        responseContent += `\n\n${t('chat_telemetry')}\n` + response.questionsToAsk.map(q => `> ${q}`).join("\n");
       }
       if (response.suggestedSolutions && response.suggestedSolutions.length > 0) {
-        responseContent += "\n\nREPAIR SEQUENCE:\n" + response.suggestedSolutions.map((s, idx) => `${idx + 1}. ${s}`).join("\n");
+        responseContent += `\n\n${t('chat_sequence')}\n` + response.suggestedSolutions.map((s, idx) => `${idx + 1}. ${s}`).join("\n");
       }
 
       setMessages((prev) => [
@@ -62,7 +64,7 @@ export default function TroubleshootingChat() {
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        { role: 'model', content: "CRITICAL: NEURAL LINK SEVERED. ATTEMPTING RECONNECT..." },
+        { role: 'model', content: t('chat_error') },
       ]);
     } finally {
       setIsLoading(false);
@@ -135,7 +137,7 @@ export default function TroubleshootingChat() {
                     <div className="mt-6 md:mt-8 pt-6 md:pt-8 border-t border-black/10 dark:border-white/10">
                        <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-4 md:mb-6 flex items-center gap-2">
                          <Info className="w-3 h-3 md:w-4 md:h-4" />
-                         Linked Protocols Found:
+                         {t('chat_linked_protocols')}
                        </p>
                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                           {msg.data.recommendedGuides.map((guide: any) => (
@@ -163,7 +165,7 @@ export default function TroubleshootingChat() {
                     <div className="w-3 h-3 md:w-4 md:h-4 bg-primary rounded-full animate-bounce [animation-delay:-0.15s]" />
                     <div className="w-3 h-3 md:w-4 md:h-4 bg-primary rounded-full animate-bounce" />
                   </div>
-                  <p className="mt-3 md:mt-4 text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary animate-pulse">Running Neural Simulation...</p>
+                  <p className="mt-3 md:mt-4 text-[8px] md:text-[10px] font-black uppercase tracking-widest text-primary animate-pulse">{t('chat_running')}</p>
                 </div>
               </div>
             )}
@@ -176,7 +178,7 @@ export default function TroubleshootingChat() {
         <div className="flex w-full gap-4 md:gap-8 items-center">
           <div className="relative flex-grow group">
             <Input
-              placeholder="ENTER COMMAND..."
+              placeholder={t('chat_placeholder')}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}

@@ -75,7 +75,7 @@ export default function Home() {
             <h2 className="text-[10px] font-black uppercase tracking-[0.6em] text-primary">{t('home_modules')}</h2>
           </div>
           <Link href="/guides" className="text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-2 group">
-            Global Hub <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+            {t('home_global_hub')} <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
         
@@ -101,7 +101,7 @@ export default function Home() {
           <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
           <div className="flex items-center gap-3">
              <List className="w-4 h-4 text-muted-foreground/50" />
-             <span className="text-[10px] font-black uppercase tracking-[0.5em] opacity-40">Auxiliary Directory</span>
+             <span className="text-[10px] font-black uppercase tracking-[0.5em] opacity-40">{t('home_auxiliary')}</span>
           </div>
           <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
         </div>
@@ -128,11 +128,11 @@ export default function Home() {
         <div className="flex items-center justify-between mb-8 px-4">
           <div className="flex items-center gap-3">
             <Zap className="w-4 h-4 text-amber-500 animate-pulse" />
-            <h2 className="text-[12px] font-black uppercase tracking-[0.6em] text-amber-500">Trending Protocols</h2>
+            <h2 className="text-[12px] font-black uppercase tracking-[0.6em] text-amber-500">{t('home_trending')}</h2>
           </div>
           <Link href="/guides">
             <Button variant="ghost" className="h-10 rounded-full text-[10px] font-black uppercase tracking-widest gap-2 bg-muted/30">
-              Refresh Data <ArrowRight className="w-3 h-3" />
+              {t('home_refresh')} <ArrowRight className="w-3 h-3" />
             </Button>
           </Link>
         </div>
@@ -140,7 +140,7 @@ export default function Home() {
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24 bg-white/5 dark:bg-white/[0.02] rounded-[4rem] border border-dashed border-primary/10">
             <Loader2 className="w-10 h-10 animate-spin text-primary mb-6" />
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-50">Syncing Global Datastreams...</p>
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
           </div>
         ) : trendingGuides.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -151,11 +151,11 @@ export default function Home() {
         ) : (
           <div className="p-16 glass rounded-[4rem] border-primary/5 max-w-2xl mx-auto text-center">
             <Activity className="w-16 h-16 text-primary/40 mx-auto mb-8" />
-            <h2 className="text-3xl font-black uppercase tracking-tighter mb-4">Neural Link Offline</h2>
+            <h2 className="text-3xl font-black uppercase tracking-tighter mb-4">{t('common_error_link')}</h2>
             <p className="text-muted-foreground mb-10 font-medium">
-              Hindi kami makakonekta sa iFixit library sa ngayon. Pakisuyong i-refresh ang iyong browser para sa manual resync.
+              {t('common_error_desc')}
             </p>
-            <Button onClick={() => window.location.reload()} className="rounded-2xl h-14 px-10 font-black uppercase tracking-widest">Retry Connection</Button>
+            <Button onClick={() => window.location.reload()} className="rounded-2xl h-14 px-10 font-black uppercase tracking-widest">{t('common_retry')}</Button>
           </div>
         )}
       </section>

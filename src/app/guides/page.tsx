@@ -148,7 +148,7 @@ function GuidesContent() {
               <Link href="/troubleshoot">
                 <Button variant="outline" className="h-10 rounded-xl gap-2 text-[10px] font-black uppercase tracking-widest border-primary/20">
                   <Sparkles className="w-4 h-4 text-primary" />
-                  Neural Ask
+                  {t('guides_neural_ask')}
                 </Button>
               </Link>
             </div>
@@ -170,7 +170,7 @@ function GuidesContent() {
       {!selectedCategory && !searchQuery && (
         <section className="container mx-auto px-6 py-12">
           <div className="flex items-center gap-4 mb-8">
-             <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Master Modules</span>
+             <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">{t('guides_master_modules')}</span>
              <div className="h-px flex-grow bg-primary/10" />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
@@ -185,8 +185,8 @@ function GuidesContent() {
                 <LayoutGrid className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest leading-none block mb-1">System</span>
-                <span className="text-sm font-black uppercase tracking-tighter">Lahat ng Gabay</span>
+                <span className="text-[10px] font-black uppercase tracking-widest leading-none block mb-1">{t('common_system')}</span>
+                <span className="text-sm font-black uppercase tracking-tighter">{t('guides_all')}</span>
               </div>
             </button>
 
@@ -203,7 +203,7 @@ function GuidesContent() {
                   <CategoryIcon name={cat.icon} className="w-5 h-5" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest leading-none block mb-1 opacity-50">Module</span>
+                  <span className="text-[10px] font-black uppercase tracking-widest leading-none block mb-1 opacity-50">{t('common_module')}</span>
                   <span className="text-sm font-black uppercase tracking-tighter">{cat.name}</span>
                 </div>
               </button>
@@ -221,7 +221,7 @@ function GuidesContent() {
               <div className="space-y-6">
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" onClick={() => handleCategoryClick(null)} className="h-8 rounded-full px-4 text-[8px] font-black uppercase tracking-widest border border-primary/20 hover:bg-primary/10">
-                    Exit Protocol
+                    {t('common_exit')}
                   </Button>
                 </div>
                 <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">{categoryWiki.title}</h2>
@@ -276,7 +276,7 @@ function GuidesContent() {
         ) : isLoading ? (
           <div className="flex flex-col items-center justify-center py-24">
             <Loader2 className="w-10 h-10 animate-spin text-primary mb-6" />
-            <p className="text-[10px] font-black uppercase tracking-widest opacity-50">Syncing Data...</p>
+            <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
           </div>
         ) : (
           <div className="text-center py-24 glass rounded-[3rem] border-dashed border-2">
@@ -294,7 +294,7 @@ function GuidesContent() {
               className="rounded-full h-14 px-12 font-black uppercase tracking-widest text-[10px]"
             >
               {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Access More Protocols
+              {t('guides_access_more')}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
