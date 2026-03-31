@@ -36,12 +36,10 @@ export default function GuideDetailPage() {
       if (!id) return;
       setLoading(true);
       
-      // Check local first
       const local = FEATURED_REPAIRS.find((g) => g.id === id);
       if (local) {
         setGuide(local);
       } else if (/^\d+$/.test(id as string)) {
-        // Numeric ID means iFixit
         const ifixit = await getIFixitGuide(id as string);
         if (ifixit) {
           setGuide(mapIFixitToInternal(ifixit));
@@ -54,7 +52,7 @@ export default function GuideDetailPage() {
 
   const handleBookmark = () => {
     if (!user) {
-      toast({ title: "Login Required", description: "Please login to save guides." });
+      toast({ title: t('common_login_required'), description: t('common_login_desc') });
       return;
     }
     if (!guide) return;
@@ -68,7 +66,7 @@ export default function GuideDetailPage() {
           });
           errorEmitter.emit('permission-error', permissionError);
         });
-      toast({ title: "Removed from bookmarks" });
+      toast({ title: "Removed from vault" });
     } else {
       const data = {
         guideId: guide.id,
@@ -86,7 +84,7 @@ export default function GuideDetailPage() {
           });
           errorEmitter.emit('permission-error', permissionError);
         });
-      toast({ title: "Saved to bookmarks" });
+      toast({ title: "Secured in vault" });
     }
   };
 
@@ -94,115 +92,144 @@ export default function GuideDetailPage() {
     if (!guide) return;
     if (navigator.share) {
       navigator.share({
-        title: translations[`${guide.id}_title`] ? t(`${guide.id}_title`) : guide.title,
-        text: translations[`${guide.id}_desc`] ? t(`${guide.id}_desc`) : guide.description,
+        title: guide.title,
+        text: guide.description,
         url: window.location.href,
       }).catch(() => {
-        toast({ title: "Couldn't share", description: "Something went wrong." });
+        toast({ title: "Protocol Error", description: "Sharing failed." });
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast({ title: "Link copied!" });
+      toast({ title: "Neural Link Copied" });
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-12 h-12 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">{t('common_syncing')}</p>
+        </div>
       </div>
     );
   }
 
   if (!guide) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-center p-8">
-        <div>
-          <h2 className="text-2xl font-black uppercase mb-4">Protocol Not Found</h2>
+      <div className="min-h-screen flex items-center justify-center text-center p-8 bg-background">
+        <div className="glass p-12 rounded-[3rem] border-primary/20">
+          <h2 className="text-2xl font-black uppercase tracking-tighter mb-4">Protocol Offline</h2>
+          <p className="text-muted-foreground mb-8 text-sm">Target manual could not be initialized.</p>
           <Link href="/guides">
-            <Button variant="outline" className="rounded-xl">Return to Library</Button>
+            <Button className="rounded-2xl h-12 px-8 font-black uppercase tracking-widest text-[10px]">Return to Library</Button>
           </Link>
         </div>
       </div>
     );
   }
 
-  const difficultyLabel = t(`guides_difficulty_${guide.difficulty}`);
   const difficultyColor = {
-    easy: 'bg-green-100 text-green-700',
-    medium: 'bg-amber-100 text-amber-700',
-    hard: 'bg-rose-100 text-rose-700',
+    easy: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+    medium: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+    hard: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
   }[guide.difficulty as 'easy' | 'medium' | 'hard'];
 
-  const localizedTitle = translations[`${guide.id}_title`] ? t(`${guide.id}_title`) : guide.title;
-  const localizedDescription = translations[`${guide.id}_desc`] ? t(`${guide.id}_desc`) : guide.description;
-
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="container mx-auto px-4 pt-20">
-        <Link href="/guides">
-          <Button variant="ghost" className="mb-6 gap-2 rounded-xl text-muted-foreground">
-            <ArrowLeft className="w-4 h-4" />
-            {t('guides_back')}
-          </Button>
-        </Link>
+    <div className="min-h-screen bg-background pb-32">
+      {/* Header HUD */}
+      <div className="fixed top-14 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-black/5 dark:border-white/5 md:hidden">
+        <div className="px-4 h-12 flex items-center justify-between">
+           <Link href="/guides" className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+             <ArrowLeft className="w-3 h-3" /> {t('guides_back')}
+           </Link>
+           <div className="flex items-center gap-2">
+             <Button variant="ghost" size="icon" onClick={handleShare} className="h-8 w-8 text-muted-foreground">
+               <Share2 className="w-4 h-4" />
+             </Button>
+             <Button variant="ghost" size="icon" onClick={handleBookmark} className={`h-8 w-8 ${isBookmarked ? 'text-primary' : 'text-muted-foreground'}`}>
+               {isBookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+             </Button>
+           </div>
+        </div>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          <div className="lg:col-span-2 space-y-12">
-            <section>
-              <div className="flex flex-wrap items-center gap-3 mb-6">
-                <Badge variant="secondary" className="rounded-lg">{guide.category}</Badge>
-                <Badge className={`rounded-lg ${difficultyColor} border-none`}>
-                  {difficultyLabel}
+      <div className="container mx-auto px-4 pt-32 md:pt-40">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
+          
+          {/* Main Content: The Instructions */}
+          <div className="lg:col-span-8 space-y-12">
+            <section className="space-y-6">
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge variant="outline" className="rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest bg-primary/5 border-primary/20 text-primary">
+                  {guide.category}
                 </Badge>
-                <div className="flex items-center gap-1 text-sm font-medium text-amber-500 ml-auto">
-                  <Star className="w-4 h-4 fill-amber-500" />
-                  {guide.rating} ({guide.reviewsCount} reviews)
+                <Badge variant="outline" className={`rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border ${difficultyColor}`}>
+                  {t(`guides_difficulty_${guide.difficulty}`)}
+                </Badge>
+                <div className="flex items-center gap-1.5 ml-auto text-amber-500 font-black text-xs">
+                  <Star className="w-4 h-4 fill-current" />
+                  {guide.rating}
                 </div>
               </div>
-              
-              <h1 className="text-4xl md:text-5xl font-black tracking-tighter mb-6 leading-tight uppercase">{localizedTitle}</h1>
-              
-              <div className="relative aspect-video rounded-[3rem] overflow-hidden mb-8 shadow-2xl glass border-primary/10">
+
+              <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] text-foreground">
+                {guide.title}
+              </h1>
+
+              <div className="relative aspect-video rounded-[2.5rem] md:rounded-[4rem] overflow-hidden shadow-2xl glass border-primary/10">
                 <Image
                   src={guide.thumbnail}
-                  alt={localizedTitle}
+                  alt={guide.title}
                   fill
                   className="object-cover"
                   priority
                 />
+                <div className="absolute inset-0 scan-line opacity-10" />
+                <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 bg-black/60 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-2xl">
+                   <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">{t('guides_time')}</p>
+                   <p className="text-white font-black text-sm uppercase tracking-tight">{guide.timeEstimate}</p>
+                </div>
               </div>
 
-              <div className="p-8 glass rounded-[2.5rem] border-primary/5 shadow-sm mb-12">
-                <h3 className="text-xl font-bold mb-4 uppercase tracking-tight">{t('guides_time')}: {guide.timeEstimate}</h3>
-                <p className="text-muted-foreground leading-relaxed text-lg font-medium whitespace-pre-wrap">
-                  {localizedDescription}
+              <div className="p-8 md:p-12 glass rounded-[2.5rem] md:rounded-[3.5rem] border-primary/5 bg-primary/[0.02]">
+                <p className="text-muted-foreground text-sm md:text-lg font-medium leading-relaxed whitespace-pre-wrap">
+                  {guide.description}
                 </p>
               </div>
+            </section>
 
-              <h2 className="text-3xl font-black uppercase tracking-tighter mb-8">{t('guides_steps')}</h2>
-              <div className="space-y-8">
+            <section className="space-y-8">
+              <div className="flex items-center gap-4 px-2">
+                <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter">{t('guides_steps')}</h2>
+                <div className="h-px flex-grow bg-primary/10" />
+              </div>
+
+              <div className="space-y-10">
                 {guide.steps.map((step: any, index: number) => (
-                  <div key={index} className="glass rounded-[3rem] overflow-hidden border-primary/5">
-                    <div className="p-8 md:p-12">
-                      <div className="flex items-center gap-6 mb-8">
-                        <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground font-black text-2xl shadow-lg shadow-primary/20">
+                  <div key={index} className="glass rounded-[2.5rem] md:rounded-[4rem] overflow-hidden border-primary/5 group/step transition-all hover:border-primary/20">
+                    <div className="p-8 md:p-16">
+                      <div className="flex items-start gap-6 md:gap-10 mb-10">
+                        <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl md:text-4xl shadow-2xl shadow-primary/30 group-hover/step:scale-110 transition-transform">
                           {index + 1}
                         </div>
-                        <h3 className="text-2xl md:text-3xl font-black tracking-tight uppercase">
-                          {step.title || t('guides_step_title')}
-                        </h3>
+                        <div className="flex-grow pt-2">
+                          <h3 className="text-xl md:text-3xl font-black tracking-tight uppercase mb-4 text-foreground">
+                            {step.title || `${t('guides_step_title')} ${index + 1}`}
+                          </h3>
+                          <div className="text-muted-foreground text-sm md:text-lg leading-relaxed font-medium whitespace-pre-wrap">
+                            {step.description}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-muted-foreground text-lg mb-8 leading-relaxed font-medium whitespace-pre-wrap">
-                        {step.description}
-                      </div>
-                      <div className="relative aspect-video rounded-[2rem] overflow-hidden shadow-xl border border-black/5 dark:border-white/5">
+                      <div className="relative aspect-video rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 group-hover/step:scale-[1.01] transition-transform">
                         <Image
                           src={step.imageUrl}
-                          alt={step.title || t('guides_step_title')}
+                          alt={`${t('guides_step_title')} ${index + 1}`}
                           fill
                           className="object-cover"
                         />
+                        <div className="absolute inset-0 scan-line opacity-0 group-hover/step:opacity-5 transition-opacity" />
                       </div>
                     </div>
                   </div>
@@ -211,80 +238,78 @@ export default function GuideDetailPage() {
             </section>
           </div>
 
-          <div className="space-y-8">
-            <div className="flex gap-4">
+          {/* Sidebar HUD: Logistics & Intelligence */}
+          <div className="lg:col-span-4 space-y-8 sticky top-32">
+            
+            {/* Desktop Actions */}
+            <div className="hidden lg:flex gap-4">
               <Button 
                 onClick={handleBookmark}
-                className={`flex-1 rounded-2xl h-16 font-black uppercase tracking-widest text-xs gap-3 shadow-xl transition-all ${isBookmarked ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground'}`}
+                className={`flex-1 rounded-2xl h-16 font-black uppercase tracking-widest text-[10px] gap-3 shadow-xl transition-all ${isBookmarked ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground'}`}
               >
                 {isBookmarked ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
                 {isBookmarked ? t('guides_saved') : t('guides_save')}
               </Button>
-              <Button onClick={handleShare} variant="outline" size="icon" className="rounded-2xl h-16 w-16 glass border-primary/10">
+              <Button onClick={handleShare} variant="outline" size="icon" className="rounded-2xl h-16 w-16 glass border-primary/10 hover:border-primary/50 text-primary">
                 <Share2 className="w-5 h-5" />
               </Button>
             </div>
 
+            {/* Tools Module */}
             <div className="glass rounded-[2.5rem] border-primary/5 overflow-hidden">
-              <div className="p-6 bg-primary/5 border-b border-primary/10 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                  <Wrench className="w-5 h-5" />
+              <div className="p-6 bg-primary/5 border-b border-primary/10 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Wrench className="w-5 h-5 text-primary" />
+                  <h3 className="font-black uppercase tracking-tight text-sm">{t('guides_tools')}</h3>
                 </div>
-                <h3 className="font-black uppercase tracking-tight text-lg">{t('guides_tools')}</h3>
+                <Badge variant="outline" className="text-[8px] opacity-40 uppercase">{guide.tools?.length || 0} units</Badge>
               </div>
-              <div className="p-8">
-                <ul className="space-y-5">
-                  {guide.tools && guide.tools.length > 0 ? (
-                    guide.tools.map((tool: any, i: number) => (
-                      <li key={i} className="flex items-center gap-4 text-sm font-bold uppercase tracking-tight text-foreground/80">
-                        <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
-                        {tool.name}
-                      </li>
-                    ))
-                  ) : (
-                    <li className="text-muted-foreground text-xs italic">No special tools listed</li>
-                  )}
-                </ul>
-                <Button variant="secondary" className="w-full mt-8 rounded-2xl h-12 font-black uppercase tracking-widest text-[10px]" onClick={() => toast({ title: "Coming Soon" })}>{t('guides_buy_kit')}</Button>
-              </div>
-            </div>
-
-            <div className="glass rounded-[2.5rem] border-primary/5 overflow-hidden">
-              <div className="p-6 bg-secondary/5 border-b border-primary/10 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary-foreground">
-                  <Package className="w-5 h-5" />
-                </div>
-                <h3 className="font-black uppercase tracking-tight text-lg">{t('guides_parts')}</h3>
-              </div>
-              <div className="p-8">
-                <div className="space-y-4">
-                  {guide.parts && guide.parts.length > 0 ? (
-                    guide.parts.map((part: any, i: number) => (
-                      <div key={i} className="flex justify-between items-center p-4 bg-muted/30 rounded-2xl border border-black/5 dark:border-white/5">
-                        <span className="text-xs font-bold uppercase tracking-tight">{part.name}</span>
-                        <span className="text-primary font-black text-xs">{part.price || 'Market Price'}</span>
+              <div className="p-8 space-y-5">
+                {guide.tools && guide.tools.length > 0 ? (
+                  guide.tools.map((tool: any, i: number) => (
+                    <div key={i} className="flex items-center gap-4 text-[10px] font-black uppercase tracking-tight text-foreground/70 group/tool">
+                      <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center group-hover/tool:bg-primary/10 transition-colors">
+                        <CheckCircle2 className="w-4 h-4 text-primary" />
                       </div>
-                    ))
-                  ) : (
-                    <div className="text-muted-foreground text-xs italic">No parts listed</div>
-                  )}
-                </div>
-                <Button className="w-full mt-8 rounded-2xl h-12 font-black uppercase tracking-widest text-[10px]" onClick={() => toast({ title: "Coming Soon" })}>{t('guides_order_parts')}</Button>
+                      {tool.name}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground text-[10px] italic">No specialized tools flagged.</p>
+                )}
+                <Button variant="secondary" className="w-full mt-4 rounded-xl h-12 font-black uppercase tracking-widest text-[9px] bg-primary/10 text-primary hover:bg-primary/20 border-none">
+                  {t('guides_buy_kit')}
+                </Button>
               </div>
             </div>
 
+            {/* Intelligence Section */}
             <div className="p-8 glass rounded-[2.5rem] border-primary/20 bg-primary/5 relative overflow-hidden group">
               <div className="absolute inset-0 scan-line opacity-5" />
               <div className="flex items-center gap-4 mb-6 text-primary">
-                <MessageCircle className="w-6 h-6" />
-                <h3 className="font-black uppercase tracking-tight text-xl">{t('guides_help_title')}</h3>
+                <div className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20">
+                  <MessageCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-black uppercase tracking-tight text-lg leading-none">{t('guides_help_title')}</h3>
+                  <p className="text-[8px] font-black uppercase tracking-widest mt-1 opacity-50">Neural Support Engine</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-8 font-medium">
+              <p className="text-xs text-muted-foreground mb-8 font-medium leading-relaxed">
                 {t('guides_help_desc')}
               </p>
               <Link href="/troubleshoot">
-                <Button className="w-full rounded-2xl h-14 font-black uppercase tracking-widest text-xs bg-primary neon-glow">{t('guides_ask_ai')}</Button>
+                <Button className="w-full rounded-2xl h-14 font-black uppercase tracking-widest text-[10px] bg-primary neon-glow shadow-xl hover:scale-105 transition-all">
+                  {t('guides_ask_ai')}
+                </Button>
               </Link>
+            </div>
+
+            {/* Technical Metadata */}
+            <div className="px-8 text-center">
+              <p className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/30">
+                 AyosGadget Protocol ID: AG-{id?.toString().padStart(6, '0')}
+              </p>
             </div>
           </div>
         </div>
