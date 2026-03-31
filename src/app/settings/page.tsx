@@ -21,7 +21,7 @@ export default function SettingsPage() {
       
       <div className="container mx-auto px-4 pt-24 md:pt-32">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-12">SYSTEM CONFIG</h1>
+          <h1 className="text-4xl md:text-6xl font-black tracking-tighter mb-12 uppercase">System Config</h1>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
             {/* Sidebar Navigation */}
@@ -37,7 +37,7 @@ export default function SettingsPage() {
                 <Button
                   key={item.label}
                   variant={item.active ? "default" : "ghost"}
-                  className={`w-full justify-start h-14 rounded-2xl gap-4 font-bold ${item.active ? 'neon-glow' : ''}`}
+                  className={`w-full justify-start h-14 rounded-2xl gap-4 font-bold ${item.active ? 'neon-glow' : 'hover:bg-muted'}`}
                 >
                   <item.icon className="w-5 h-5" />
                   {item.label}
@@ -47,8 +47,8 @@ export default function SettingsPage() {
 
             {/* Content Area */}
             <div className="md:col-span-8 space-y-8">
-              <Card className="glass border-white/10 rounded-[2.5rem] overflow-hidden">
-                <CardHeader className="p-8 border-b border-white/5">
+              <Card className="glass border-black/5 dark:border-white/10 rounded-[2.5rem] overflow-hidden">
+                <CardHeader className="p-8 border-b border-black/5 dark:border-white/5">
                   <CardTitle className="text-2xl font-black tracking-tight flex items-center gap-3">
                     <Sun className="w-6 h-6 text-primary" />
                     Appearance
@@ -65,7 +65,7 @@ export default function SettingsPage() {
                           className={`flex flex-col items-center gap-3 p-6 rounded-3xl transition-all border-2 ${
                             theme === t.id 
                               ? 'border-primary bg-primary/10 text-primary' 
-                              : 'border-white/5 bg-white/5 hover:border-white/20'
+                              : 'border-black/5 dark:border-white/5 bg-muted/30 dark:bg-white/5 hover:border-black/20 dark:hover:border-white/20'
                           }`}
                         >
                           <t.icon className="w-8 h-8" />
@@ -75,7 +75,7 @@ export default function SettingsPage() {
                     </div>
                   </section>
 
-                  <section className="pt-8 border-t border-white/5">
+                  <section className="pt-8 border-t border-black/5 dark:border-white/5">
                     <p className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-6">Interface Feedback</p>
                     <div className="space-y-4">
                       {[
@@ -86,7 +86,7 @@ export default function SettingsPage() {
                         <div key={pref.label} className="flex items-center justify-between p-4 glass rounded-2xl">
                           <span className="font-bold text-sm">{pref.label}</span>
                           <div className={`w-12 h-6 rounded-full relative transition-colors ${pref.active ? 'bg-primary' : 'bg-muted'}`}>
-                            <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${pref.active ? 'left-7' : 'left-1'}`} />
+                            <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${pref.active ? 'left-7' : 'left-1'}`} />
                           </div>
                         </div>
                       ))}
@@ -95,12 +95,12 @@ export default function SettingsPage() {
                 </CardContent>
               </Card>
 
-              <div className="p-8 glass rounded-[2.5rem] border-white/5 flex items-center justify-between">
+              <div className="p-8 glass rounded-[2.5rem] border-black/5 dark:border-white/5 flex items-center justify-between">
                 <div>
-                  <p className="font-black text-lg tracking-tight">Software Version</p>
+                  <p className="font-black text-lg tracking-tight uppercase">Software Version</p>
                   <p className="text-sm text-muted-foreground font-bold">AyosGadget Engine v4.2.1-stable</p>
                 </div>
-                <Button variant="outline" className="rounded-xl font-bold border-white/10">Check Updates</Button>
+                <Button variant="outline" className="rounded-xl font-bold border-black/10 dark:border-white/10">Check Updates</Button>
               </div>
             </div>
           </div>

@@ -14,14 +14,14 @@
     --primary-foreground: 190 100% 98%;
     --secondary: 260 80% 60%;
     --secondary-foreground: 260 80% 98%;
-    --muted: 235 20% 95%;
-    --muted-foreground: 235 20% 40%;
+    --muted: 235 20% 92%;
+    --muted-foreground: 235 20% 35%;
     --accent: 190 100% 40%;
     --accent-foreground: 190 100% 98%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 235 20% 90%;
-    --input: 235 20% 90%;
+    --border: 235 20% 85%;
+    --input: 235 20% 85%;
     --ring: 190 100% 40%;
     --radius: 1.5rem;
   }
@@ -71,10 +71,10 @@
     padding-top: env(safe-area-inset-top, 0rem);
   }
   .glass {
-    @apply bg-white/5 dark:bg-black/20 backdrop-blur-2xl border border-black/5 dark:border-white/10 shadow-lg;
+    @apply bg-white/70 dark:bg-black/40 backdrop-blur-2xl border border-black/5 dark:border-white/10 shadow-lg;
   }
   .glass-card {
-    @apply bg-black/[0.02] dark:bg-white/[0.03] backdrop-blur-md border border-black/5 dark:border-white/10 hover:border-primary/50 transition-all duration-300 active:scale-[0.98];
+    @apply bg-slate-100/50 dark:bg-white/[0.03] backdrop-blur-md border border-black/5 dark:border-white/10 hover:border-primary/50 transition-all duration-300 active:scale-[0.98];
   }
   .neon-glow {
     box-shadow: 0 0 20px hsla(190, 100%, 50%, 0.3);
@@ -90,7 +90,7 @@
 }
 
 .scan-line {
-  @apply absolute inset-0 pointer-events-none overflow-hidden opacity-5 dark:opacity-20;
+  @apply absolute inset-0 pointer-events-none overflow-hidden opacity-[0.03] dark:opacity-20;
   background: linear-gradient(to bottom, transparent, var(--primary), transparent);
   height: 2px;
   animation: scan 6s linear infinite;
