@@ -1,14 +1,12 @@
 'use server';
 /**
  * @fileOverview An AI-powered interactive troubleshooting tool for electronic devices.
- *
- * - aiTroubleshootingAssistant - A function that handles the device troubleshooting process.
- * - AITroubleshootingAssistantInput - The input type for the aiTroubleshootingAssistant function.
- * - AITroubleshootingAssistantOutput - The return type for the aiTroubleshootingAssistant function.
+ * Now integrated with real iFixit API data.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import {searchIFixitGuides} from '@/lib/ifixit-api';
 
 // Input Schema
 const AITroubleshootingAssistantInputSchema = z.object({
@@ -17,33 +15,31 @@ const AITroubleshootingAssistantInputSchema = z.object({
   conversationHistory: z.array(z.object({
     role: z.enum(['user', 'model']),
     content: z.string(),
-  })).optional().describe('Previous turns in the conversation to maintain context. This helps the AI understand the ongoing dialogue.'),
+  })).optional().describe('Previous turns in the conversation to maintain context.'),
 });
 export type AITroubleshootingAssistantInput = z.infer<typeof AITroubleshootingAssistantInputSchema>;
 
 // Output Schema
 const AITroubleshootingAssistantOutputSchema = z.object({
-  diagnosis: z.string().describe('A clear diagnosis of the potential problem with the device, based on the provided information.'),
-  questionsToAsk: z.array(z.string()).optional().describe('A list of further questions to ask the user to gather more information and refine the diagnosis.'),
-  suggestedSolutions: z.array(z.string()).optional().describe('A list of preliminary solutions or troubleshooting steps the user can try immediately.'),
+  diagnosis: z.string().describe('A clear diagnosis of the potential problem with the device.'),
+  questionsToAsk: z.array(z.string()).optional().describe('Further questions to gathering telemetry.'),
+  suggestedSolutions: z.array(z.string()).optional().describe('Preliminary solutions or troubleshooting steps.'),
   recommendedGuides: z.array(z.object({
     id: z.string().describe('The unique identifier of the repair guide.'),
     title: z.string().describe('The title of the recommended repair guide.'),
-    url: z.string().url().describe('The URL to the recommended repair guide.'),
-    difficulty: z.enum(['easy', 'medium', 'hard']).optional().describe('The difficulty level of the repair guide.'),
-  })).optional().describe('A list of relevant repair guide IDs, titles, URLs, and difficulty levels from AyosGadget.'),
+    url: z.string().url().describe('The internal URL to the recommended repair guide (e.g., /guides/1234).'),
+    difficulty: z.enum(['easy', 'medium', 'hard']).optional().describe('Difficulty level.'),
+  })).optional().describe('Relevant repair guides fetched from iFixit.'),
 });
 export type AITroubleshootingAssistantOutput = z.infer<typeof AITroubleshootingAssistantOutputSchema>;
 
-// Define a tool to search for repair guides
-// Tip: In a production environment, this tool could call the iFixit API (https://www.ifixit.com/api/2.0/doc)
+// Real iFixit Tool
 const searchRepairGuidesTool = ai.defineTool(
   {
     name: 'searchRepairGuides',
-    description: 'Searches the AyosGadget database for relevant repair guides based on keywords and device type.',
+    description: 'Searches the real-world iFixit database for relevant repair guides based on keywords.',
     inputSchema: z.object({
-      query: z.string().describe('Keywords or a brief description of the repair needed (e.g., "iPhone 13 screen replacement", "laptop not charging").'),
-      deviceType: z.string().optional().describe('The type of electronic device to filter guides (e.g., "smartphone", "laptop").'),
+      query: z.string().describe('Search terms (e.g., "iPhone 13 battery", "MacBook logic board").'),
     }),
     outputSchema: z.array(z.object({
       id: z.string(),
@@ -53,63 +49,33 @@ const searchRepairGuidesTool = ai.defineTool(
     })),
   },
   async (input) => {
-    // Professional Tip: Use iFixit API for real-world repair data.
-    // For now, we simulate a robust database with more categories.
-    const query = input.query.toLowerCase();
-    const device = input.deviceType?.toLowerCase() || '';
-
-    if (query.includes('screen') || query.includes('basag')) {
-      return [
-        { id: 'iphone-13-screen', title: 'iPhone 13 Screen Replacement', url: '/guides/iphone-13-screen', difficulty: 'medium' },
-        { id: 'generic-screen-repair', title: 'General Smartphone Screen Repair', url: '/guides/iphone-13-screen', difficulty: 'hard' },
-      ];
-    }
-    
-    if (query.includes('battery') || query.includes('mabilis malowbat') || query.includes('ayaw magcharge')) {
-      return [
-        { id: 'macbook-pro-battery', title: 'MacBook Pro Battery Replacement', url: '/guides/macbook-pro-battery', difficulty: 'hard' },
-        { id: 'laptop-charging-port', title: 'Laptop DC Jack Repair', url: '/guides/macbook-pro-battery', difficulty: 'medium' },
-      ];
-    }
-
-    if (query.includes('drift') || query.includes('joystick') || query.includes('pumipitik')) {
-      return [
-        { id: 'switch-joycon-drift', title: 'Nintendo Switch Joy-Con Drift Repair', url: '/guides/switch-joycon-drift', difficulty: 'easy' },
-        { id: 'ps5-controller-fix', title: 'DualSense Analog Stick Replacement', url: '/guides/switch-joycon-drift', difficulty: 'hard' },
-      ];
-    }
-
-    if (query.includes('water') || query.includes('nabasa')) {
-      return [
-        { id: 'water-damage-protocol', title: 'Emergency Water Damage Recovery', url: '/guides/iphone-13-screen', difficulty: 'medium' },
-      ];
-    }
-
-    return [
-      { id: 'general-power-fix', title: 'System Diagnostics: Power Issues', url: '/guides/iphone-13-screen', difficulty: 'easy' },
-      { id: 'hardware-reset-guide', title: 'Full Hardware Reset Protocol', url: '/guides/switch-joycon-drift', difficulty: 'easy' },
-    ];
+    const results = await searchIFixitGuides(input.query);
+    return results.map((r: any) => ({
+      id: r.guideid.toString(),
+      title: r.title,
+      url: `/guides/${r.guideid}`,
+      difficulty: r.difficulty?.toLowerCase().includes('easy') ? 'easy' : r.difficulty?.toLowerCase().includes('moderate') ? 'medium' : 'hard',
+    }));
   }
 );
-
 
 const aiTroubleshootingAssistantPrompt = ai.definePrompt({
   name: 'aiTroubleshootingAssistantPrompt',
   input: {schema: AITroubleshootingAssistantInputSchema},
   output: {schema: AITroubleshootingAssistantOutputSchema},
   tools: [searchRepairGuidesTool],
-  prompt: `You are an AI-powered interactive troubleshooting assistant for electronic devices, part of the AyosGadget repair platform.
-Your goal is to help users diagnose problems with their devices and recommend relevant repair guides.
+  prompt: `You are an AI-powered interactive troubleshooting assistant for electronic devices, part of the AyosGadget platform.
+Your goal is to help users diagnose problems and recommend REAL iFixit repair guides.
 
-Based on the user's problem description and any conversation history, perform the following steps:
-1. Provide a concise diagnosis of the potential problem in a professional, "Neural Engine" style.
-2. If more information is needed, ask specific, clarifying questions. Limit to 1-2 questions per turn.
-3. Suggest preliminary solutions or troubleshooting steps the user can try.
-4. IMPORTANT: Use the 'searchRepairGuides' tool to find and recommend relevant repair guides from AyosGadget. Ensure the query for the tool is descriptive and includes device type if known.
+Step-by-Step:
+1. Provide a concise technical diagnosis.
+2. Ask 1-2 clarifying questions if needed.
+3. Suggest immediate troubleshooting steps.
+4. CRITICAL: Call 'searchRepairGuides' with a highly descriptive query to find real iFixit manuals.
 
-Language Constraint: Use simple Filipino (Mababaw na Tagalog) if the user speaks in Tagalog, otherwise use English.
+Language: Use simple Filipino (Mababaw na Tagalog) if the user speaks Tagalog, otherwise English.
 
-Conversation History:
+History:
 {{#if conversationHistory}}
   {{#each conversationHistory}}
     {{this.role}}: {{this.content}}
@@ -118,9 +84,7 @@ Conversation History:
 
 User's Device Problem:
 Device Type: {{deviceType}}
-Problem Description: {{{problemDescription}}}
-
-Think step-by-step. First, analyze the problem. Then, formulate your diagnosis, questions, solutions, and finally, search for relevant guides using the provided tool.`
+Problem Description: {{{problemDescription}}}`
 });
 
 const aiTroubleshootingAssistantFlow = ai.defineFlow(
