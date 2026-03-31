@@ -32,16 +32,16 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-body antialiased min-h-screen relative;
+    @apply bg-background text-foreground font-body antialiased min-h-screen relative overflow-x-hidden;
     background-image: 
       linear-gradient(to bottom, rgba(0, 242, 255, 0.03) 1px, transparent 1px),
       linear-gradient(to right, rgba(0, 242, 255, 0.03) 1px, transparent 1px),
-      radial-gradient(circle at 0% 0%, hsla(190, 100%, 50%, 0.08) 0%, transparent 40%),
-      radial-gradient(circle at 100% 100%, hsla(260, 80%, 60%, 0.08) 0%, transparent 40%);
+      radial-gradient(circle at 0% 0%, hsla(190, 100%, 50%, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 100% 100%, hsla(260, 80%, 60%, 0.1) 0%, transparent 50%);
     background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-headline font-bold tracking-tight;
+    @apply font-headline font-bold tracking-tighter;
   }
 }
 
@@ -58,9 +58,21 @@
   .neon-text {
     text-shadow: 0 0 12px hsla(190, 100%, 50%, 0.6);
   }
-  .border-glow {
-    @apply relative after:absolute after:inset-0 after:rounded-[inherit] after:border after:border-primary/0 hover:after:border-primary/50 after:transition-all after:duration-500;
+  .cyber-border {
+    @apply relative after:absolute after:inset-0 after:border after:border-primary/20 after:pointer-events-none;
+    clip-path: polygon(0 0, 90% 0, 100% 10%, 100% 100%, 10% 100%, 0 90%);
   }
+  .scan-line {
+    @apply absolute inset-0 pointer-events-none overflow-hidden;
+    background: linear-gradient(to bottom, transparent 50%, rgba(0, 242, 255, 0.05) 50%);
+    background-size: 100% 4px;
+    animation: scan 10s linear infinite;
+  }
+}
+
+@keyframes scan {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
 }
 
 @keyframes float {
