@@ -15,11 +15,13 @@ export interface Tool {
   name: string;
 }
 
+export type CategoryName = 'Smartphones' | 'Laptops' | 'Tablets' | 'Consoles' | 'Appliances' | 'Audio' | 'Cameras' | 'Desktop PCs';
+
 export interface RepairGuide {
   id: string;
   title: string;
   device: string;
-  category: 'Smartphones' | 'Laptops' | 'Tablets' | 'Consoles' | 'Appliances';
+  category: CategoryName;
   difficulty: Difficulty;
   timeEstimate: string;
   description: string;
@@ -36,6 +38,9 @@ export const REPAIR_CATEGORIES = [
   { name: 'Laptops', icon: 'Laptop' },
   { name: 'Tablets', icon: 'Tablet' },
   { name: 'Consoles', icon: 'Gamepad' },
+  { name: 'Audio', icon: 'Headphones' },
+  { name: 'Cameras', icon: 'Camera' },
+  { name: 'Desktop PCs', icon: 'Monitor' },
   { name: 'Appliances', icon: 'Home' },
 ] as const;
 

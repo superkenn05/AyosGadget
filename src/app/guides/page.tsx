@@ -17,16 +17,25 @@ export default function GuidesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(0);
 
-  // Initial load of trending guides from iFixit
+  // Initial load or category change search
   useEffect(() => {
     async function loadInitial() {
+      if (searchQuery.length > 0) return; // Don't override active search
+      
       setIsLoading(true);
-      const trending = await getTrendingGuides(0, 12);
-      setGlobalGuides(trending.map(mapIFixitToInternal));
+      if (selectedCategory) {
+        // Search specifically for the category if selected
+        const results = await searchIFixitGuides(selectedCategory);
+        setGlobalGuides(results.map(mapIFixitToInternal));
+      } else {
+        // Load trending if nothing selected
+        const trending = await getTrendingGuides(0, 12);
+        setGlobalGuides(trending.map(mapIFixitToInternal));
+      }
       setIsLoading(false);
     }
     loadInitial();
-  }, []);
+  }, [selectedCategory]);
 
   // Search logic
   useEffect(() => {
@@ -36,11 +45,16 @@ export default function GuidesPage() {
         const results = await searchIFixitGuides(searchQuery);
         setGlobalGuides(results.map(mapIFixitToInternal));
         setIsLoading(false);
-      } else if (searchQuery.length === 0) {
-        // Reset to trending
+      } else if (searchQuery.length === 0 && !isLoading) {
+        // Reset to category default or trending
         setIsLoading(true);
-        const trending = await getTrendingGuides(0, 12);
-        setGlobalGuides(trending.map(mapIFixitToInternal));
+        if (selectedCategory) {
+          const results = await searchIFixitGuides(selectedCategory);
+          setGlobalGuides(results.map(mapIFixitToInternal));
+        } else {
+          const trending = await getTrendingGuides(0, 12);
+          setGlobalGuides(trending.map(mapIFixitToInternal));
+        }
         setIsLoading(false);
       }
     }, 500);
@@ -58,8 +72,14 @@ export default function GuidesPage() {
   const loadMore = async () => {
     const nextPage = page + 1;
     setIsLoading(true);
-    const more = await getTrendingGuides(nextPage * 12, 12);
-    setGlobalGuides(prev => [...prev, ...more.map(mapIFixitToInternal)]);
+    if (selectedCategory || searchQuery) {
+      const query = searchQuery || selectedCategory || '';
+      const more = await searchIFixitGuides(query); // Search doesn't support offset in basic iFixit API but we can try
+      setGlobalGuides(prev => [...prev, ...more.map(mapIFixitToInternal)]);
+    } else {
+      const more = await getTrendingGuides(nextPage * 12, 12);
+      setGlobalGuides(prev => [...prev, ...more.map(mapIFixitToInternal)]);
+    }
     setPage(nextPage);
     setIsLoading(false);
   };

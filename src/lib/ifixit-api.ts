@@ -2,6 +2,8 @@
  * @fileOverview Client for interacting with the iFixit API v2.0.
  */
 
+import { CategoryName } from './repair-data';
+
 export interface IFixitGuide {
   guideid: number;
   title: string;
@@ -61,11 +63,9 @@ export function mapIFixitToInternal(ifixit: any) {
   
   // Extract steps instructions more robustly
   const mappedSteps = (ifixit.steps || []).map((s: any) => {
-    // Collect all lines of text for this step
     const stepLines = (s.lines || []).map((l: any) => {
-      // Prefer text_rendered (stripped of HTML) or text_raw
       const text = l.text_rendered || l.text_raw || l.text || '';
-      const prefix = l.bullet === 'black' ? '• ' : ''; // Add bullet if applicable
+      const prefix = l.bullet === 'black' ? '• ' : '';
       return prefix + stripHtml(text).trim();
     }).filter(Boolean);
 
@@ -100,18 +100,20 @@ function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
   return 'hard';
 }
 
-function mapCategory(type: string): 'Smartphones' | 'Laptops' | 'Tablets' | 'Consoles' | 'Appliances' {
+function mapCategory(type: string): CategoryName {
   const t = type.toLowerCase();
   if (t.includes('phone')) return 'Smartphones';
-  if (t.includes('laptop') || t.includes('computer')) return 'Laptops';
+  if (t.includes('laptop') || t.includes('macbook')) return 'Laptops';
   if (t.includes('tablet') || t.includes('ipad')) return 'Tablets';
-  if (t.includes('console') || t.includes('switch') || t.includes('playstation') || t.includes('xbox')) return 'Consoles';
+  if (t.includes('console') || t.includes('switch') || t.includes('playstation') || t.includes('xbox') || t.includes('gaming')) return 'Consoles';
+  if (t.includes('audio') || t.includes('headphone') || t.includes('speaker') || t.includes('earbud')) return 'Audio';
+  if (t.includes('camera') || t.includes('lens') || t.includes('photography')) return 'Cameras';
+  if (t.includes('desktop') || t.includes('pc') || t.includes('monitor') || t.includes('workstation')) return 'Desktop PCs';
   return 'Appliances';
 }
 
 function stripHtml(html: string) {
   if (!html) return '';
-  // Enhanced stripping to handle entities and more tags
   return html
     .replace(/<[^>]*>?/gm, '')
     .replace(/&nbsp;/g, ' ')
