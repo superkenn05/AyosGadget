@@ -4,7 +4,7 @@ import CategoryIcon from '@/components/repair/CategoryIcon';
 import RepairCard from '@/components/repair/RepairCard';
 import { PRIMARY_CATEGORIES, DIRECTORY_CATEGORIES } from '@/lib/repair-data';
 import { Button } from '@/components/ui/button';
-import { Activity, Cpu, Zap, ArrowRight, Globe, Loader2, List, Search, Sparkles } from 'lucide-react';
+import { Activity, Cpu, Zap, ArrowRight, Globe, Loader2, List } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useState, useEffect } from 'react';
@@ -32,16 +32,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Futuristic Background HUD Elements */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-secondary/5 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
-      </div>
-
       {/* Hero: Compact System Dashboard Header */}
       <section className="relative pt-24 pb-8 px-6">
         <div className="container mx-auto max-w-5xl text-center">
-          <div className="glass p-8 md:p-16 rounded-[3rem] md:rounded-[4rem] border-primary/10 relative overflow-hidden group shadow-2xl">
+          <div className="glass p-8 md:p-16 rounded-[3rem] border-primary/10 relative overflow-hidden group shadow-2xl">
             <div className="absolute inset-0 scan-line opacity-5" />
             
             <div className="flex flex-col gap-10 relative z-10 items-center">
@@ -74,7 +68,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Mini-Modules Grid (Updated: Smaller Icons) */}
+      {/* Mini-Modules Grid (Compact Icons) */}
       <section className="container mx-auto px-6 mb-16">
         <div className="flex items-center justify-between mb-8 px-4">
           <div className="flex flex-col">
@@ -87,7 +81,7 @@ export default function Home() {
         
         <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-4 md:gap-6">
           {PRIMARY_CATEGORIES.map((cat) => (
-            <Link key={cat.name} href={`/guides?category=${cat.name.toLowerCase()}`}>
+            <Link key={cat.name} href={`/guides?category=${cat.name}`}>
               <div className="flex flex-col items-center gap-3 group transition-all">
                 <div className="w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-3xl glass border-primary/5 flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:border-primary/50 group-hover:scale-110 active:scale-90 transition-all shadow-sm">
                   <CategoryIcon name={cat.icon} className="w-6 h-6 md:w-8 md:h-8" />
