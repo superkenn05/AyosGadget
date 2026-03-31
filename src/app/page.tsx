@@ -4,7 +4,7 @@ import CategoryIcon from '@/components/repair/CategoryIcon';
 import RepairCard from '@/components/repair/RepairCard';
 import { PRIMARY_CATEGORIES, DIRECTORY_CATEGORIES } from '@/lib/repair-data';
 import { Button } from '@/components/ui/button';
-import { Activity, Cpu, Zap, ArrowRight, Globe, Loader2, List, Search } from 'lucide-react';
+import { Activity, Cpu, Zap, ArrowRight, Globe, Loader2, List, Search, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useState, useEffect } from 'react';
@@ -74,44 +74,34 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Master Modules Grid (UI Designer Tier 1) */}
+      {/* Mini-Modules Grid (Updated: Smaller Icons) */}
       <section className="container mx-auto px-6 mb-16">
         <div className="flex items-center justify-between mb-8 px-4">
           <div className="flex flex-col">
-            <h2 className="text-[12px] font-black uppercase tracking-[0.6em] text-primary">{t('home_modules')}</h2>
-            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Primary Repair Domains</span>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.6em] text-primary">{t('home_modules')}</h2>
           </div>
-          <Link href="/guides" className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 group hover:bg-primary/5 px-4 py-2 rounded-full transition-colors">
-            All Systems <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          <Link href="/guides" className="text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-2 group">
+            Global Hub <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-8 gap-4 md:gap-6">
           {PRIMARY_CATEGORIES.map((cat) => (
             <Link key={cat.name} href={`/guides?category=${cat.name.toLowerCase()}`}>
-              <div className="glass-card group relative h-48 md:h-56 rounded-[2.5rem] overflow-hidden transition-all hover:-translate-y-2 active:scale-[0.98] shadow-lg border-primary/5">
-                {/* Visual Hint / Illustration Area */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 group-hover:from-primary/20 transition-all" />
-                <div className="absolute right-0 bottom-0 opacity-10 group-hover:opacity-20 transition-opacity translate-x-1/4 translate-y-1/4 scale-150 rotate-12">
-                   <CategoryIcon name={cat.icon} className="w-32 h-32" />
+              <div className="flex flex-col items-center gap-3 group transition-all">
+                <div className="w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-3xl glass border-primary/5 flex items-center justify-center text-muted-foreground group-hover:text-primary group-hover:border-primary/50 group-hover:scale-110 active:scale-90 transition-all shadow-sm">
+                  <CategoryIcon name={cat.icon} className="w-6 h-6 md:w-8 md:h-8" />
                 </div>
-                
-                <div className="absolute inset-0 p-8 flex flex-col justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-white dark:bg-white/5 flex items-center justify-center text-primary shadow-sm border border-primary/10">
-                    <CategoryIcon name={cat.icon} className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black uppercase tracking-tighter leading-none mb-1 group-hover:text-primary transition-colors">{cat.name}</h3>
-                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/60">{cat.hint}</p>
-                  </div>
-                </div>
+                <span className="text-[8px] md:text-[10px] font-black uppercase tracking-tighter text-center leading-tight opacity-60 group-hover:opacity-100 group-hover:text-primary transition-all">
+                  {cat.name}
+                </span>
               </div>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* Directory List (UI Designer Tier 2) */}
+      {/* Directory List */}
       <section className="container mx-auto px-6 mb-20">
         <div className="flex items-center gap-4 mb-10 px-4">
           <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
@@ -136,16 +126,6 @@ export default function Home() {
                </div>
              </Link>
            ))}
-        </div>
-        
-        <div className="mt-12 text-center">
-           <p className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-[0.2em] mb-4">Thousands more step-by-step protocols for everything</p>
-           <Link href="/guides">
-             <Button variant="outline" className="rounded-full h-12 px-10 text-[9px] font-black uppercase tracking-widest border-primary/20 hover:border-primary">
-                <Search className="w-4 h-4 mr-2" />
-                Browse System Library
-             </Button>
-           </Link>
         </div>
       </section>
 

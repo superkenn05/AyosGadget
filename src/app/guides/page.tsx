@@ -1,10 +1,10 @@
 'use client';
 
 import RepairCard from '@/components/repair/RepairCard';
-import { FEATURED_REPAIRS, REPAIR_CATEGORIES } from '@/lib/repair-data';
+import { REPAIR_CATEGORIES } from '@/lib/repair-data';
 import { Input } from '@/components/ui/input';
 import { Search, Filter, Cpu, Loader2, Globe, ArrowRight, Sparkles, LayoutGrid } from 'lucide-react';
-import { useState, useEffect, Suspense, useCallback } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
 import { searchIFixitGuides, getTrendingGuides, mapIFixitToInternal, getIFixitWiki, IFixitWiki } from '@/lib/ifixit-api';
@@ -51,15 +51,11 @@ function GuidesContent() {
       
       try {
         if (selectedCategory) {
-          // Fetch Wiki Data for Category Landing Page
           const wiki = await getIFixitWiki(selectedCategory);
           setCategoryWiki(wiki);
-          
-          // Search specifically for the category
           const results = await searchIFixitGuides(selectedCategory);
           setGlobalGuides(deduplicateGuides(results.map(mapIFixitToInternal)));
         } else if (!searchQuery) {
-          // Load trending if nothing selected
           setCategoryWiki(null);
           const trending = await getTrendingGuides(0, 12);
           setGlobalGuides(deduplicateGuides(trending.map(mapIFixitToInternal)));
@@ -110,7 +106,6 @@ function GuidesContent() {
       let more: any[] = [];
       if (selectedCategory || searchQuery) {
         const query = searchQuery || selectedCategory || '';
-        // Note: Real pagination might need offset param in searchIFixitGuides
         more = await searchIFixitGuides(query); 
       } else {
         more = await getTrendingGuides(nextPage * 12, 12);
@@ -180,7 +175,7 @@ function GuidesContent() {
         <div className="flex gap-2 min-w-max">
           <Button
             variant={selectedCategory === null ? "default" : "outline"}
-            className={`rounded-full h-10 px-6 text-[10px] font-black uppercase tracking-widest transition-all ${selectedCategory === null ? 'neon-glow' : 'border-black/5 dark:border-white/10'}`}
+            className={`rounded-full h-10 px-6 text-[10px] font-black uppercase tracking-widest transition-all ${selectedCategory === null ? 'neon-glow shadow-primary/20' : 'border-black/5 dark:border-white/10'}`}
             onClick={() => handleCategoryClick(null)}
           >
             {t('guides_all')}
@@ -189,7 +184,7 @@ function GuidesContent() {
             <Button
               key={cat.name}
               variant={selectedCategory === cat.name ? "default" : "outline"}
-              className={`rounded-full h-10 px-6 text-[10px] font-black uppercase tracking-widest transition-all ${selectedCategory === cat.name ? 'neon-glow' : 'border-black/5 dark:border-white/10'}`}
+              className={`rounded-full h-10 px-6 text-[10px] font-black uppercase tracking-widest transition-all ${selectedCategory === cat.name ? 'neon-glow shadow-primary/20' : 'border-black/5 dark:border-white/10'}`}
               onClick={() => handleCategoryClick(cat.name)}
             >
               {cat.name}
@@ -198,33 +193,35 @@ function GuidesContent() {
         </div>
       </section>
 
-      {/* Category Landing Page Content */}
+      {/* Category Landing Page Content (Neural Redesign) */}
       {categoryWiki && !searchQuery && (
-        <section className="container mx-auto px-6 mb-12">
-          <div className="glass rounded-[3rem] p-8 md:p-12 border-primary/10 overflow-hidden relative">
+        <section className="container mx-auto px-6 mb-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          <div className="glass rounded-[3rem] p-8 md:p-16 border-primary/10 overflow-hidden relative shadow-2xl">
             <div className="absolute inset-0 scan-line opacity-5" />
+            <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+            
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center relative z-10">
-              <div className="lg:col-span-8 space-y-6">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest">
-                  <Globe className="w-3 h-3" />
+              <div className="lg:col-span-8 space-y-8">
+                <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-[0.3em]">
+                  <Globe className="w-4 h-4" />
                   System Directory: {categoryWiki.title}
                 </div>
-                <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-tight">
+                <h2 className="text-4xl md:text-7xl font-black tracking-tighter uppercase leading-tight">
                   {categoryWiki.title} <span className="text-primary">Repair</span>
                 </h2>
-                <p className="text-muted-foreground text-sm md:text-lg font-medium leading-relaxed max-w-2xl">
+                <p className="text-muted-foreground text-sm md:text-xl font-medium leading-relaxed max-w-3xl opacity-80">
                   {categoryWiki.description}
                 </p>
               </div>
               <div className="lg:col-span-4 flex justify-center">
                 {categoryWiki.image?.original && (
-                  <div className="relative w-48 h-48 md:w-64 md:h-64 group">
+                  <div className="relative w-56 h-56 md:w-80 md:h-80 group">
                     <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl animate-pulse" />
                     <Image 
                       src={categoryWiki.image.original} 
                       alt={categoryWiki.title} 
                       fill 
-                      className="object-contain relative z-10 filter drop-shadow-2xl"
+                      className="object-contain relative z-10 filter drop-shadow-2xl transition-transform group-hover:scale-110 duration-700"
                     />
                   </div>
                 )}
@@ -232,26 +229,33 @@ function GuidesContent() {
             </div>
           </div>
 
-          {/* Sub-categories Grid */}
+          {/* Sub-categories Grid (Compact Style) */}
           {categoryWiki.children && categoryWiki.children.length > 0 && (
-            <div className="mt-16">
-              <div className="flex items-center gap-4 mb-8">
-                <h3 className="text-xl font-black uppercase tracking-tighter">{categoryWiki.children.length} Sub-Modules</h3>
+            <div className="mt-20">
+              <div className="flex items-center gap-6 mb-10">
+                <h3 className="text-xl font-black uppercase tracking-tighter flex items-center gap-4">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                    <LayoutGrid className="w-4 h-4" />
+                  </div>
+                  {categoryWiki.children.length} Sub-Modules Identified
+                </h3>
                 <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 md:gap-6">
                 {categoryWiki.children.map((child, i) => (
                   <Link key={`child-${i}-${child.title}`} href={`/guides?category=${encodeURIComponent(child.title)}`}>
-                    <div className="glass-card p-6 rounded-[2rem] flex flex-col items-center text-center gap-4 group hover:border-primary/50 transition-all">
-                      <div className="relative w-16 h-16 md:w-20 md:h-20 mb-2">
+                    <div className="glass group p-4 md:p-6 rounded-3xl flex flex-col items-center text-center gap-4 transition-all hover:bg-primary/5 hover:border-primary/30 active:scale-95 border-primary/5">
+                      <div className="relative w-12 h-12 md:w-16 md:h-16 mb-2">
                         <Image 
                           src={child.image?.thumbnail || 'https://picsum.photos/seed/sub/200/200'} 
                           alt={child.title} 
                           fill 
-                          className="object-contain group-hover:scale-110 transition-transform"
+                          className="object-contain group-hover:scale-110 transition-transform duration-500"
                         />
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-tight leading-tight">{child.title}</span>
+                      <span className="text-[7px] md:text-[9px] font-black uppercase tracking-tight leading-tight opacity-70 group-hover:opacity-100 transition-opacity">
+                        {child.title}
+                      </span>
                     </div>
                   </Link>
                 ))}
