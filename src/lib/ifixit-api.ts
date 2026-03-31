@@ -20,12 +20,24 @@ export interface IFixitGuide {
 
 export async function searchIFixitGuides(query: string) {
   try {
-    const res = await fetch(`https://www.ifixit.com/api/2.0/search/${encodeURIComponent(query)}?type=guide&limit=5`);
+    const res = await fetch(`https://www.ifixit.com/api/2.0/search/${encodeURIComponent(query)}?type=guide&limit=12`);
     if (!res.ok) return [];
     const data = await res.json();
     return data.results || [];
   } catch (error) {
     console.error('iFixit search error:', error);
+    return [];
+  }
+}
+
+export async function getTrendingGuides(offset: number = 0, limit: number = 12) {
+  try {
+    const res = await fetch(`https://www.ifixit.com/api/2.0/guides?offset=${offset}&limit=${limit}`);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data || [];
+  } catch (error) {
+    console.error('iFixit trending error:', error);
     return [];
   }
 }
@@ -41,21 +53,23 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
   }
 }
 
-export function mapIFixitToInternal(ifixit: IFixitGuide) {
+export function mapIFixitToInternal(ifixit: any) {
+  // Handles both search result structure and full guide structure
+  const guideId = ifixit.guideid || ifixit.id;
   return {
-    id: ifixit.guideid.toString(),
+    id: guideId.toString(),
     title: ifixit.title,
-    device: 'Hardware Device', // iFixit has a separate 'subject' usually
-    category: 'Appliances' as any,
-    difficulty: mapDifficulty(ifixit.difficulty),
-    timeEstimate: ifixit.time_required || 'Unknown',
-    description: stripHtml(ifixit.summary),
-    thumbnail: ifixit.image?.original || 'https://picsum.photos/seed/repair/600/400',
-    tools: ifixit.tools.map(t => ({ name: t.name })),
-    parts: ifixit.parts.map(p => ({ name: p.name })),
-    steps: ifixit.steps.map(s => ({
+    device: ifixit.subject || 'Hardware Device',
+    category: 'Appliances' as any, // Default category
+    difficulty: mapDifficulty(ifixit.difficulty || 'Easy'),
+    timeEstimate: ifixit.time_required || '30-60 mins',
+    description: stripHtml(ifixit.summary || ifixit.text || ''),
+    thumbnail: ifixit.image?.original || ifixit.thumbnail || 'https://picsum.photos/seed/repair/600/400',
+    tools: (ifixit.tools || []).map((t: any) => ({ name: t.name })),
+    parts: (ifixit.parts || []).map((p: any) => ({ name: p.name })),
+    steps: (ifixit.steps || []).map((s: any) => ({
       title: s.title || 'Step',
-      description: s.lines.map(l => stripHtml(l.text)).join(' '),
+      description: (s.lines || []).map((l: any) => stripHtml(l.text)).join(' '),
       imageUrl: s.media?.data?.[0]?.original || 'https://picsum.photos/seed/step/600/400'
     })),
     rating: 4.5,
