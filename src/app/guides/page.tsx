@@ -4,7 +4,7 @@ import RepairCard from '@/components/repair/RepairCard';
 import { FEATURED_REPAIRS, REPAIR_CATEGORIES } from '@/lib/repair-data';
 import { Input } from '@/components/ui/input';
 import { Search, Filter, Cpu, Loader2, Globe, ArrowRight, Sparkles, LayoutGrid } from 'lucide-react';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
 import { searchIFixitGuides, getTrendingGuides, mapIFixitToInternal, getIFixitWiki, IFixitWiki } from '@/lib/ifixit-api';
@@ -27,6 +27,16 @@ function GuidesContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(0);
 
+  // Helper to deduplicate guides by ID
+  const deduplicateGuides = (guides: any[]) => {
+    const seen = new Set();
+    return guides.filter(guide => {
+      const duplicate = seen.has(guide.id);
+      seen.add(guide.id);
+      return !duplicate;
+    });
+  };
+
   // Sync state with URL params
   useEffect(() => {
     setSelectedCategory(categoryParam);
@@ -39,58 +49,81 @@ function GuidesContent() {
       setIsLoading(true);
       setPage(0);
       
-      if (selectedCategory) {
-        // Fetch Wiki Data for Category Landing Page
-        const wiki = await getIFixitWiki(selectedCategory);
-        setCategoryWiki(wiki);
-        
-        // Search specifically for the category
-        const results = await searchIFixitGuides(selectedCategory);
-        setGlobalGuides(results.map(mapIFixitToInternal));
-      } else if (!searchQuery) {
-        // Load trending if nothing selected
-        setCategoryWiki(null);
-        const trending = await getTrendingGuides(0, 12);
-        setGlobalGuides(trending.map(mapIFixitToInternal));
+      try {
+        if (selectedCategory) {
+          // Fetch Wiki Data for Category Landing Page
+          const wiki = await getIFixitWiki(selectedCategory);
+          setCategoryWiki(wiki);
+          
+          // Search specifically for the category
+          const results = await searchIFixitGuides(selectedCategory);
+          setGlobalGuides(deduplicateGuides(results.map(mapIFixitToInternal)));
+        } else if (!searchQuery) {
+          // Load trending if nothing selected
+          setCategoryWiki(null);
+          const trending = await getTrendingGuides(0, 12);
+          setGlobalGuides(deduplicateGuides(trending.map(mapIFixitToInternal)));
+        }
+      } catch (error) {
+        console.error("Error loading category data:", error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     }
     loadCategoryData();
-  }, [selectedCategory]);
+  }, [selectedCategory, searchQuery]);
 
-  // Search logic
+  // Search logic (debounced)
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (searchQuery.length > 2) {
         setIsLoading(true);
         setCategoryWiki(null);
-        const results = await searchIFixitGuides(searchQuery);
-        setGlobalGuides(results.map(mapIFixitToInternal));
-        setIsLoading(false);
+        try {
+          const results = await searchIFixitGuides(searchQuery);
+          setGlobalGuides(deduplicateGuides(results.map(mapIFixitToInternal)));
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setIsLoading(false);
+        }
       } else if (searchQuery.length === 0 && !selectedCategory) {
         setIsLoading(true);
-        const trending = await getTrendingGuides(0, 12);
-        setGlobalGuides(trending.map(mapIFixitToInternal));
-        setIsLoading(false);
+        try {
+          const trending = await getTrendingGuides(0, 12);
+          setGlobalGuides(deduplicateGuides(trending.map(mapIFixitToInternal)));
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setIsLoading(false);
+        }
       }
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, selectedCategory]);
 
   const loadMore = async () => {
     const nextPage = page + 1;
     setIsLoading(true);
-    if (selectedCategory || searchQuery) {
-      const query = searchQuery || selectedCategory || '';
-      const more = await searchIFixitGuides(query); 
-      setGlobalGuides(prev => [...prev, ...more.map(mapIFixitToInternal)]);
-    } else {
-      const more = await getTrendingGuides(nextPage * 12, 12);
-      setGlobalGuides(prev => [...prev, ...more.map(mapIFixitToInternal)]);
+    try {
+      let more: any[] = [];
+      if (selectedCategory || searchQuery) {
+        const query = searchQuery || selectedCategory || '';
+        // Note: Real pagination might need offset param in searchIFixitGuides
+        more = await searchIFixitGuides(query); 
+      } else {
+        more = await getTrendingGuides(nextPage * 12, 12);
+      }
+      
+      const mappedMore = more.map(mapIFixitToInternal);
+      setGlobalGuides(prev => deduplicateGuides([...prev, ...mappedMore]));
+      setPage(nextPage);
+    } catch (error) {
+      console.error("Error loading more guides:", error);
+    } finally {
+      setIsLoading(false);
     }
-    setPage(nextPage);
-    setIsLoading(false);
   };
 
   const handleCategoryClick = (catName: string | null) => {
@@ -199,8 +232,8 @@ function GuidesContent() {
             </div>
           </div>
 
-          {/* Sub-categories Grid (matches screenshot "7 Categories") */}
-          {categoryWiki.children.length > 0 && (
+          {/* Sub-categories Grid */}
+          {categoryWiki.children && categoryWiki.children.length > 0 && (
             <div className="mt-16">
               <div className="flex items-center gap-4 mb-8">
                 <h3 className="text-xl font-black uppercase tracking-tighter">{categoryWiki.children.length} Sub-Modules</h3>
@@ -208,7 +241,7 @@ function GuidesContent() {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                 {categoryWiki.children.map((child, i) => (
-                  <Link key={i} href={`/guides?category=${encodeURIComponent(child.title)}`}>
+                  <Link key={`child-${i}-${child.title}`} href={`/guides?category=${encodeURIComponent(child.title)}`}>
                     <div className="glass-card p-6 rounded-[2rem] flex flex-col items-center text-center gap-4 group hover:border-primary/50 transition-all">
                       <div className="relative w-16 h-16 md:w-20 md:h-20 mb-2">
                         <Image 
@@ -241,7 +274,7 @@ function GuidesContent() {
         {globalGuides.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {globalGuides.map((guide) => (
-              <RepairCard key={guide.id} guide={guide} />
+              <RepairCard key={`guide-${guide.id}`} guide={guide} />
             ))}
           </div>
         ) : isLoading ? (
