@@ -3,7 +3,7 @@
 import { FEATURED_REPAIRS } from '@/lib/repair-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Wrench, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, Clock, Zap } from 'lucide-react';
+import { CheckCircle2, Wrench, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, Clock } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc } from '@/firebase';
@@ -84,7 +84,7 @@ export default function GuideDetailPage() {
             title: originalGuide.title,
             description: originalGuide.description,
             steps: originalGuide.steps.map((s: any) => ({ 
-              title: s.title, 
+              title: s.title || '', 
               description: s.description 
             })),
           });
@@ -112,7 +112,7 @@ export default function GuideDetailPage() {
       }
     }
     handleTranslation();
-  }, [language, originalGuide, toast]);
+  }, [language, originalGuide, toast, guide?.language]);
 
   const handleBookmark = () => {
     if (!user) {
@@ -182,10 +182,13 @@ export default function GuideDetailPage() {
       <div className="min-h-screen flex items-center justify-center text-center p-8 bg-background">
         <div className="glass p-12 rounded-[3rem] border-primary/20">
           <h2 className="text-2xl font-black uppercase tracking-tighter mb-4">Protocol Offline</h2>
-          <p className="text-muted-foreground mb-8 text-sm">Target manual could not be initialized.</p>
-          <Link href="/guides">
-            <Button className="rounded-2xl h-12 px-8 font-black uppercase tracking-widest text-[10px]">Return to Library</Button>
-          </Link>
+          <p className="text-muted-foreground mb-8 text-sm">Target manual could not be initialized. Please check your connection.</p>
+          <div className="flex flex-col gap-4">
+             <Button onClick={() => window.location.reload()} className="rounded-2xl h-12 px-8 font-black uppercase tracking-widest text-[10px]">{t('common_retry')}</Button>
+             <Link href="/guides">
+               <Button variant="ghost" className="rounded-2xl h-12 px-8 font-black uppercase tracking-widest text-[10px]">{t('guides_back')}</Button>
+             </Link>
+          </div>
         </div>
       </div>
     );
@@ -195,7 +198,7 @@ export default function GuideDetailPage() {
     easy: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
     medium: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
     hard: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-  }[guide.difficulty as 'easy' | 'medium' | 'hard'];
+  }[guide.difficulty as 'easy' | 'medium' | 'hard'] || 'bg-muted text-muted-foreground';
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -297,15 +300,17 @@ export default function GuideDetailPage() {
                           </div>
                         </div>
                       </div>
-                      <div className="relative aspect-video rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 group-hover/step:scale-[1.01] transition-transform">
-                        <Image
-                          src={step.imageUrl}
-                          alt={`${t('guides_step_title')} ${index + 1}`}
-                          fill
-                          className="object-cover"
-                        />
-                        <div className="absolute inset-0 scan-line opacity-0 group-hover/step:opacity-5 transition-opacity" />
-                      </div>
+                      {step.imageUrl && (
+                        <div className="relative aspect-video rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 group-hover/step:scale-[1.01] transition-transform">
+                          <Image
+                            src={step.imageUrl}
+                            alt={`${t('guides_step_title')} ${index + 1}`}
+                            fill
+                            className="object-cover"
+                          />
+                          <div className="absolute inset-0 scan-line opacity-0 group-hover/step:opacity-5 transition-opacity" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
