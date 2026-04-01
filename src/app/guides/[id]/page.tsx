@@ -34,10 +34,8 @@ export default function GuideDetailPage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const translationRef = useRef<string | null>(null);
 
-  // Gallery state for each step
   const [stepImageIndexes, setStepImageIndexes] = useState<Record<number, number>>({});
 
-  // Memoize document reference for bookmarks
   const bookmarkRef = useMemo(() => {
     if (!user || !guide?.id) return null;
     return doc(db, 'users', user.uid, 'bookmarks', guide.id);
@@ -46,21 +44,36 @@ export default function GuideDetailPage() {
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
-  // Initial Fetch: Full Guide Fetch including Steps
   useEffect(() => {
-    async function fetchGuide() {
+    async function fetchFullProtocol() {
       if (!id) return;
       setLoading(true);
       try {
         let fetchedGuide = null;
-        
         const local = FEATURED_REPAIRS.find((g) => g.id === id);
+        
         if (local) {
           fetchedGuide = local;
         } else {
           const ifixit = await getIFixitGuide(id);
           if (ifixit) {
-            fetchedGuide = mapIFixitToInternal(ifixit);
+            let baseGuide = mapIFixitToInternal(ifixit);
+            
+            // SMART MERGING: Fetch prerequisites steps and prepend them (like iFixit website)
+            if (ifixit.prerequisites && ifixit.prerequisites.length > 0) {
+              const prereqSteps = [];
+              for (const prereq of ifixit.prerequisites) {
+                const prereqData = await getIFixitGuide(prereq.guideid.toString());
+                if (prereqData) {
+                  const mappedPrereq = mapIFixitToInternal(prereqData);
+                  prereqSteps.push(...mappedPrereq.steps);
+                }
+              }
+              // Prepend prerequisite steps to the main steps
+              baseGuide.steps = [...prereqSteps, ...baseGuide.steps];
+            }
+            
+            fetchedGuide = baseGuide;
           } else {
             const wiki = await getIFixitWiki(id);
             if (wiki) {
@@ -73,7 +86,6 @@ export default function GuideDetailPage() {
         if (fetchedGuide) {
           setOriginalGuide(fetchedGuide);
           setGuide(fetchedGuide);
-          // Initialize gallery indexes to 0
           const initialIndexes: Record<number, number> = {};
           fetchedGuide.steps.forEach((_: any, i: number) => {
             initialIndexes[i] = 0;
@@ -86,10 +98,9 @@ export default function GuideDetailPage() {
         setLoading(false);
       }
     }
-    fetchGuide();
+    fetchFullProtocol();
   }, [id, router]);
 
-  // AI Live Translation for Step-by-Step Instructions
   useEffect(() => {
     async function handleTranslation() {
       if (!originalGuide || !originalGuide.steps || originalGuide.steps.length === 0) return;
@@ -101,6 +112,7 @@ export default function GuideDetailPage() {
         setIsTranslating(true);
         translationRef.current = translationKey;
         try {
+          // Process steps in chunks if they are too many (e.g. 20+ steps) for the AI
           const translated = await translateGuide({
             title: originalGuide.title,
             description: originalGuide.description,
@@ -111,7 +123,6 @@ export default function GuideDetailPage() {
           });
 
           if (translated) {
-            // Re-map with integrity check: ensure we use the translated step if available, else fallback
             const finalSteps = originalGuide.steps.map((s: any, i: number) => ({
               ...s,
               title: translated.steps[i]?.title || s.title,
@@ -132,7 +143,7 @@ export default function GuideDetailPage() {
           toast({ 
             variant: "destructive", 
             title: "Neural Link Busy", 
-            description: "Limitado ang AI quota sa ngayon. Pakisubukan muli makalipas ang ilang sandali." 
+            description: "Masyadong mahaba ang manual o limitado ang AI quota. Pansamantalang ipapakita ang English version." 
           });
         } finally {
           setIsTranslating(false);
@@ -318,31 +329,11 @@ export default function GuideDetailPage() {
               </div>
             </section>
 
-            {guide.prerequisites && guide.prerequisites.length > 0 && (
-              <section className="p-6 glass border-amber-500/20 bg-amber-500/5 rounded-3xl">
-                <div className="flex items-center gap-3 text-amber-500 mb-4">
-                  <Info className="w-5 h-5" />
-                  <h3 className="font-black uppercase tracking-widest text-xs">Prerequisite Steps Detected</h3>
-                </div>
-                <p className="text-xs text-muted-foreground mb-4">
-                  You may need to complete these guides before starting the main protocol:
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {guide.prerequisites.map((pr: any) => (
-                    <Link key={pr.id} href={`/guides/${pr.id}`}>
-                      <Badge variant="secondary" className="rounded-xl h-8 px-4 cursor-pointer hover:bg-secondary/80">
-                        {pr.title}
-                      </Badge>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            )}
-
             <section className="space-y-8">
               <div className="flex items-center gap-4 px-2">
                 <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter">{t('guides_steps')}</h2>
                 <div className="h-px flex-grow bg-primary/10" />
+                <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest opacity-40">{guide.steps?.length} Total Protocols</Badge>
               </div>
 
               <div className="space-y-10">
@@ -499,12 +490,6 @@ export default function GuideDetailPage() {
                   {t('guides_ask_ai')}
                 </Button>
               </Link>
-            </div>
-
-            <div className="px-8 text-center">
-              <p className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/30">
-                 AyosGadget Protocol ID: AG-{id?.toString().padStart(6, '0')}
-              </p>
             </div>
           </div>
         </div>

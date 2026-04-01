@@ -38,6 +38,7 @@ STRICT INTEGRITY AND FORMATTING RULES:
 2. BULLET POINTS: EVERY bullet point (•) MUST start on its own NEW LINE. 
 3. LINE BREAKS: Use double newlines (\\n\\n) between paragraphs or list items to ensure visual separation.
 4. TECHNICAL TERMS: Standard industry terms like "logic board", "spudger", "ribbon cable", "LCD connector" should be kept as is (Taglish) for technical accuracy.
+5. NO SUMMARIZATION: Translate everything provided. Do not summarize the content to save tokens.
 
 Source Content:
 Title: {{{title}}}
@@ -54,8 +55,8 @@ Content:
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
   let attempts = 0;
-  const maxAttempts = 4;
-  const baseDelay = 3000;
+  const maxAttempts = 5;
+  const baseDelay = 5000;
 
   while (attempts < maxAttempts) {
     try {
@@ -64,6 +65,7 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       
       // STRICT INTEGRITY CHECK: Step count must match input count
       if (output.steps.length !== input.steps.length) {
+        console.warn(`Neural Link returned ${output.steps.length} steps, expected ${input.steps.length}. Retrying...`);
         throw new Error(`Integrity Check Failed: Expected ${input.steps.length} steps, but Neural Link returned ${output.steps.length}. Retrying for completeness...`);
       }
 
@@ -81,9 +83,9 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
         errorMsg.includes('Integrity Check Failed');
       
       if (isRetryable && attempts < maxAttempts) {
-        // If it's a quota error, wait significantly longer
+        // Longer delay for longer guides or quota issues
         const delay = isQuotaError 
-          ? 15000 + (attempts * 5000) 
+          ? 20000 + (attempts * 5000) 
           : baseDelay * Math.pow(2, attempts - 1);
           
         await new Promise(resolve => setTimeout(resolve, delay));
