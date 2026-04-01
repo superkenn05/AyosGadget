@@ -26,12 +26,13 @@ export interface IFixitWiki {
   title: string;
   description: string;
   image: { original: string };
+  type: string;
   children: { title: string; image: { thumbnail: string }; type: string }[];
 }
 
 export async function searchIFixitGuides(query: string) {
   try {
-    const res = await fetch(`https://www.ifixit.com/api/2.0/search/${encodeURIComponent(query)}?type=guide&limit=12`);
+    const res = await fetch(`https://www.ifixit.com/api/2.0/search/${encodeURIComponent(query)}?type=guide&limit=24`);
     if (!res.ok) return [];
     const data = await res.json();
     return data.results || [];
@@ -66,7 +67,6 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
 
 export async function getIFixitWiki(categoryName: string): Promise<IFixitWiki | null> {
   try {
-    // Map internal category names to iFixit names if necessary
     const mappedName = categoryName === 'Smartphones' ? 'Phone' : categoryName;
     const res = await fetch(`https://www.ifixit.com/api/2.0/wikis/CATEGORY/${encodeURIComponent(mappedName)}`);
     if (!res.ok) return null;
@@ -75,6 +75,7 @@ export async function getIFixitWiki(categoryName: string): Promise<IFixitWiki | 
       title: data.title,
       description: stripHtml(data.description_rendered || data.description || ''),
       image: data.image,
+      type: data.type || 'category',
       children: data.children || [],
     };
   } catch (error) {
@@ -95,7 +96,7 @@ export function mapIFixitToInternal(ifixit: any) {
     }).filter(Boolean);
 
     return {
-      title: s.title || '', // Leave empty to let UI handle "Step" label translation
+      title: s.title || '',
       description: stepLines.join('\n\n'),
       imageUrl: s.media?.data?.[0]?.original || 'https://picsum.photos/seed/step/600/400'
     };
@@ -110,6 +111,7 @@ export function mapIFixitToInternal(ifixit: any) {
     timeEstimate: ifixit.time_required || '30-60 mins',
     description: stripHtml(ifixit.summary || ifixit.text || ''),
     thumbnail: ifixit.image?.original || ifixit.thumbnail || 'https://picsum.photos/seed/repair/600/400',
+    type: ifixit.type || 'replacement',
     tools: (ifixit.tools || []).map((t: any) => ({ name: t.name })),
     parts: (ifixit.parts || []).map((p: any) => ({ name: p.name })),
     steps: mappedSteps,

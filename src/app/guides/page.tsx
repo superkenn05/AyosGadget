@@ -4,8 +4,8 @@ import RepairCard from '@/components/repair/RepairCard';
 import CategoryIcon from '@/components/repair/CategoryIcon';
 import { REPAIR_CATEGORIES } from '@/lib/repair-data';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2, Sparkles, LayoutGrid, ArrowRight } from 'lucide-react';
-import { useState, useEffect, Suspense } from 'react';
+import { Search, Loader2, Sparkles, LayoutGrid, ArrowRight, Wrench, Activity, AlertTriangle } from 'lucide-react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
 import { searchIFixitGuides, getTrendingGuides, mapIFixitToInternal, getIFixitWiki, IFixitWiki } from '@/lib/ifixit-api';
@@ -36,6 +36,13 @@ function GuidesContent() {
       return !duplicate;
     });
   };
+
+  const sections = useMemo(() => {
+    const replacement = globalGuides.filter(g => g.type === 'replacement' || g.type === 'technique' || !g.type);
+    const teardowns = globalGuides.filter(g => g.type === 'teardown');
+    const troubleshooting = globalGuides.filter(g => g.type === 'troubleshooting');
+    return { replacement, teardowns, troubleshooting };
+  }, [globalGuides]);
 
   useEffect(() => {
     setSelectedCategory(categoryParam);
@@ -119,12 +126,9 @@ function GuidesContent() {
   };
 
   const handleCategoryClick = (catName: string | null) => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams();
     if (catName) {
       params.set('category', catName);
-      params.delete('search');
-    } else {
-      params.delete('category');
     }
     router.push(`/guides?${params.toString()}`);
   };
@@ -166,7 +170,7 @@ function GuidesContent() {
         </div>
       </section>
 
-      {/* Professional Visual Category Cards Grid */}
+      {/* Landing UI: Category Cards */}
       {!selectedCategory && !searchQuery && (
         <section className="container mx-auto px-6 py-12">
           <div className="flex items-center gap-4 mb-8">
@@ -174,22 +178,6 @@ function GuidesContent() {
              <div className="h-px flex-grow bg-primary/10" />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            <button
-              onClick={() => handleCategoryClick(null)}
-              className={`glass group relative overflow-hidden rounded-[2rem] p-6 text-left transition-all hover:border-primary/50 active:scale-95 flex flex-col justify-between h-40 ${selectedCategory === null ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : 'border-black/5 dark:border-white/5'}`}
-            >
-              <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <LayoutGrid className="w-32 h-32" />
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
-                <LayoutGrid className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-widest leading-none block mb-1">{t('common_system')}</span>
-                <span className="text-sm font-black uppercase tracking-tighter">{t('guides_all')}</span>
-              </div>
-            </button>
-
             {REPAIR_CATEGORIES.map((cat) => (
               <button
                 key={cat.name}
@@ -212,91 +200,135 @@ function GuidesContent() {
         </section>
       )}
 
-      {/* Category Landing Grid */}
-      {categoryWiki && !searchQuery && (
-        <section className="container mx-auto px-6 mb-16 animate-in fade-in slide-in-from-bottom-4">
-          <div className="glass rounded-[2.5rem] p-8 md:p-12 mb-12 relative overflow-hidden">
+      {/* Device Landing Hero */}
+      {categoryWiki && (
+        <section className="container mx-auto px-6 mb-16 animate-in fade-in slide-in-from-bottom-4 pt-12">
+          <div className="glass rounded-[3rem] p-8 md:p-12 mb-12 relative overflow-hidden border-primary/10">
             <div className="absolute inset-0 scan-line opacity-5" />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-16 items-center">
+              <div className="lg:col-span-8 space-y-6">
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" onClick={() => handleCategoryClick(null)} className="h-8 rounded-full px-4 text-[8px] font-black uppercase tracking-widest border border-primary/20 hover:bg-primary/10">
-                    {t('common_exit')}
-                  </Button>
+                   <Button variant="ghost" onClick={() => handleCategoryClick(null)} className="h-8 rounded-full px-4 text-[8px] font-black uppercase tracking-widest border border-primary/20 hover:bg-primary/10">
+                     <ArrowRight className="w-3 h-3 rotate-180 mr-2" /> {t('guides_back')}
+                   </Button>
+                   <span className="text-[10px] font-black uppercase tracking-widest opacity-30">/ {categoryWiki.type}</span>
                 </div>
-                <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter">{categoryWiki.title}</h2>
-                <p className="text-muted-foreground font-medium leading-relaxed max-w-xl">{categoryWiki.description}</p>
+                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none">{categoryWiki.title}</h2>
+                <p className="text-muted-foreground font-medium leading-relaxed max-w-2xl text-sm md:text-base">{categoryWiki.description}</p>
+                <div className="flex flex-wrap gap-4 pt-4">
+                   <Button className="rounded-xl h-12 px-8 font-black uppercase tracking-widest text-[9px] neon-glow">Initialize Repair</Button>
+                   <Button variant="outline" className="rounded-xl h-12 px-8 font-black uppercase tracking-widest text-[9px] border-primary/20">I own this device</Button>
+                </div>
               </div>
               {categoryWiki.image?.original && (
-                <div className="relative h-48 md:h-64">
-                  <Image src={categoryWiki.image.original} alt={categoryWiki.title} fill className="object-contain" />
+                <div className="lg:col-span-4 relative aspect-square">
+                  <Image src={categoryWiki.image.original} alt={categoryWiki.title} fill className="object-contain drop-shadow-2xl" />
                 </div>
               )}
             </div>
           </div>
 
-          {/* Sub-categories Grid */}
-          {categoryWiki.children && categoryWiki.children.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-              {categoryWiki.children.map((child, i) => (
-                <Link key={`child-${i}`} href={`/guides?category=${child.title}`}>
-                  <div className="glass group rounded-2xl p-6 h-full flex flex-col items-center justify-center text-center gap-4 hover:border-primary/50 transition-all">
-                    <div className="relative w-12 h-12">
-                      <Image 
-                        src={child.image?.thumbnail || 'https://picsum.photos/seed/sub/100/100'} 
-                        alt={child.title} 
-                        fill 
-                        className="object-contain opacity-50 group-hover:opacity-100 transition-opacity" 
-                      />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest leading-tight">{child.title}</span>
-                  </div>
-                </Link>
-              ))}
+          {/* Device Sub-categories (Apple iPhone, Android, etc) */}
+          {categoryWiki.children && categoryWiki.children.length > 0 && !searchQuery && (
+            <div className="mb-16">
+               <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary mb-8 px-2">Sub-Modules Detected</h3>
+               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                 {categoryWiki.children.map((child, i) => (
+                   <Link key={`child-${i}`} href={`/guides?category=${child.title}`}>
+                     <div className="glass group rounded-2xl p-6 h-32 flex flex-col items-center justify-center text-center gap-3 hover:border-primary/50 transition-all active:scale-95">
+                       <div className="relative w-10 h-10 opacity-40 group-hover:opacity-100 transition-opacity">
+                         <Image 
+                           src={child.image?.thumbnail || 'https://picsum.photos/seed/sub/100/100'} 
+                           alt={child.title} 
+                           fill 
+                           className="object-contain" 
+                         />
+                       </div>
+                       <span className="text-[8px] font-black uppercase tracking-widest leading-tight line-clamp-2">{child.title}</span>
+                     </div>
+                   </Link>
+                 ))}
+               </div>
             </div>
           )}
         </section>
       )}
 
-      {/* Results Grid */}
-      <section className="container mx-auto px-6">
-        <div className="flex items-center gap-4 mb-10">
-          <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">
-            {searchQuery ? `Results for "${searchQuery}"` : selectedCategory ? `Protocols in "${selectedCategory}"` : 'Library Protocols'}
-          </h3>
-          <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
-        </div>
-
-        {globalGuides.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {globalGuides.map((guide) => (
-              <RepairCard key={`guide-${guide.id}`} guide={guide} />
-            ))}
-          </div>
-        ) : isLoading ? (
+      {/* Main Content Sections */}
+      <section className="container mx-auto px-6 space-y-24">
+        {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24">
             <Loader2 className="w-10 h-10 animate-spin text-primary mb-6" />
             <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
           </div>
+        ) : globalGuides.length > 0 ? (
+          <>
+            {/* 1. Replacement Guides (Compact Horizontal) */}
+            {sections.replacement.length > 0 && (
+              <div>
+                <div className="flex items-center gap-4 mb-10 px-2">
+                  <Wrench className="w-4 h-4 text-primary" />
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Replacement Protocols</h3>
+                  <div className="h-px flex-grow bg-primary/10" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {sections.replacement.map((guide) => (
+                    <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 2. Troubleshooting (Visual Grid) */}
+            {sections.troubleshooting.length > 0 && (
+              <div>
+                <div className="flex items-center gap-4 mb-10 px-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">System Troubleshooting</h3>
+                  <div className="h-px flex-grow bg-amber-500/10" />
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {sections.troubleshooting.map((guide) => (
+                    <RepairCard key={`guide-${guide.id}`} guide={guide} variant="trouble" />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 3. Teardowns & Advanced (Default Cards) */}
+            {sections.teardowns.length > 0 && (
+              <div>
+                <div className="flex items-center gap-4 mb-10 px-2">
+                  <Activity className="w-4 h-4 text-secondary" />
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-secondary">Advanced Teardowns</h3>
+                  <div className="h-px flex-grow bg-secondary/10" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {sections.teardowns.map((guide) => (
+                    <RepairCard key={`guide-${guide.id}`} guide={guide} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Pagination / Load More */}
+            <div className="mt-16 text-center">
+              <Button 
+                onClick={loadMore} 
+                disabled={isLoading}
+                variant="outline" 
+                className="rounded-full h-14 px-12 font-black uppercase tracking-widest text-[10px] border-primary/20"
+              >
+                {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {t('guides_access_more')}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </div>
+          </>
         ) : (
-          <div className="text-center py-24 glass rounded-[3rem] border-dashed border-2">
+          <div className="text-center py-24 glass rounded-[3rem] border-dashed border-2 border-primary/10">
             <h3 className="text-lg font-black uppercase tracking-tighter mb-2">{t('guides_not_found')}</h3>
             <p className="text-xs text-muted-foreground font-medium">{t('guides_adjust')}</p>
-          </div>
-        )}
-
-        {globalGuides.length > 0 && (
-          <div className="mt-16 text-center">
-            <Button 
-              onClick={loadMore} 
-              disabled={isLoading}
-              variant="outline" 
-              className="rounded-full h-14 px-12 font-black uppercase tracking-widest text-[10px]"
-            >
-              {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {t('guides_access_more')}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
           </div>
         )}
       </section>

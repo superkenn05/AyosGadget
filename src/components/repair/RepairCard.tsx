@@ -1,15 +1,16 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, Clock, ShieldCheck, ArrowRight, Zap } from 'lucide-react';
+import { Star, Clock, ShieldCheck, ArrowRight, Zap, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { RepairGuide } from '@/lib/repair-data';
-import { useLanguage, translations } from '@/components/providers/language-provider';
+import { useLanguage } from '@/components/providers/language-provider';
+import { cn } from '@/lib/utils';
 
 interface RepairCardProps {
-  guide: RepairGuide;
+  guide: any;
+  variant?: 'default' | 'compact' | 'trouble';
 }
 
-export default function RepairCard({ guide }: RepairCardProps) {
+export default function RepairCard({ guide, variant = 'default' }: RepairCardProps) {
   const { t } = useLanguage();
   
   const difficultyLabel = t(`guides_difficulty_${guide.difficulty}`);
@@ -17,9 +18,54 @@ export default function RepairCard({ guide }: RepairCardProps) {
     easy: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/20',
     medium: 'text-amber-600 dark:text-amber-400 bg-amber-500/20',
     hard: 'text-rose-600 dark:text-rose-400 bg-rose-500/20',
-  }[guide.difficulty];
+  }[guide.difficulty as 'easy' | 'medium' | 'hard'] || 'bg-muted';
 
-  const localizedTitle = translations[`${guide.id}_title`] ? t(`${guide.id}_title`) : guide.title;
+  if (variant === 'compact') {
+    return (
+      <Link href={`/guides/${guide.id}`}>
+        <div className="glass group rounded-2xl overflow-hidden flex items-center h-24 transition-all hover:border-primary/50 active:scale-95">
+          <div className="p-4 flex-grow min-w-0">
+             <h4 className="text-xs md:text-sm font-black uppercase tracking-tighter truncate group-hover:text-primary transition-colors">
+               {guide.title}
+             </h4>
+             <div className="flex items-center gap-2 mt-1">
+               <span className={`text-[6px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full ${difficultyColor}`}>
+                 {difficultyLabel}
+               </span>
+               <span className="text-[6px] font-black uppercase tracking-widest text-muted-foreground">
+                 {guide.timeEstimate}
+               </span>
+             </div>
+          </div>
+          <div className="relative w-32 h-full shrink-0 border-l border-black/5 dark:border-white/5">
+            <Image src={guide.thumbnail} alt={guide.title} fill className="object-cover transition-transform group-hover:scale-110" />
+            <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/20" />
+          </div>
+        </div>
+      </Link>
+    );
+  }
+
+  if (variant === 'trouble') {
+    return (
+      <Link href={`/guides/${guide.id}`}>
+        <div className="glass group rounded-3xl overflow-hidden flex flex-col transition-all hover:border-amber-500/50 active:scale-95 bg-amber-500/[0.02]">
+          <div className="relative aspect-square">
+            <Image src={guide.thumbnail} alt={guide.title} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute top-3 left-3 px-2 py-1 rounded-lg bg-amber-500 text-white text-[7px] font-black uppercase tracking-widest shadow-lg">
+              FAULTS DETECTED
+            </div>
+          </div>
+          <div className="p-4 text-center">
+            <h4 className="text-[10px] md:text-xs font-black uppercase tracking-tight leading-tight group-hover:text-amber-500 transition-colors line-clamp-2">
+              {guide.title}
+            </h4>
+          </div>
+        </div>
+      </Link>
+    );
+  }
 
   return (
     <Link href={`/guides/${guide.id}`}>
@@ -29,12 +75,10 @@ export default function RepairCard({ guide }: RepairCardProps) {
         <div className="relative aspect-[21/10] overflow-hidden">
           <Image
             src={guide.thumbnail}
-            alt={localizedTitle}
+            alt={guide.title}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-110"
-            data-ai-hint="gadget repair"
           />
-          {/* Always dark gradient for text readability on images */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           
           <Badge className={`absolute top-4 right-4 ${difficultyColor} font-black uppercase tracking-[0.2em] text-[7px] border-none px-3 py-1 rounded-full backdrop-blur-md shadow-sm`}>
@@ -57,7 +101,7 @@ export default function RepairCard({ guide }: RepairCardProps) {
           </div>
           
           <h3 className="text-xl md:text-2xl font-black leading-tight tracking-tighter text-foreground group-hover:text-primary transition-colors">
-            {localizedTitle}
+            {guide.title}
           </h3>
           
           <div className="grid grid-cols-2 gap-4 mt-2">
@@ -67,7 +111,7 @@ export default function RepairCard({ guide }: RepairCardProps) {
             </div>
             <div className="flex items-center gap-2 text-[8px] font-black text-muted-foreground uppercase tracking-widest">
               <ShieldCheck className="w-3.5 h-3.5 text-primary/50" />
-              {guide.device}
+              {guide.device || 'Hardware'}
             </div>
           </div>
         </div>
