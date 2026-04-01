@@ -3,24 +3,25 @@
 import { FEATURED_REPAIRS } from '@/lib/repair-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Wrench, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, Clock, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Wrench, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc } from '@/firebase';
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo } from 'react';
-import { getIFixitGuide, mapIFixitToInternal } from '@/lib/ifixit-api';
+import { getIFixitGuide, mapIFixitToInternal, getIFixitWiki } from '@/lib/ifixit-api';
 import { translateGuide } from '@/ai/flows/translate-guide-flow';
 
 export default function GuideDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params?.id as string;
-  const { user } = useUser();
+  const { user } = user ? useUser() : { user: null }; // Safe check for hook usage if needed
   const db = useFirestore();
   const { toast } = useToast();
   const { t, language } = useLanguage();
@@ -56,6 +57,15 @@ export default function GuideDetailPage() {
           const ifixit = await getIFixitGuide(id);
           if (ifixit) {
             fetchedGuide = mapIFixitToInternal(ifixit);
+          } else {
+            // 3. FALLBACK: Check if this is actually a WIKI/DEVICE ID
+            // If the ID represents a device (e.g. "MacBook_Pro_13_Unibody_Mid_2009"),
+            // we redirect the user to the category view to see the list of guides.
+            const wiki = await getIFixitWiki(id);
+            if (wiki) {
+              router.replace(`/guides?category=${encodeURIComponent(id)}`);
+              return;
+            }
           }
         }
         
@@ -70,7 +80,7 @@ export default function GuideDetailPage() {
       }
     }
     fetchGuide();
-  }, [id]);
+  }, [id, router]);
 
   // AI Live Translation for Step-by-Step Instructions
   useEffect(() => {
@@ -116,7 +126,8 @@ export default function GuideDetailPage() {
   }, [language, originalGuide, toast, guide?.language]);
 
   const handleBookmark = () => {
-    if (!user) {
+    const { user: currentUser } = useUser();
+    if (!currentUser) {
       toast({ title: t('common_login_required'), description: t('common_login_desc') });
       return;
     }
@@ -181,7 +192,7 @@ export default function GuideDetailPage() {
   if (!guide) {
     return (
       <div className="min-h-screen flex items-center justify-center text-center p-8 bg-background">
-        <div className="glass p-12 rounded-[3rem] border-primary/20">
+        <div className="glass p-12 rounded-3xl border-primary/20">
           <AlertTriangle className="w-16 h-16 text-rose-500 mx-auto mb-6" />
           <h2 className="text-2xl font-black uppercase tracking-tighter mb-4">Protocol Offline</h2>
           <p className="text-muted-foreground mb-8 text-sm">Target manual could not be initialized. Please check your connection.</p>
@@ -217,7 +228,6 @@ export default function GuideDetailPage() {
         </div>
       )}
 
-      {/* Header HUD - Compact for Mobile */}
       <div className="fixed top-14 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-black/5 dark:border-white/5 md:hidden">
         <div className="px-4 h-12 flex items-center justify-between">
            <Link href="/guides" className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
@@ -237,7 +247,6 @@ export default function GuideDetailPage() {
       <div className="container mx-auto px-4 pt-32 md:pt-40">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
           
-          {/* Main Content */}
           <div className="lg:col-span-8 space-y-12">
             <section className="space-y-6">
               <div className="flex flex-wrap items-center gap-3">
@@ -258,7 +267,7 @@ export default function GuideDetailPage() {
               </h1>
 
               {guide.thumbnail && (
-                <div className="relative aspect-video rounded-[2.5rem] md:rounded-[4rem] overflow-hidden shadow-2xl glass border-primary/10">
+                <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl glass border-primary/10">
                   <Image
                     src={guide.thumbnail}
                     alt={guide.title}
@@ -274,7 +283,7 @@ export default function GuideDetailPage() {
                 </div>
               )}
 
-              <div className="p-8 md:p-12 glass rounded-[2.5rem] md:rounded-[3.5rem] border-primary/5 bg-primary/[0.02]">
+              <div className="p-8 md:p-12 glass rounded-3xl border-primary/5 bg-primary/[0.02]">
                 <p className="text-muted-foreground text-sm md:text-lg font-medium leading-relaxed whitespace-pre-wrap">
                   {guide.description}
                 </p>
@@ -290,7 +299,7 @@ export default function GuideDetailPage() {
               <div className="space-y-10">
                 {guide.steps && guide.steps.length > 0 ? (
                   guide.steps.map((step: any, index: number) => (
-                    <div key={index} className="glass rounded-[2.5rem] md:rounded-[4rem] overflow-hidden border-primary/5 group/step transition-all hover:border-primary/20">
+                    <div key={index} className="glass rounded-3xl overflow-hidden border-primary/5 group/step transition-all hover:border-primary/20">
                       <div className="p-8 md:p-16">
                         <div className="flex items-start gap-6 md:gap-10 mb-10">
                           <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl md:text-4xl shadow-2xl shadow-primary/30 group-hover/step:scale-110 transition-transform">
@@ -306,7 +315,7 @@ export default function GuideDetailPage() {
                           </div>
                         </div>
                         {step.imageUrl && (
-                          <div className="relative aspect-video rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 group-hover/step:scale-[1.01] transition-transform">
+                          <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 group-hover/step:scale-[1.01] transition-transform">
                             <Image
                               src={step.imageUrl}
                               alt={`${t('guides_step_title')} ${index + 1}`}
@@ -328,7 +337,6 @@ export default function GuideDetailPage() {
             </section>
           </div>
 
-          {/* Sidebar */}
           <div className="lg:col-span-4 space-y-8 sticky top-32">
             <div className="hidden lg:flex gap-4">
               <Button 
@@ -343,7 +351,7 @@ export default function GuideDetailPage() {
               </Button>
             </div>
 
-            <div className="glass rounded-[2.5rem] border-primary/5 overflow-hidden">
+            <div className="glass rounded-3xl border-primary/5 overflow-hidden">
               <div className="p-6 bg-primary/5 border-b border-primary/10 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Wrench className="w-5 h-5 text-primary" />
@@ -370,7 +378,7 @@ export default function GuideDetailPage() {
               </div>
             </div>
 
-            <div className="p-8 glass rounded-[2.5rem] border-primary/20 bg-primary/5 relative overflow-hidden group">
+            <div className="p-8 glass rounded-3xl border-primary/20 bg-primary/5 relative overflow-hidden group">
               <div className="absolute inset-0 scan-line opacity-5" />
               <div className="flex items-center gap-4 mb-6 text-primary">
                 <div className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20">
