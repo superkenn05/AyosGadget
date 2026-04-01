@@ -91,14 +91,14 @@ export function mapIFixitToInternal(ifixit: any) {
   
   const guideId = rawId.toString();
   
-  // Robust Mapping: Capture ALL lines and use color indicators to match iFixit's UI
+  // Robust Mapping: Capture ALL steps and ALL lines within those steps
   const rawSteps = ifixit.steps || [];
   const mappedSteps = rawSteps.map((s: any) => {
     const stepLines = (s.lines || []).map((l: any) => {
       let text = l.text_rendered || l.text_raw || l.text || '';
       const bulletType = l.bullet || 'none';
       
-      // Map iFixit bullet colors to Emojis for better visual guidance
+      // Map iFixit bullet colors to Emojis to match visual screw markers in photos
       const bulletIcons: Record<string, string> = {
         'black': '• ',
         'blue': '🔵 ',
@@ -116,7 +116,7 @@ export function mapIFixitToInternal(ifixit: any) {
       return prefix + stripHtml(text).trim();
     }).filter(Boolean);
 
-    // Get ALL media items for the step gallery
+    // Capture ALL images for the gallery
     const images = (s.media?.data || []).map((m: any) => m.original || m.medium || m.thumbnail).filter(Boolean);
     const primaryImage = images[0] || '';
 

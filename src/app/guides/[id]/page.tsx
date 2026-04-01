@@ -34,6 +34,7 @@ export default function GuideDetailPage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const translationRef = useRef<string | null>(null);
 
+  // Gallery state for each step: stepIndex -> activeImageIndex
   const [stepImageIndexes, setStepImageIndexes] = useState<Record<number, number>>({});
 
   const bookmarkRef = useMemo(() => {
@@ -234,6 +235,7 @@ export default function GuideDetailPage() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
+      {/* Mobile Back Header */}
       <div className="fixed top-14 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-black/5 dark:border-white/5 md:hidden">
         <div className="px-4 h-12 flex items-center justify-between">
            <Link href="/guides" className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
@@ -253,7 +255,9 @@ export default function GuideDetailPage() {
       <div className="container mx-auto px-4 pt-32 md:pt-40">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
           
+          {/* Main Content */}
           <div className="lg:col-span-8 space-y-12">
+            {/* Guide Header Section */}
             <section className="space-y-6">
               <div className="flex flex-wrap items-center gap-3">
                 <Badge variant="outline" className="rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest bg-primary/5 border-primary/20 text-primary">
@@ -314,6 +318,7 @@ export default function GuideDetailPage() {
               </div>
             </section>
 
+            {/* Steps Section */}
             <section className="space-y-8">
               <div className="flex items-center gap-4 px-2">
                 <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter">{t('guides_steps')}</h2>
@@ -416,6 +421,7 @@ export default function GuideDetailPage() {
             </section>
           </div>
 
+          {/* Sidebar */}
           <div className="lg:col-span-4 space-y-8 sticky top-32">
             <div className="hidden lg:flex gap-4">
               <Button 
