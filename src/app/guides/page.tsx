@@ -171,7 +171,7 @@ function GuidesContent() {
         </div>
       </section>
 
-      {/* Category Modules (Icon on Left, Labels on Right) */}
+      {/* Category Modules (Icon & Labels at Top Left, 2 Rows) */}
       {!selectedCategory && !searchQuery && (
         <section className="container mx-auto px-6 py-12">
           <div className="flex items-center gap-4 mb-10">
@@ -183,17 +183,17 @@ function GuidesContent() {
               <button
                 key={cat.name}
                 onClick={() => handleCategoryClick(cat.name)}
-                className={`glass group relative overflow-hidden rounded-[2.5rem] p-6 md:p-8 flex items-center justify-between text-left transition-all hover:border-primary/50 active:scale-95 h-32 md:h-40 shadow-xl border-primary/5 ${selectedCategory === cat.name ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : ''}`}
+                className={`glass group relative overflow-hidden rounded-[2.5rem] p-6 md:p-8 flex flex-col items-start justify-start text-left transition-all hover:border-primary/50 active:scale-95 h-40 md:h-48 shadow-xl border-primary/5 ${selectedCategory === cat.name ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : ''}`}
               >
-                {/* Icon on Left */}
-                <div className="w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all relative z-10 shadow-sm shrink-0">
-                  <CategoryIcon name={cat.icon} className="w-5 h-5 md:w-8 md:h-8" />
+                {/* Icon at Top Left */}
+                <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all relative z-10 shadow-sm shrink-0 mb-4">
+                  <CategoryIcon name={cat.icon} className="w-5 h-5 md:w-7 md:h-7" />
                 </div>
 
-                {/* Labels on Right */}
-                <div className="flex flex-col relative z-10 flex-grow pl-4">
-                  <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest opacity-30 leading-none mb-1 md:mb-2">{t('common_module')}</span>
-                  <span className="text-xs md:text-lg font-black uppercase tracking-tighter leading-tight group-hover:text-primary transition-colors break-words">{cat.name}</span>
+                {/* Labels at Top Left (below icon) */}
+                <div className="flex flex-col relative z-10">
+                  <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest opacity-30 leading-none mb-1.5">{t('common_module')}</span>
+                  <span className="text-xs md:text-xl font-black uppercase tracking-tighter leading-tight group-hover:text-primary transition-colors">{cat.name}</span>
                 </div>
 
                 {/* Watermark */}
