@@ -2,7 +2,7 @@
 
 import RepairCard from '@/components/repair/RepairCard';
 import CategoryIcon from '@/components/repair/CategoryIcon';
-import { REPAIR_CATEGORIES } from '@/lib/repair-data';
+import { REPAIR_CATEGORIES, PRIMARY_CATEGORIES } from '@/lib/repair-data';
 import { Input } from '@/components/ui/input';
 import { Search, Loader2, Sparkles, LayoutGrid, ArrowRight, Wrench, Activity, AlertTriangle } from 'lucide-react';
 import { useState, useEffect, Suspense, useMemo } from 'react';
@@ -170,7 +170,7 @@ function GuidesContent() {
         </div>
       </section>
 
-      {/* Landing UI: Category Cards (Label on Left) */}
+      {/* Landing UI: Category Cards (Label on Left, 2 Rows) */}
       {!selectedCategory && !searchQuery && (
         <section className="container mx-auto px-6 py-12">
           <div className="flex items-center gap-4 mb-8">
@@ -178,17 +178,17 @@ function GuidesContent() {
              <div className="h-px flex-grow bg-primary/10" />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {REPAIR_CATEGORIES.map((cat) => (
+            {PRIMARY_CATEGORIES.map((cat) => (
               <button
                 key={cat.name}
                 onClick={() => handleCategoryClick(cat.name)}
-                className={`glass group relative overflow-hidden rounded-2xl p-6 text-left transition-all hover:border-primary/50 active:scale-95 flex items-center justify-between h-20 ${selectedCategory === cat.name ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : 'border-black/5 dark:border-white/5'}`}
+                className={`glass group relative overflow-hidden rounded-2xl px-6 py-4 text-left transition-all hover:border-primary/50 active:scale-95 flex items-center justify-between h-20 shadow-md border-primary/5 ${selectedCategory === cat.name ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : ''}`}
               >
-                <div className="flex flex-col relative z-10">
-                  <span className="text-[8px] font-black uppercase tracking-widest opacity-40 leading-none mb-1">{t('common_module')}</span>
+                <div className="flex flex-col relative z-10 text-left">
+                  <span className="text-[8px] font-black uppercase tracking-widest opacity-40 leading-none mb-1.5">{t('common_module')}</span>
                   <span className="text-xs font-black uppercase tracking-tighter leading-none group-hover:text-primary transition-colors">{cat.name}</span>
                 </div>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors relative z-10 ${selectedCategory === cat.name ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground group-hover:text-primary'}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all relative z-10 ${selectedCategory === cat.name ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground'}`}>
                   <CategoryIcon name={cat.icon} className="w-5 h-5" />
                 </div>
               </button>

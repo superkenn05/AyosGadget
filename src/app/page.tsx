@@ -68,7 +68,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Mini-Modules Grid (Horizontal, Label on Left) */}
+      {/* Category Modules Grid (Horizontal Label on Left, 2 Rows) */}
       <section className="container mx-auto px-6 mb-12">
         <div className="flex items-center justify-between mb-6 px-2">
           <div className="flex flex-col">
@@ -79,15 +79,15 @@ export default function Home() {
           </Link>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {PRIMARY_CATEGORIES.map((cat) => (
             <Link key={cat.name} href={`/guides?category=${cat.name}`}>
-              <div className="glass h-16 px-5 rounded-2xl flex items-center justify-between group transition-all hover:border-primary/50 hover:bg-primary/5 active:scale-95 shadow-sm">
-                <div className="flex flex-col">
-                  <span className="text-[7px] font-black uppercase tracking-widest opacity-40 leading-none mb-1">{t('common_module')}</span>
-                  <span className="text-[10px] md:text-xs font-black uppercase tracking-tighter leading-none group-hover:text-primary transition-colors">{cat.name}</span>
+              <div className="glass h-20 px-6 rounded-2xl flex items-center justify-between group transition-all hover:border-primary/50 hover:bg-primary/5 active:scale-95 shadow-md border-primary/10">
+                <div className="flex flex-col text-left">
+                  <span className="text-[8px] font-black uppercase tracking-widest opacity-40 leading-none mb-1.5">{t('common_module')}</span>
+                  <span className="text-xs md:text-sm font-black uppercase tracking-tighter leading-none group-hover:text-primary transition-colors">{cat.name}</span>
                 </div>
-                <div className="w-10 h-10 rounded-xl bg-muted/30 flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                   <CategoryIcon name={cat.icon} className="w-5 h-5" />
                 </div>
               </div>
