@@ -31,6 +31,7 @@ function GuidesContent() {
   const deduplicateGuides = (guides: any[]) => {
     const seen = new Set();
     return guides.filter(guide => {
+      if (!guide || !guide.id) return false;
       const duplicate = seen.has(guide.id);
       seen.add(guide.id);
       return !duplicate;
@@ -56,11 +57,9 @@ function GuidesContent() {
       
       try {
         if (selectedCategory) {
-          // 1. Fetch Wiki Data (to see children/sub-categories)
           const wiki = await getIFixitWiki(selectedCategory);
           setCategoryWiki(wiki);
           
-          // 2. Fetch Guides associated with this category/device
           const results = await searchIFixitGuides(selectedCategory);
           setGlobalGuides(deduplicateGuides(results.map(mapIFixitToInternal)));
         } else if (!searchQuery) {
@@ -113,7 +112,6 @@ function GuidesContent() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-background pb-24">
-      {/* Search Header */}
       <section className="pt-24 pb-4 px-6 sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-black/5 dark:border-white/5">
         <div className="container mx-auto max-w-4xl">
           <div className="relative group">
@@ -128,10 +126,8 @@ function GuidesContent() {
         </div>
       </section>
 
-      {/* Deeply Nested Category Navigation */}
       {selectedCategory && (
         <section className="container mx-auto px-4 mt-8">
-          {/* Breadcrumbs for tracking depth */}
           <nav className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-8 px-2 overflow-x-auto whitespace-nowrap pb-2">
             <Link href="/guides" className="hover:text-primary transition-colors">LIBRARY</Link>
             <ChevronRight className="w-3 h-3 flex-shrink-0" />
@@ -174,7 +170,6 @@ function GuidesContent() {
                 </div>
               )}
 
-              {/* Infinite Sub-Modules/Categories Grid */}
               {categoryWiki?.children && categoryWiki.children.length > 0 && (
                 <div className="mb-16">
                   <div className="flex items-center gap-4 mb-10 px-2">
@@ -212,7 +207,6 @@ function GuidesContent() {
                 </div>
               )}
 
-              {/* Guides categorized by type - Nested View */}
               {(globalGuides.length > 0) && (
                 <div className="space-y-16">
                   <div className="flex items-center gap-4 px-2">
@@ -278,7 +272,6 @@ function GuidesContent() {
         </section>
       )}
 
-      {/* Global Landing View */}
       {!selectedCategory && (
         <section className="container mx-auto px-6 space-y-16 mt-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-2">
