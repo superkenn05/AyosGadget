@@ -3,7 +3,7 @@
 import { FEATURED_REPAIRS } from '@/lib/repair-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Wrench, Package, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles } from 'lucide-react';
+import { CheckCircle2, Wrench, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, Clock, Zap } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc } from '@/firebase';
@@ -13,13 +13,13 @@ import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useLanguage } from '@/components/providers/language-provider';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { getIFixitGuide, mapIFixitToInternal } from '@/lib/ifixit-api';
 import { translateGuide } from '@/ai/flows/translate-guide-flow';
 
 export default function GuideDetailPage() {
   const params = useParams();
-  const { id } = params;
+  const id = params?.id as string;
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
@@ -30,81 +30,102 @@ export default function GuideDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isTranslating, setIsTranslating] = useState(false);
 
-  const bookmarkRef = user && guide ? doc(db, 'users', user.uid, 'bookmarks', guide.id) : null;
+  // Memoize document reference to avoid hydration/render loops
+  const bookmarkRef = useMemo(() => {
+    if (!user || !guide?.id) return null;
+    return doc(db, 'users', user.uid, 'bookmarks', guide.id);
+  }, [user, guide?.id, db]);
+
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
+  // Initial Fetch
   useEffect(() => {
     async function fetchGuide() {
       if (!id) return;
       setLoading(true);
-      
-      let fetchedGuide = null;
-      const local = FEATURED_REPAIRS.find((g) => g.id === id);
-      if (local) {
-        fetchedGuide = local;
-      } else if (/^\d+$/.test(id as string)) {
-        const ifixit = await getIFixitGuide(id as string);
-        if (ifixit) {
-          fetchedGuide = mapIFixitToInternal(ifixit);
+      try {
+        let fetchedGuide = null;
+        
+        // 1. Try local data first
+        const local = FEATURED_REPAIRS.find((g) => g.id === id);
+        if (local) {
+          fetchedGuide = local;
+        } else {
+          // 2. Fetch from iFixit
+          const ifixit = await getIFixitGuide(id);
+          if (ifixit) {
+            fetchedGuide = mapIFixitToInternal(ifixit);
+          }
         }
+        
+        if (fetchedGuide) {
+          setOriginalGuide(fetchedGuide);
+          setGuide(fetchedGuide);
+        }
+      } catch (error) {
+        console.error("Neural Fetch failed:", error);
+      } finally {
+        setLoading(false);
       }
-      
-      setGuide(fetchedGuide);
-      setOriginalGuide(fetchedGuide);
-      setLoading(false);
     }
     fetchGuide();
   }, [id]);
 
-  // Handle live translation when language changes to Filipino
+  // AI Live Translation
   useEffect(() => {
     async function handleTranslation() {
-      if (language === 'fil' && guide && guide.language !== 'fil') {
+      if (!originalGuide) return;
+
+      if (language === 'fil' && guide?.language !== 'fil') {
         setIsTranslating(true);
         try {
           const translated = await translateGuide({
-            title: guide.title,
-            description: guide.description,
-            steps: guide.steps.map((s: any) => ({ title: s.title, description: s.description })),
+            title: originalGuide.title,
+            description: originalGuide.description,
+            steps: originalGuide.steps.map((s: any) => ({ 
+              title: s.title, 
+              description: s.description 
+            })),
           });
 
-          setGuide((prev: any) => ({
-            ...prev,
+          setGuide({
+            ...originalGuide,
             title: translated.title,
             description: translated.description,
-            steps: prev.steps.map((s: any, i: number) => ({
+            steps: originalGuide.steps.map((s: any, i: number) => ({
               ...s,
               title: translated.steps[i].title,
               description: translated.steps[i].description,
             })),
             language: 'fil'
-          }));
+          });
         } catch (error) {
-          console.error("Translation failed", error);
+          console.error("AI Translation failed:", error);
+          toast({ variant: "destructive", title: "Neural Link Busy", description: "AI translation failed." });
         } finally {
           setIsTranslating(false);
         }
-      } else if (language === 'en' && guide && guide.language === 'fil') {
-        // Revert to original English if user switches back
+      } else if (language === 'en' && guide?.language === 'fil') {
+        // Revert to original English
         setGuide(originalGuide);
       }
     }
     handleTranslation();
-  }, [language, originalGuide]);
+  }, [language, originalGuide, toast]);
 
   const handleBookmark = () => {
     if (!user) {
       toast({ title: t('common_login_required'), description: t('common_login_desc') });
       return;
     }
-    if (!guide) return;
+    if (!guide || !bookmarkRef) return;
 
     if (isBookmarked) {
-      deleteDoc(bookmarkRef!)
+      deleteDoc(bookmarkRef)
         .catch(async () => {
           const permissionError = new FirestorePermissionError({
-            path: bookmarkRef!.path,
+            path: bookmarkRef.path,
             operation: 'delete',
           });
           errorEmitter.emit('permission-error', permissionError);
@@ -118,10 +139,10 @@ export default function GuideDetailPage() {
         category: guide.category,
         savedAt: serverTimestamp(),
       };
-      setDoc(bookmarkRef!, data)
+      setDoc(bookmarkRef, data)
         .catch(async () => {
           const permissionError = new FirestorePermissionError({
-            path: bookmarkRef!.path,
+            path: bookmarkRef.path,
             operation: 'create',
             requestResourceData: data,
           });
@@ -138,9 +159,7 @@ export default function GuideDetailPage() {
         title: guide.title,
         text: guide.description,
         url: window.location.href,
-      }).catch(() => {
-        toast({ title: "Protocol Error", description: "Sharing failed." });
-      });
+      }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast({ title: "Neural Link Copied" });
@@ -193,7 +212,7 @@ export default function GuideDetailPage() {
         </div>
       )}
 
-      {/* Header HUD */}
+      {/* Header HUD - Compact for Mobile */}
       <div className="fixed top-14 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-black/5 dark:border-white/5 md:hidden">
         <div className="px-4 h-12 flex items-center justify-between">
            <Link href="/guides" className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
@@ -213,7 +232,7 @@ export default function GuideDetailPage() {
       <div className="container mx-auto px-4 pt-32 md:pt-40">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
           
-          {/* Main Content: The Instructions */}
+          {/* Main Content */}
           <div className="lg:col-span-8 space-y-12">
             <section className="space-y-6">
               <div className="flex flex-wrap items-center gap-3">
@@ -294,10 +313,8 @@ export default function GuideDetailPage() {
             </section>
           </div>
 
-          {/* Sidebar HUD: Logistics & Intelligence */}
+          {/* Sidebar */}
           <div className="lg:col-span-4 space-y-8 sticky top-32">
-            
-            {/* Desktop Actions */}
             <div className="hidden lg:flex gap-4">
               <Button 
                 onClick={handleBookmark}
@@ -311,7 +328,6 @@ export default function GuideDetailPage() {
               </Button>
             </div>
 
-            {/* Tools Module */}
             <div className="glass rounded-[2.5rem] border-primary/5 overflow-hidden">
               <div className="p-6 bg-primary/5 border-b border-primary/10 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -339,7 +355,6 @@ export default function GuideDetailPage() {
               </div>
             </div>
 
-            {/* Intelligence Section */}
             <div className="p-8 glass rounded-[2.5rem] border-primary/20 bg-primary/5 relative overflow-hidden group">
               <div className="absolute inset-0 scan-line opacity-5" />
               <div className="flex items-center gap-4 mb-6 text-primary">
@@ -361,7 +376,6 @@ export default function GuideDetailPage() {
               </Link>
             </div>
 
-            {/* Technical Metadata */}
             <div className="px-8 text-center">
               <p className="text-[8px] font-black uppercase tracking-[0.4em] text-muted-foreground/30">
                  AyosGadget Protocol ID: AG-{id?.toString().padStart(6, '0')}
