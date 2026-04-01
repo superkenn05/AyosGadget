@@ -16,6 +16,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo } from 'react';
 import { getIFixitGuide, mapIFixitToInternal, getIFixitWiki } from '@/lib/ifixit-api';
 import { translateGuide } from '@/ai/flows/translate-guide-flow';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function GuideDetailPage() {
   const params = useParams();
@@ -210,18 +211,6 @@ export default function GuideDetailPage() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
-      {isTranslating && (
-        <div className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm flex items-center justify-center">
-          <div className="glass p-8 rounded-3xl flex flex-col items-center gap-4 border-primary/30">
-            <div className="relative">
-              <Sparkles className="w-10 h-10 text-primary animate-pulse" />
-              <Loader2 className="w-10 h-10 text-primary animate-spin absolute inset-0 opacity-40" />
-            </div>
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary">{t('chat_running')}</p>
-          </div>
-        </div>
-      )}
-
       <div className="fixed top-14 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-black/5 dark:border-white/5 md:hidden">
         <div className="px-4 h-12 flex items-center justify-between">
            <Link href="/guides" className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
@@ -250,15 +239,25 @@ export default function GuideDetailPage() {
                 <Badge variant="outline" className={`rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest border ${difficultyColor}`}>
                   {t(`guides_difficulty_${guide.difficulty}`)}
                 </Badge>
+                {isTranslating && (
+                  <div className="flex items-center gap-2 text-primary animate-pulse ml-4">
+                    <Sparkles className="w-3 h-3" />
+                    <span className="text-[8px] font-black uppercase tracking-widest">Neural Link Syncing...</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-1.5 ml-auto text-amber-500 font-black text-xs">
                   <Star className="w-4 h-4 fill-current" />
                   {guide.rating}
                 </div>
               </div>
 
-              <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] text-foreground">
-                {guide.title}
-              </h1>
+              {isTranslating ? (
+                <Skeleton className="h-12 md:h-20 w-3/4 rounded-2xl md:rounded-3xl" />
+              ) : (
+                <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] text-foreground">
+                  {guide.title}
+                </h1>
+              )}
 
               {guide.thumbnail && (
                 <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl glass border-primary/10">
@@ -278,9 +277,17 @@ export default function GuideDetailPage() {
               )}
 
               <div className="p-8 md:p-12 glass rounded-3xl border-primary/5 bg-primary/[0.02]">
-                <p className="text-muted-foreground text-sm md:text-lg font-medium leading-relaxed whitespace-pre-wrap">
-                  {guide.description}
-                </p>
+                {isTranslating ? (
+                  <div className="space-y-4">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-5/6" />
+                    <Skeleton className="h-4 w-4/6" />
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm md:text-lg font-medium leading-relaxed whitespace-pre-wrap">
+                    {guide.description}
+                  </p>
+                )}
               </div>
             </section>
 
@@ -291,7 +298,25 @@ export default function GuideDetailPage() {
               </div>
 
               <div className="space-y-10">
-                {guide.steps && guide.steps.length > 0 ? (
+                {isTranslating ? (
+                  // Translation Skeletons
+                  [1, 2, 3].map((i) => (
+                    <div key={i} className="glass rounded-3xl overflow-hidden border-primary/5 p-8 md:p-16">
+                      <div className="flex items-start gap-6 md:gap-10 mb-10">
+                         <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary/20 animate-pulse" />
+                         <div className="flex-grow pt-2 space-y-4">
+                            <Skeleton className="h-8 w-1/3 rounded-xl" />
+                            <div className="space-y-2">
+                               <Skeleton className="h-4 w-full" />
+                               <Skeleton className="h-4 w-5/6" />
+                               <Skeleton className="h-4 w-4/6" />
+                            </div>
+                         </div>
+                      </div>
+                      <Skeleton className="aspect-video w-full rounded-3xl" />
+                    </div>
+                  ))
+                ) : guide.steps && guide.steps.length > 0 ? (
                   guide.steps.map((step: any, index: number) => (
                     <div key={index} className="glass rounded-3xl overflow-hidden border-primary/5 group/step transition-all hover:border-primary/20">
                       <div className="p-8 md:p-16">
