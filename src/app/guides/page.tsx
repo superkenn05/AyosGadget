@@ -170,7 +170,7 @@ function GuidesContent() {
         </div>
       </section>
 
-      {/* Landing UI: Category Cards */}
+      {/* Landing UI: Category Cards (Label on Left) */}
       {!selectedCategory && !searchQuery && (
         <section className="container mx-auto px-6 py-12">
           <div className="flex items-center gap-4 mb-8">
@@ -182,17 +182,14 @@ function GuidesContent() {
               <button
                 key={cat.name}
                 onClick={() => handleCategoryClick(cat.name)}
-                className={`glass group relative overflow-hidden rounded-[2rem] p-6 text-left transition-all hover:border-primary/50 active:scale-95 flex flex-col justify-between h-40 ${selectedCategory === cat.name ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : 'border-black/5 dark:border-white/5'}`}
+                className={`glass group relative overflow-hidden rounded-2xl p-6 text-left transition-all hover:border-primary/50 active:scale-95 flex items-center justify-between h-20 ${selectedCategory === cat.name ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : 'border-black/5 dark:border-white/5'}`}
               >
-                <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <CategoryIcon name={cat.icon} className="w-32 h-32" />
+                <div className="flex flex-col relative z-10">
+                  <span className="text-[8px] font-black uppercase tracking-widest opacity-40 leading-none mb-1">{t('common_module')}</span>
+                  <span className="text-xs font-black uppercase tracking-tighter leading-none group-hover:text-primary transition-colors">{cat.name}</span>
                 </div>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${selectedCategory === cat.name ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground group-hover:text-primary'}`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors relative z-10 ${selectedCategory === cat.name ? 'bg-primary/20 text-primary' : 'bg-muted/50 text-muted-foreground group-hover:text-primary'}`}>
                   <CategoryIcon name={cat.icon} className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest leading-none block mb-1 opacity-50">{t('common_module')}</span>
-                  <span className="text-sm font-black uppercase tracking-tighter">{cat.name}</span>
                 </div>
               </button>
             ))}
