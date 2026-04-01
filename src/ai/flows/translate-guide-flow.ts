@@ -54,15 +54,14 @@ Content:
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
   let attempts = 0;
-  const maxAttempts = 3;
-  const baseDelay = 2000;
+  const maxAttempts = 4;
+  const baseDelay = 3000;
 
   while (attempts < maxAttempts) {
     try {
       const {output} = await translatePrompt(input);
       if (!output) throw new Error('No output from AI');
       
-      // Basic validation to ensure the AI didn't return an empty step list if input was not empty
       if (input.steps.length > 0 && output.steps.length === 0) {
         throw new Error('AI returned zero steps for a non-empty input.');
       }
@@ -71,19 +70,25 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     } catch (error: any) {
       attempts++;
       
+      const errorMsg = error.message || "";
+      const isQuotaError = errorMsg.includes('429') || errorMsg.includes('quota');
       const isRetryable = 
-        error.message?.includes('503') || 
-        error.message?.includes('high demand') || 
-        error.message?.includes('429') ||
-        error.message?.includes('overloaded');
+        errorMsg.includes('503') || 
+        errorMsg.includes('high demand') || 
+        isQuotaError ||
+        errorMsg.includes('overloaded');
       
       if (isRetryable && attempts < maxAttempts) {
-        const delay = baseDelay * Math.pow(2, attempts - 1);
+        // If it's a quota error, wait significantly longer
+        const delay = isQuotaError 
+          ? 15000 + (attempts * 5000) // Wait 20s, 25s, 30s...
+          : baseDelay * Math.pow(2, attempts - 1);
+          
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
       
-      throw error;
+      throw new Error(`Neural Link Busy: ${errorMsg}`);
     }
   }
   

@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useLanguage } from '@/components/providers/language-provider';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { getIFixitGuide, mapIFixitToInternal, getIFixitWiki } from '@/lib/ifixit-api';
 import { translateGuide } from '@/ai/flows/translate-guide-flow';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -31,6 +31,7 @@ export default function GuideDetailPage() {
   const [originalGuide, setOriginalGuide] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isTranslating, setIsTranslating] = useState(false);
+  const translationRef = useRef<string | null>(null);
 
   // Memoize document reference for bookmarks
   const bookmarkRef = useMemo(() => {
@@ -82,9 +83,14 @@ export default function GuideDetailPage() {
   useEffect(() => {
     async function handleTranslation() {
       if (!originalGuide || !originalGuide.steps || originalGuide.steps.length === 0) return;
+      
+      // Prevent multiple concurrent translations or re-translating if already in target language
+      const translationKey = `${id}-${language}`;
+      if (translationRef.current === translationKey) return;
 
       if (language === 'fil' && guide?.language !== 'fil') {
         setIsTranslating(true);
+        translationRef.current = translationKey;
         try {
           const translated = await translateGuide({
             title: originalGuide.title,
@@ -108,18 +114,24 @@ export default function GuideDetailPage() {
               language: 'fil'
             });
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error("AI Translation failed:", error);
-          toast({ variant: "destructive", title: "Neural Link Busy", description: "Masyadong maraming request sa AI. Pakisubukan muli mamaya." });
+          translationRef.current = null;
+          toast({ 
+            variant: "destructive", 
+            title: "Neural Link Busy", 
+            description: "Limitado ang AI quota sa ngayon. Pakisubukan muli makalipas ang ilang sandali." 
+          });
         } finally {
           setIsTranslating(false);
         }
       } else if (language === 'en' && guide?.language === 'fil') {
         setGuide(originalGuide);
+        translationRef.current = `${id}-en`;
       }
     }
     handleTranslation();
-  }, [language, originalGuide, toast, guide?.language]);
+  }, [language, originalGuide, id, guide?.language, toast]);
 
   const handleBookmark = () => {
     if (!user) {
