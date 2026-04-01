@@ -91,16 +91,28 @@ export function mapIFixitToInternal(ifixit: any) {
   
   const guideId = rawId.toString();
   
-  // Robust Mapping: Ensure ALL steps are captured correctly from the API structure
+  // Robust Mapping: Capture ALL lines and use color indicators to match iFixit's UI
   const rawSteps = ifixit.steps || [];
   const mappedSteps = rawSteps.map((s: any) => {
-    // Process ALL bullet types to ensure no content is skipped (black, blue, orange, caution, etc.)
     const stepLines = (s.lines || []).map((l: any) => {
       let text = l.text_rendered || l.text_raw || l.text || '';
-      const isBullet = !!l.bullet && l.bullet !== 'none';
-      const isWarning = l.bullet === 'caution' || l.bullet === 'warning' || l.bullet === 'red';
+      const bulletType = l.bullet || 'none';
       
-      const prefix = isWarning ? '⚠️ [WARNING]: ' : (isBullet ? '• ' : '');
+      // Map iFixit bullet colors to Emojis for better visual guidance
+      const bulletIcons: Record<string, string> = {
+        'black': '• ',
+        'blue': '🔵 ',
+        'orange': '🟠 ',
+        'yellow': '🟡 ',
+        'red': '🔴 ',
+        'green': '🟢 ',
+        'violet': '🟣 ',
+        'white': '⚪ ',
+        'caution': '⚠️ [WARNING]: ',
+        'warning': '⚠️ [WARNING]: '
+      };
+
+      const prefix = bulletIcons[bulletType] || (bulletType !== 'none' ? '• ' : '');
       return prefix + stripHtml(text).trim();
     }).filter(Boolean);
 

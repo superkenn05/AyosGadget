@@ -45,7 +45,7 @@ export default function GuideDetailPage() {
   const isBookmarked = !!bookmark;
 
   useEffect(() => {
-    async function fetchFullProtocol() {
+    async function fetchGuideData() {
       if (!id) return;
       setLoading(true);
       try {
@@ -57,24 +57,7 @@ export default function GuideDetailPage() {
         } else {
           const ifixit = await getIFixitGuide(id);
           if (ifixit) {
-            let baseGuide = mapIFixitToInternal(ifixit);
-            
-            // SMART MERGING: Fetch prerequisites steps and prepend them (like iFixit website)
-            if (ifixit.prerequisites && ifixit.prerequisites.length > 0) {
-              const prereqSteps = [];
-              for (const prereq of ifixit.prerequisites) {
-                const prereqData = await getIFixitGuide(prereq.guideid.toString());
-                if (prereqData) {
-                  const mappedPrereq = mapIFixitToInternal(prereqData);
-                  // Filter out redundant steps or just add them all
-                  prereqSteps.push(...mappedPrereq.steps);
-                }
-              }
-              // Prepend prerequisite steps to the main steps to form the full protocol
-              baseGuide.steps = [...prereqSteps, ...baseGuide.steps];
-            }
-            
-            fetchedGuide = baseGuide;
+            fetchedGuide = mapIFixitToInternal(ifixit);
           } else {
             const wiki = await getIFixitWiki(id);
             if (wiki) {
@@ -100,7 +83,7 @@ export default function GuideDetailPage() {
         setLoading(false);
       }
     }
-    fetchFullProtocol();
+    fetchGuideData();
   }, [id, router]);
 
   useEffect(() => {
@@ -156,7 +139,7 @@ export default function GuideDetailPage() {
       }
     }
     handleTranslation();
-  }, [language, originalGuide, id, guide?.language, toast]);
+  }, [language, originalGuide, id, guide?.language, toast, t]);
 
   const handleBookmark = () => {
     if (!user) {
