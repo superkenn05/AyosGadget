@@ -111,15 +111,18 @@ export default function GuideDetailPage() {
           });
 
           if (translated) {
+            // Re-map with integrity check: ensure we use the translated step if available, else fallback
+            const finalSteps = originalGuide.steps.map((s: any, i: number) => ({
+              ...s,
+              title: translated.steps[i]?.title || s.title,
+              description: translated.steps[i]?.description || s.description,
+            }));
+
             setGuide({
               ...originalGuide,
               title: translated.title,
               description: translated.description,
-              steps: originalGuide.steps.map((s: any, i: number) => ({
-                ...s,
-                title: translated.steps[i]?.title || s.title,
-                description: translated.steps[i]?.description || s.description,
-              })),
+              steps: finalSteps,
               language: 'fil'
             });
           }

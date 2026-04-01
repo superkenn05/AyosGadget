@@ -91,9 +91,10 @@ export function mapIFixitToInternal(ifixit: any) {
   
   const guideId = rawId.toString();
   
-  const mappedSteps = (ifixit.steps || []).map((s: any) => {
-    // Process ALL bullet types to ensure no content is skipped
-    // Also tag warnings specifically for UI treatment if desired
+  // Robust Mapping: Ensure ALL steps are captured correctly from the API structure
+  const rawSteps = ifixit.steps || [];
+  const mappedSteps = rawSteps.map((s: any) => {
+    // Process ALL bullet types to ensure no content is skipped (black, blue, orange, etc.)
     const stepLines = (s.lines || []).map((l: any) => {
       let text = l.text_rendered || l.text_raw || l.text || '';
       const isBullet = !!l.bullet && l.bullet !== 'none';
