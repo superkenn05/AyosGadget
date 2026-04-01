@@ -1,3 +1,4 @@
+
 'use client';
 
 import RepairCard from '@/components/repair/RepairCard';
@@ -136,21 +137,21 @@ function GuidesContent() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Search HUD Header */}
-      <section className="pt-24 pb-6 px-6 sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-black/5 dark:border-white/5">
+      <section className="pt-24 pb-8 px-6 sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-black/5 dark:border-white/5">
         <div className="container mx-auto max-w-4xl">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                  <LayoutGrid className="w-5 h-5" />
+          <div className="space-y-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-lg shadow-primary/10">
+                  <LayoutGrid className="w-6 h-6" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-black tracking-tighter uppercase leading-none">{t('guides_title')}</h1>
-                  <p className="text-[8px] font-black text-primary uppercase tracking-[0.3em] mt-1">{t('guides_subtitle')}</p>
+                  <h1 className="text-2xl md:text-3xl font-black tracking-tighter uppercase leading-none">{t('guides_title')}</h1>
+                  <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mt-2">{t('guides_subtitle')}</p>
                 </div>
               </div>
               <Link href="/troubleshoot">
-                <Button variant="outline" className="h-10 rounded-xl gap-2 text-[10px] font-black uppercase tracking-widest border-primary/20">
+                <Button variant="outline" className="h-12 rounded-2xl gap-2 text-[10px] font-black uppercase tracking-widest border-primary/20 shadow-sm">
                   <Sparkles className="w-4 h-4 text-primary" />
                   {t('guides_neural_ask')}
                 </Button>
@@ -158,10 +159,10 @@ function GuidesContent() {
             </div>
 
             <div className="relative group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <Input
                 placeholder={t('guides_search')}
-                className="pl-12 h-12 rounded-2xl border-none shadow-sm bg-white dark:bg-white/5 font-bold uppercase tracking-widest text-[10px]"
+                className="pl-14 h-14 rounded-2xl border-none shadow-md bg-white dark:bg-white/5 font-bold uppercase tracking-widest text-[10px] focus:ring-2 focus:ring-primary/20"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -170,26 +171,28 @@ function GuidesContent() {
         </div>
       </section>
 
-      {/* Landing UI: Category Cards (Label on Left, 2 Rows) */}
+      {/* Landing UI: Category Cards (Label on Left, Watermark Icon, 2 Columns Mobile) */}
       {!selectedCategory && !searchQuery && (
         <section className="container mx-auto px-6 py-12">
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex items-center gap-4 mb-10">
              <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">{t('guides_master_modules')}</span>
              <div className="h-px flex-grow bg-primary/10" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
             {PRIMARY_CATEGORIES.map((cat) => (
               <button
                 key={cat.name}
                 onClick={() => handleCategoryClick(cat.name)}
-                className={`glass group relative overflow-hidden rounded-2xl px-6 py-4 text-left transition-all hover:border-primary/50 active:scale-95 flex items-center justify-between h-20 shadow-md border-primary/5 ${selectedCategory === cat.name ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : ''}`}
+                className={`glass group relative overflow-hidden rounded-[2.5rem] p-8 text-left transition-all hover:border-primary/50 active:scale-95 h-52 shadow-xl border-primary/5 ${selectedCategory === cat.name ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : ''}`}
               >
-                <div className="flex flex-col relative z-10 text-left">
-                  <span className="text-[8px] font-black uppercase tracking-widest opacity-40 leading-none mb-1.5">{t('common_module')}</span>
-                  <span className="text-xs font-black uppercase tracking-tighter leading-none group-hover:text-primary transition-colors">{cat.name}</span>
+                <div className="flex flex-col h-full justify-between relative z-10">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30 leading-none block mb-2">{t('common_module')}</span>
+                    <span className="text-sm md:text-lg font-black uppercase tracking-tighter leading-tight group-hover:text-primary transition-colors break-words">{cat.name}</span>
+                  </div>
                 </div>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all relative z-10 ${selectedCategory === cat.name ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground'}`}>
-                  <CategoryIcon name={cat.icon} className="w-5 h-5" />
+                <div className="absolute top-1/2 right-4 -translate-y-1/2 opacity-[0.03] dark:opacity-[0.05] group-hover:opacity-[0.1] transition-opacity pointer-events-none scale-150 transform">
+                   <CategoryIcon name={cat.icon} className="w-24 h-24" />
                 </div>
               </button>
             ))}
@@ -200,21 +203,21 @@ function GuidesContent() {
       {/* Device Landing Hero */}
       {categoryWiki && (
         <section className="container mx-auto px-6 mb-16 animate-in fade-in slide-in-from-bottom-4 pt-12">
-          <div className="glass rounded-[3rem] p-8 md:p-12 mb-12 relative overflow-hidden border-primary/10">
+          <div className="glass rounded-[3rem] p-8 md:p-12 mb-12 relative overflow-hidden border-primary/10 shadow-2xl">
             <div className="absolute inset-0 scan-line opacity-5" />
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-16 items-center">
               <div className="lg:col-span-8 space-y-6">
                 <div className="flex items-center gap-2">
-                   <Button variant="ghost" onClick={() => handleCategoryClick(null)} className="h-8 rounded-full px-4 text-[8px] font-black uppercase tracking-widest border border-primary/20 hover:bg-primary/10">
+                   <Button variant="ghost" onClick={() => handleCategoryClick(null)} className="h-10 rounded-full px-5 text-[9px] font-black uppercase tracking-widest border border-primary/20 hover:bg-primary/10">
                      <ArrowRight className="w-3 h-3 rotate-180 mr-2" /> {t('guides_back')}
                    </Button>
                    <span className="text-[10px] font-black uppercase tracking-widest opacity-30">/ {categoryWiki.type}</span>
                 </div>
-                <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none">{categoryWiki.title}</h2>
-                <p className="text-muted-foreground font-medium leading-relaxed max-w-2xl text-sm md:text-base">{categoryWiki.description}</p>
+                <h2 className="text-4xl md:text-7xl font-black uppercase tracking-tighter leading-none">{categoryWiki.title}</h2>
+                <p className="text-muted-foreground font-medium leading-relaxed max-w-2xl text-sm md:text-lg">{categoryWiki.description}</p>
                 <div className="flex flex-wrap gap-4 pt-4">
-                   <Button className="rounded-xl h-12 px-8 font-black uppercase tracking-widest text-[9px] neon-glow">Initialize Repair</Button>
-                   <Button variant="outline" className="rounded-xl h-12 px-8 font-black uppercase tracking-widest text-[9px] border-primary/20">I own this device</Button>
+                   <Button className="rounded-2xl h-14 px-10 font-black uppercase tracking-widest text-[10px] neon-glow shadow-xl">Initialize Repair</Button>
+                   <Button variant="outline" className="rounded-2xl h-14 px-10 font-black uppercase tracking-widest text-[10px] border-primary/20 glass">I own this device</Button>
                 </div>
               </div>
               {categoryWiki.image?.original && (
@@ -225,15 +228,15 @@ function GuidesContent() {
             </div>
           </div>
 
-          {/* Device Sub-categories (Apple iPhone, Android, etc) */}
+          {/* Device Sub-categories */}
           {categoryWiki.children && categoryWiki.children.length > 0 && !searchQuery && (
             <div className="mb-16">
-               <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary mb-8 px-2">Sub-Modules Detected</h3>
-               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+               <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary mb-10 px-2">Sub-Modules Detected</h3>
+               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                  {categoryWiki.children.map((child, i) => (
                    <Link key={`child-${i}`} href={`/guides?category=${child.title}`}>
-                     <div className="glass group rounded-2xl p-6 h-32 flex flex-col items-center justify-center text-center gap-3 hover:border-primary/50 transition-all active:scale-95">
-                       <div className="relative w-10 h-10 opacity-40 group-hover:opacity-100 transition-opacity">
+                     <div className="glass group rounded-[2rem] p-8 h-40 flex flex-col items-center justify-center text-center gap-4 hover:border-primary/50 transition-all active:scale-95 shadow-lg border-primary/5">
+                       <div className="relative w-12 h-12 opacity-40 group-hover:opacity-100 transition-opacity">
                          <Image 
                            src={child.image?.thumbnail || 'https://picsum.photos/seed/sub/100/100'} 
                            alt={child.title} 
@@ -241,7 +244,7 @@ function GuidesContent() {
                            className="object-contain" 
                          />
                        </div>
-                       <span className="text-[8px] font-black uppercase tracking-widest leading-tight line-clamp-2">{child.title}</span>
+                       <span className="text-[9px] font-black uppercase tracking-widest leading-tight line-clamp-2">{child.title}</span>
                      </div>
                    </Link>
                  ))}
@@ -255,7 +258,7 @@ function GuidesContent() {
       <section className="container mx-auto px-6 space-y-24">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24">
-            <Loader2 className="w-10 h-10 animate-spin text-primary mb-6" />
+            <Loader2 className="w-12 h-12 animate-spin text-primary mb-6" />
             <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
           </div>
         ) : globalGuides.length > 0 ? (
@@ -263,12 +266,12 @@ function GuidesContent() {
             {/* 1. Replacement Guides (Compact Horizontal) */}
             {sections.replacement.length > 0 && (
               <div>
-                <div className="flex items-center gap-4 mb-10 px-2">
-                  <Wrench className="w-4 h-4 text-primary" />
+                <div className="flex items-center gap-4 mb-12 px-2">
+                  <Wrench className="w-5 h-5 text-primary" />
                   <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">Replacement Protocols</h3>
                   <div className="h-px flex-grow bg-primary/10" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {sections.replacement.map((guide) => (
                     <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
                   ))}
@@ -276,15 +279,15 @@ function GuidesContent() {
               </div>
             )}
 
-            {/* 2. Troubleshooting (Visual Grid) */}
+            {/* 2. Troubleshooting */}
             {sections.troubleshooting.length > 0 && (
               <div>
-                <div className="flex items-center gap-4 mb-10 px-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                <div className="flex items-center gap-4 mb-12 px-2">
+                  <AlertTriangle className="w-5 h-5 text-amber-500" />
                   <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-amber-500">System Troubleshooting</h3>
                   <div className="h-px flex-grow bg-amber-500/10" />
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
                   {sections.troubleshooting.map((guide) => (
                     <RepairCard key={`guide-${guide.id}`} guide={guide} variant="trouble" />
                   ))}
@@ -292,15 +295,15 @@ function GuidesContent() {
               </div>
             )}
 
-            {/* 3. Teardowns & Advanced (Default Cards) */}
+            {/* 3. Teardowns & Advanced */}
             {sections.teardowns.length > 0 && (
               <div>
-                <div className="flex items-center gap-4 mb-10 px-2">
-                  <Activity className="w-4 h-4 text-secondary" />
+                <div className="flex items-center gap-4 mb-12 px-2">
+                  <Activity className="w-5 h-5 text-secondary" />
                   <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-secondary">Advanced Teardowns</h3>
                   <div className="h-px flex-grow bg-secondary/10" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                   {sections.teardowns.map((guide) => (
                     <RepairCard key={`guide-${guide.id}`} guide={guide} />
                   ))}
@@ -309,23 +312,23 @@ function GuidesContent() {
             )}
 
             {/* Pagination / Load More */}
-            <div className="mt-16 text-center">
+            <div className="mt-20 text-center">
               <Button 
                 onClick={loadMore} 
                 disabled={isLoading}
                 variant="outline" 
-                className="rounded-full h-14 px-12 font-black uppercase tracking-widest text-[10px] border-primary/20"
+                className="rounded-full h-16 px-16 font-black uppercase tracking-widest text-[10px] border-primary/20 shadow-xl glass"
               >
-                {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-3" />}
                 {t('guides_access_more')}
-                <ArrowRight className="w-4 h-4 ml-2" />
+                <ArrowRight className="w-4 h-4 ml-3" />
               </Button>
             </div>
           </>
         ) : (
-          <div className="text-center py-24 glass rounded-[3rem] border-dashed border-2 border-primary/10">
-            <h3 className="text-lg font-black uppercase tracking-tighter mb-2">{t('guides_not_found')}</h3>
-            <p className="text-xs text-muted-foreground font-medium">{t('guides_adjust')}</p>
+          <div className="text-center py-24 glass rounded-[3rem] border-dashed border-2 border-primary/10 max-w-2xl mx-auto">
+            <h3 className="text-xl font-black uppercase tracking-tighter mb-4">{t('guides_not_found')}</h3>
+            <p className="text-sm text-muted-foreground font-medium opacity-60">{t('guides_adjust')}</p>
           </div>
         )}
       </section>
