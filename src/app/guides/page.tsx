@@ -289,19 +289,25 @@ function GuidesContent() {
                  <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">{t('guides_master_modules')}</span>
                  <div className="h-px flex-grow bg-primary/10" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6 max-w-4xl mx-auto">
                 {PRIMARY_CATEGORIES.map((cat) => (
                   <button
                     key={cat.name}
                     onClick={() => handleCategoryClick(cat.name)}
-                    className="group bg-white dark:bg-card p-4 rounded-[2rem] flex items-center gap-4 shadow-sm border border-transparent hover:border-primary/20 transition-all active:scale-95 text-left"
+                    className="group relative bg-white dark:bg-card p-6 rounded-[2.5rem] flex items-center gap-6 shadow-md border border-transparent hover:border-primary/20 transition-all active:scale-95 text-left overflow-hidden h-32 md:h-40"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">
-                      <CategoryIcon name={cat.icon} className="w-6 h-6" />
+                    {/* Ghost Background Icon */}
+                    <div className="absolute -right-6 -bottom-6 opacity-[0.03] dark:opacity-[0.06] group-hover:opacity-[0.1] transition-opacity">
+                      <CategoryIcon name={cat.icon} className="w-24 h-24 md:w-32 md:h-32" />
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-[7px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-0.5">Module</span>
-                      <span className="text-[10px] font-black uppercase tracking-tight group-hover:text-primary transition-colors">{cat.name}</span>
+
+                    {/* Main Content */}
+                    <div className="relative z-10 w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all shrink-0">
+                      <CategoryIcon name={cat.icon} className="w-7 h-7 md:w-10 md:h-10" />
+                    </div>
+                    <div className="relative z-10 flex flex-col">
+                      <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 mb-1">Module</span>
+                      <span className="text-sm md:text-xl font-black uppercase tracking-tight group-hover:text-primary transition-colors leading-none">{cat.name}</span>
                     </div>
                   </button>
                 ))}
