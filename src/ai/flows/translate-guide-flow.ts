@@ -30,15 +30,16 @@ const translatePrompt = ai.definePrompt({
   name: 'translateGuidePrompt',
   input: {schema: TranslateGuideInputSchema},
   output: {schema: TranslateGuideOutputSchema},
-  prompt: `You are a professional technical translator. 
-Translate the electronics repair guide into clear Filipino (Tagalog).
+  prompt: `You are a professional technical translator specializing in repair manuals.
+Translate the following electronics repair guide into clear, natural Filipino (Tagalog/Taglish).
 
-FORMATTING PROTOCOL:
-- PRESERVE EVERY BULLET POINT (e.g., '•').
-- MAINTAIN ALL LINE BREAKS AND NEWLINES.
-- DO NOT COMBINE PARAGRAPHS.
-- Technical terms like "logic board", "motherboard", "ribbon cable" can be left as is or used in Taglish context.
+STRICT FORMATTING RULES:
+1. EVERY bullet point (•) MUST start on its own NEW LINE. 
+2. DO NOT merge lines or paragraphs. If the source has multiple lines, the translation MUST have the exact same structure.
+3. Use a double newline (\\n\\n) between distinct paragraphs or list items to ensure they are visually separated.
+4. Technical terms like "logic board", "ribbon cable", "spudger", "motherboard" can be left as is (Taglish) as they are standard in the industry.
 
+Source Content:
 Title: {{{title}}}
 Description: {{{description}}}
 
