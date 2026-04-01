@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview AI Flow to translate repair guide content into Filipino.
+ * @fileOverview AI Flow to translate repair guide content into Filipino with retry logic.
  */
 
 import {ai} from '@/ai/genkit';
@@ -49,7 +49,31 @@ Steps:
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
-  const {output} = await translatePrompt(input);
-  if (!output) throw new Error('Translation failed');
-  return output;
+  let attempts = 0;
+  const maxAttempts = 3;
+  const baseDelay = 1500; // 1.5 seconds
+
+  while (attempts < maxAttempts) {
+    try {
+      const {output} = await translatePrompt(input);
+      if (!output) throw new Error('Translation failed: No output received');
+      return output;
+    } catch (error: any) {
+      attempts++;
+      
+      // If it's a 503 or 429 (overloaded/rate limited), wait and retry
+      const isRetryable = error.message?.includes('503') || error.message?.includes('high demand') || error.message?.includes('429');
+      
+      if (isRetryable && attempts < maxAttempts) {
+        // Exponential backoff
+        const delay = baseDelay * Math.pow(2, attempts - 1);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      throw error;
+    }
+  }
+  
+  throw new Error('Translation failed after multiple attempts due to high demand.');
 }
