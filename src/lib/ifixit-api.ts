@@ -71,34 +71,40 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
  * This ensures guides like "MacBook Battery Replacement" show all 20+ steps.
  */
 export async function getFullIFixitProtocol(id: string): Promise<any> {
-  const guide = await getIFixitGuide(id);
-  if (!guide) return null;
+  try {
+    const guide = await getIFixitGuide(id);
+    if (!guide) return null;
 
-  let allSteps: any[] = [];
-  
-  // 1. Recursively fetch steps from prerequisites
-  if (guide.prerequisites && guide.prerequisites.length > 0) {
-    for (const prereq of guide.prerequisites) {
-      const prereqProtocol = await getFullIFixitProtocol(prereq.guideid.toString());
-      if (prereqProtocol && prereqProtocol.steps) {
-        allSteps = [...allSteps, ...prereqProtocol.steps];
+    let allSteps: any[] = [];
+    
+    // 1. Map current guide data to get the base information
+    const internal = mapIFixitToInternal(guide);
+    if (!internal) return null;
+
+    // 2. Recursively fetch steps from prerequisites FIRST to maintain chronological order
+    if (guide.prerequisites && guide.prerequisites.length > 0) {
+      for (const prereq of guide.prerequisites) {
+        const prereqProtocol = await getFullIFixitProtocol(prereq.guideid.toString());
+        if (prereqProtocol && prereqProtocol.steps) {
+          allSteps = [...allSteps, ...prereqProtocol.steps];
+        }
       }
     }
-  }
 
-  // 2. Map current guide data
-  const internal = mapIFixitToInternal(guide);
-  
-  // 3. Append current guide steps to the prerequisite steps
-  if (internal && internal.steps) {
-    allSteps = [...allSteps, ...internal.steps];
-  }
+    // 3. Append current guide steps AFTER the prerequisite steps
+    if (internal.steps && internal.steps.length > 0) {
+      allSteps = [...allSteps, ...internal.steps];
+    }
 
-  // Return the combined protocol
-  return {
-    ...internal,
-    steps: allSteps
-  };
+    // Return the combined protocol with the main guide's metadata but ALL steps
+    return {
+      ...internal,
+      steps: allSteps
+    };
+  } catch (error) {
+    console.error(`Failed to fetch full protocol for ${id}:`, error);
+    return null;
+  }
 }
 
 export async function getIFixitWiki(categoryName: string): Promise<IFixitWiki | null> {

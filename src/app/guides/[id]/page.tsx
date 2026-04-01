@@ -37,9 +37,9 @@ export default function GuideDetailPage() {
   const [stepImageIndexes, setStepImageIndexes] = useState<Record<number, number>>({});
 
   const bookmarkRef = useMemo(() => {
-    if (!user || !guide?.id) return null;
-    return doc(db, 'users', user.uid, 'bookmarks', guide.id);
-  }, [user, guide?.id, db]);
+    if (!user || !id) return null;
+    return doc(db, 'users', user.uid, 'bookmarks', id);
+  }, [user, id, db]);
 
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
@@ -55,7 +55,7 @@ export default function GuideDetailPage() {
         if (local) {
           fetchedGuide = local;
         } else {
-          // Use getFullIFixitProtocol to recursively fetch all steps (1-20+)
+          // Recursive fetch to get all steps (e.g., 20+ steps for MacBook)
           fetchedGuide = await getFullIFixitProtocol(id);
           
           if (!fetchedGuide) {
@@ -105,7 +105,7 @@ export default function GuideDetailPage() {
             })),
           });
 
-          if (translated) {
+          if (translated && translated.steps.length === originalGuide.steps.length) {
             const finalSteps = originalGuide.steps.map((s: any, i: number) => ({
               ...s,
               title: translated.steps[i]?.title || s.title,
@@ -119,6 +119,8 @@ export default function GuideDetailPage() {
               steps: finalSteps,
               language: 'fil'
             });
+          } else {
+            throw new Error("Translation integrity check failed");
           }
         } catch (error: any) {
           console.error("AI Translation failed:", error);
@@ -126,8 +128,9 @@ export default function GuideDetailPage() {
           toast({ 
             variant: "destructive", 
             title: "Neural Link Busy", 
-            description: "Ang haba ng manual ay lumampas sa AI quota. Pansamantalang ipapakita ang English version." 
+            description: "Ang haba ng manual ay lumampas sa AI quota. Ipinapakita ang English version." 
           });
+          setGuide(originalGuide);
         } finally {
           setIsTranslating(false);
         }
@@ -153,7 +156,7 @@ export default function GuideDetailPage() {
       toast({ title: "Removed from vault" });
     } else {
       const data = {
-        guideId: guide.id,
+        guideId: id,
         title: guide.title,
         thumbnail: guide.thumbnail || '',
         category: guide.category,

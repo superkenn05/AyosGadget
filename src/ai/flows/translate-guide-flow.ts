@@ -1,6 +1,7 @@
 'use server';
 /**
  * @fileOverview AI Flow to translate repair guide content into Filipino with batched processing for large manuals.
+ * Optimized for stability with 20+ steps guides.
  */
 
 import {ai} from '@/ai/genkit';
@@ -44,9 +45,9 @@ Translate the following guide content into clear, natural Filipino (Tagalog/Tagl
 
 STRICT INTEGRITY AND FORMATTING RULES:
 1. COMPLETENESS: You MUST translate EVERY SINGLE STEP provided in this batch.
-2. BULLET POINTS: EVERY bullet point (•) MUST start on its own NEW LINE. 
+2. BULLET POINTS: EVERY bullet point (•, 🔵, 🟠, etc.) MUST start on its own NEW LINE. 
 3. TECHNICAL TERMS: Standard industry terms like "logic board", "spudger", "ribbon cable" should be kept as is (Taglish).
-4. NO SUMMARIZATION: Translate everything provided.
+4. NO SUMMARIZATION: Translate everything provided. Do not skip any instructions.
 
 Source Content:
 {{#if title}}Title: {{{title}}}{{/if}}
@@ -62,19 +63,18 @@ Content:
 });
 
 /**
- * Translates a guide in batches to handle manuals with many steps (e.g., 20+ steps) 
- * without hitting token limits or skipping data.
+ * Translates a guide in small batches to handle manuals with many steps (e.g., 20+ steps) 
+ * without hitting token limits, skipping data, or timing out.
  */
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
-  const BATCH_SIZE = 5;
+  // Smaller batch size for 20+ steps guides to ensure stability and completeness
+  const BATCH_SIZE = 3; 
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
-  // 1. Translate Title and Description in the first batch
   let finalTitle = input.title;
   let finalDescription = input.description;
 
-  // 2. Process steps in small batches for stability
   for (let i = 0; i < totalSteps; i += BATCH_SIZE) {
     const batch = input.steps.slice(i, i + BATCH_SIZE);
     let attempts = 0;
@@ -96,9 +96,9 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
           finalDescription = output.description;
         }
 
-        // Integrity check for this batch
+        // Hard integrity check: ensuring every step in the batch was returned
         if (output.steps.length !== batch.length) {
-          throw new Error(`Integrity check failed: Expected ${batch.length} steps, got ${output.steps.length}`);
+          throw new Error(`Integrity check failed: Expected ${batch.length} steps in batch, got ${output.steps.length}`);
         }
 
         translatedSteps.push(...output.steps);
@@ -106,8 +106,8 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       } catch (error: any) {
         attempts++;
         if (attempts >= maxAttempts) throw error;
-        // Exponential backoff for quota issues
-        await new Promise(resolve => setTimeout(resolve, 5000 * attempts));
+        // Exponential backoff for quota or timeout issues
+        await new Promise(resolve => setTimeout(resolve, 8000 * attempts));
       }
     }
   }
