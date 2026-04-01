@@ -30,7 +30,7 @@ function GuidesContent() {
 
   const deduplicateGuides = (guides: any[]) => {
     const seen = new Set();
-    return guides.filter(guide => {
+    return (guides || []).filter(guide => {
       if (!guide || !guide.id) return false;
       const duplicate = seen.has(guide.id);
       seen.add(guide.id);
@@ -289,25 +289,25 @@ function GuidesContent() {
                  <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">{t('guides_master_modules')}</span>
                  <div className="h-px flex-grow bg-primary/10" />
               </div>
-              <div className="grid grid-cols-2 gap-6 max-w-4xl mx-auto">
+              <div className="grid grid-cols-2 gap-4 md:gap-6 max-w-4xl mx-auto">
                 {PRIMARY_CATEGORIES.map((cat) => (
                   <button
                     key={cat.name}
                     onClick={() => handleCategoryClick(cat.name)}
-                    className="group relative bg-white dark:bg-card p-6 rounded-[2.5rem] flex items-center gap-6 shadow-md border border-transparent hover:border-primary/20 transition-all active:scale-95 text-left overflow-hidden h-32 md:h-40"
+                    className="group relative bg-white dark:bg-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] flex items-center gap-4 md:gap-6 shadow-md border border-transparent hover:border-primary/20 transition-all active:scale-95 text-left overflow-hidden h-24 md:h-28"
                   >
                     {/* Ghost Background Icon */}
-                    <div className="absolute -right-6 -bottom-6 opacity-[0.03] dark:opacity-[0.06] group-hover:opacity-[0.1] transition-opacity">
-                      <CategoryIcon name={cat.icon} className="w-24 h-24 md:w-32 md:h-32" />
+                    <div className="absolute -right-4 -bottom-4 opacity-[0.03] dark:opacity-[0.06] group-hover:opacity-[0.1] transition-opacity">
+                      <CategoryIcon name={cat.icon} className="w-20 h-20 md:w-24 md:h-24" />
                     </div>
 
                     {/* Main Content */}
-                    <div className="relative z-10 w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all shrink-0">
-                      <CategoryIcon name={cat.icon} className="w-7 h-7 md:w-10 md:h-10" />
+                    <div className="relative z-10 w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all shrink-0">
+                      <CategoryIcon name={cat.icon} className="w-6 h-6 md:w-8 md:h-8" />
                     </div>
                     <div className="relative z-10 flex flex-col">
-                      <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 mb-1">Module</span>
-                      <span className="text-sm md:text-xl font-black uppercase tracking-tight group-hover:text-primary transition-colors leading-none">{cat.name}</span>
+                      <span className="text-[7px] md:text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 mb-0.5">Module</span>
+                      <span className="text-xs md:text-lg font-black uppercase tracking-tight group-hover:text-primary transition-colors leading-none">{cat.name}</span>
                     </div>
                   </button>
                 ))}
