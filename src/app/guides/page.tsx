@@ -2,9 +2,9 @@
 
 import RepairCard from '@/components/repair/RepairCard';
 import CategoryIcon from '@/components/repair/CategoryIcon';
-import { REPAIR_CATEGORIES, PRIMARY_CATEGORIES } from '@/lib/repair-data';
+import { PRIMARY_CATEGORIES } from '@/lib/repair-data';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2, Sparkles, LayoutGrid, ArrowRight, Wrench, ChevronRight, ChevronLeft, ChevronDown, Layers } from 'lucide-react';
+import { Search, Loader2, Sparkles, ChevronRight, ChevronLeft, Layers, Wrench, LayoutGrid } from 'lucide-react';
 import { useState, useEffect, Suspense, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -111,14 +111,33 @@ function GuidesContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background pb-24">
-      <section className="pt-24 pb-4 px-6 sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-black/5 dark:border-white/5">
-        <div className="container mx-auto max-w-4xl">
+    <div className="min-h-screen bg-background pb-24">
+      {/* Search and Header Section */}
+      <section className="pt-24 pb-8 px-6">
+        <div className="container mx-auto max-w-4xl space-y-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <LayoutGrid className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-black uppercase tracking-tighter leading-none">{t('guides_title')}</h1>
+                <p className="text-[10px] font-black uppercase tracking-widest text-primary opacity-60 mt-1">{t('guides_subtitle')}</p>
+              </div>
+            </div>
+            <Link href="/troubleshoot">
+              <Button variant="outline" className="rounded-xl h-10 px-4 gap-2 text-[8px] font-black uppercase tracking-widest border-primary/20 text-primary hover:bg-primary/5">
+                <Sparkles className="w-3 h-3" />
+                {t('guides_neural_ask')}
+              </Button>
+            </Link>
+          </div>
+
           <div className="relative group">
-            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder={t('guides_search')}
-              className="pl-14 h-14 rounded-2xl border-none shadow-md bg-white dark:bg-white/5 font-bold uppercase tracking-widest text-[10px] focus:ring-2 focus:ring-primary/20"
+              className="pl-14 h-14 rounded-2xl border-none shadow-md bg-white dark:bg-card font-bold uppercase tracking-widest text-[10px] focus:ring-2 focus:ring-primary/20"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -127,7 +146,7 @@ function GuidesContent() {
       </section>
 
       {selectedCategory && (
-        <section className="container mx-auto px-4 mt-8">
+        <section className="container mx-auto px-4">
           <nav className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-8 px-2 overflow-x-auto whitespace-nowrap pb-2">
             <Link href="/guides" className="hover:text-primary transition-colors">LIBRARY</Link>
             <ChevronRight className="w-3 h-3 flex-shrink-0" />
@@ -257,53 +276,33 @@ function GuidesContent() {
                   )}
                 </div>
               )}
-
-              {globalGuides.length === 0 && !categoryWiki?.children?.length && !isLoading && (
-                <div className="text-center py-24 glass rounded-[3rem] border-dashed border-2 border-primary/10 max-w-2xl mx-auto">
-                  <h3 className="text-xl font-black uppercase tracking-tighter mb-4">{t('guides_not_found')}</h3>
-                  <p className="text-sm text-muted-foreground font-medium opacity-60">{t('guides_adjust')}</p>
-                  <Button onClick={handleBack} className="mt-8 rounded-2xl px-8 h-12 text-[10px] font-black uppercase tracking-widest">
-                    Go Back
-                  </Button>
-                </div>
-              )}
             </>
           )}
         </section>
       )}
 
       {!selectedCategory && (
-        <section className="container mx-auto px-6 space-y-16 mt-12">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-2">
-            <div>
-              <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-none">{t('guides_title')}</h1>
-              <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] mt-4">{t('guides_subtitle')}</p>
-            </div>
-            <Link href="/troubleshoot">
-              <Button className="rounded-2xl h-14 px-8 gap-3 text-[10px] font-black uppercase tracking-widest bg-primary neon-glow shadow-xl">
-                <Sparkles className="w-5 h-5" />
-                {t('guides_neural_ask')}
-              </Button>
-            </Link>
-          </div>
-
+        <section className="container mx-auto px-6 space-y-12">
           {!searchQuery && (
             <div>
-              <div className="flex items-center gap-4 mb-10 px-2">
+              <div className="flex items-center gap-4 mb-8 px-2">
                  <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">{t('guides_master_modules')}</span>
                  <div className="h-px flex-grow bg-primary/10" />
               </div>
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
+              <div className="grid grid-cols-2 gap-4">
                 {PRIMARY_CATEGORIES.map((cat) => (
                   <button
                     key={cat.name}
                     onClick={() => handleCategoryClick(cat.name)}
-                    className="glass group relative overflow-hidden rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center justify-center text-center transition-all hover:border-primary/50 active:scale-95 shadow-xl border-primary/5 bg-white dark:bg-card h-48 md:h-64"
+                    className="group bg-white dark:bg-card p-4 rounded-[2rem] flex items-center gap-4 shadow-sm border border-transparent hover:border-primary/20 transition-all active:scale-95 text-left"
                   >
-                    <div className="w-16 h-16 md:w-24 md:h-24 rounded-[2rem] bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all relative z-10 shadow-sm mb-6">
-                      <CategoryIcon name={cat.icon} className="w-8 h-8 md:w-12 md:h-12" />
+                    <div className="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all">
+                      <CategoryIcon name={cat.icon} className="w-6 h-6" />
                     </div>
-                    <span className="text-xs md:text-lg font-black uppercase tracking-tighter leading-tight group-hover:text-primary transition-colors">{cat.name}</span>
+                    <div className="flex flex-col">
+                      <span className="text-[7px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-0.5">Module</span>
+                      <span className="text-[10px] font-black uppercase tracking-tight group-hover:text-primary transition-colors">{cat.name}</span>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -318,33 +317,27 @@ function GuidesContent() {
           ) : globalGuides.length > 0 ? (
             <div className="space-y-12">
                <div className="flex items-center gap-4 px-2">
-                  <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">TRENDING PROTOCOLS</h2>
+                  <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">REPLACEMENT PROTOCOLS</h2>
                   <div className="h-px flex-grow bg-primary/10" />
                </div>
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {globalGuides.map((guide) => (
-                  <RepairCard key={`guide-${guide.id}`} guide={guide} />
+                  <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
                 ))}
               </div>
             </div>
-          ) : (
-            <div className="text-center py-24 glass rounded-[3rem] border-dashed border-2 border-primary/10 max-w-2xl mx-auto">
-              <h3 className="text-xl font-black uppercase tracking-tighter mb-4">{t('guides_not_found')}</h3>
-              <p className="text-sm text-muted-foreground font-medium opacity-60">{t('guides_adjust')}</p>
-            </div>
-          )}
+          ) : null}
 
           {globalGuides.length > 0 && (
-            <div className="mt-20 text-center">
+            <div className="mt-12 text-center">
               <Button 
                 onClick={loadMore} 
                 disabled={isLoading}
                 variant="outline" 
-                className="rounded-full h-16 px-16 font-black uppercase tracking-widest text-[10px] border-primary/20 shadow-xl glass"
+                className="rounded-full h-12 px-8 font-black uppercase tracking-widest text-[9px] border-primary/20 shadow-md glass"
               >
-                {isLoading && <Loader2 className="w-4 h-4 animate-spin mr-3" />}
+                {isLoading && <Loader2 className="w-3 h-3 animate-spin mr-3" />}
                 {t('guides_access_more')}
-                <ChevronRight className="w-4 h-4 ml-3" />
               </Button>
             </div>
           )}
