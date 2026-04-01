@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview AI Flow to translate repair guide content into Filipino with retry logic.
+ * @fileOverview AI Flow to translate repair guide content into Filipino with strict formatting preservation.
  */
 
 import {ai} from '@/ai/genkit';
@@ -33,10 +33,11 @@ const translatePrompt = ai.definePrompt({
   prompt: `You are a professional technical translator specializing in electronics repair. 
 Translate the following repair guide into Filipino (Tagalog). 
 
-Guidelines:
-1. Use clear, instructional Tagalog (Mababaw na Tagalog/Taglish where appropriate for technical terms like "ribbon cable", "motherboard", "screws").
-2. Maintain the formatting and bullet points.
-3. Keep the tone helpful and professional.
+CRITICAL FORMATTING RULES:
+1. PRESERVE ALL BULLETS: You MUST maintain every bullet point character (e.g., '•') exactly as it appears.
+2. PRESERVE ALL NEWLINES: Do NOT merge separate lines into a single paragraph. Every newline in the source must have a corresponding newline in the translation.
+3. DO NOT SUMMARIZE: Translate every instruction line by line.
+4. Language: Use clear Tagalog. Use technical terms (Taglish) for parts like "ribbon cable", "motherboard", "screws", "logic board" if it is more natural for a technician.
 
 Guide to translate:
 Title: {{{title}}}
@@ -44,7 +45,10 @@ Description: {{{description}}}
 
 Steps:
 {{#each steps}}
-- Step {{@index}}: {{this.description}}
+--- STEP {{@index}} ---
+Title: {{this.title}}
+Content:
+{{{this.description}}}
 {{/each}}`,
 });
 
