@@ -14,7 +14,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { getIFixitGuide, mapIFixitToInternal, getIFixitWiki } from '@/lib/ifixit-api';
+import { getFullIFixitProtocol, getIFixitWiki } from '@/lib/ifixit-api';
 import { translateGuide } from '@/ai/flows/translate-guide-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -34,7 +34,6 @@ export default function GuideDetailPage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const translationRef = useRef<string | null>(null);
 
-  // Gallery state for each step: stepIndex -> activeImageIndex
   const [stepImageIndexes, setStepImageIndexes] = useState<Record<number, number>>({});
 
   const bookmarkRef = useMemo(() => {
@@ -56,10 +55,10 @@ export default function GuideDetailPage() {
         if (local) {
           fetchedGuide = local;
         } else {
-          const ifixit = await getIFixitGuide(id);
-          if (ifixit) {
-            fetchedGuide = mapIFixitToInternal(ifixit);
-          } else {
+          // Use getFullIFixitProtocol to recursively fetch all steps (1-20+)
+          fetchedGuide = await getFullIFixitProtocol(id);
+          
+          if (!fetchedGuide) {
             const wiki = await getIFixitWiki(id);
             if (wiki) {
               router.replace(`/guides?category=${encodeURIComponent(id)}`);
@@ -71,7 +70,6 @@ export default function GuideDetailPage() {
         if (fetchedGuide) {
           setOriginalGuide(fetchedGuide);
           setGuide(fetchedGuide);
-          // Initialize image indexes for each step
           const initialIndexes: Record<number, number> = {};
           fetchedGuide.steps.forEach((_: any, i: number) => {
             initialIndexes[i] = 0;
@@ -98,7 +96,6 @@ export default function GuideDetailPage() {
         setIsTranslating(true);
         translationRef.current = translationKey;
         try {
-          // Process steps for translation
           const translated = await translateGuide({
             title: originalGuide.title,
             description: originalGuide.description,
@@ -110,7 +107,7 @@ export default function GuideDetailPage() {
 
           if (translated) {
             const finalSteps = originalGuide.steps.map((s: any, i: number) => ({
-              ...s, // Preserve images and other non-text data
+              ...s,
               title: translated.steps[i]?.title || s.title,
               description: translated.steps[i]?.description || s.description,
             }));
@@ -129,7 +126,7 @@ export default function GuideDetailPage() {
           toast({ 
             variant: "destructive", 
             title: "Neural Link Busy", 
-            description: "Masyadong mahaba ang manual o limitado ang AI quota. Pansamantalang ipapakita ang English version." 
+            description: "Ang haba ng manual ay lumampas sa AI quota. Pansamantalang ipapakita ang English version." 
           });
         } finally {
           setIsTranslating(false);
@@ -150,14 +147,9 @@ export default function GuideDetailPage() {
     if (!guide || !bookmarkRef) return;
 
     if (isBookmarked) {
-      deleteDoc(bookmarkRef)
-        .catch(async () => {
-          const permissionError = new FirestorePermissionError({
-            path: bookmarkRef.path,
-            operation: 'delete',
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        });
+      deleteDoc(bookmarkRef).catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: bookmarkRef.path, operation: 'delete' }));
+      });
       toast({ title: "Removed from vault" });
     } else {
       const data = {
@@ -167,15 +159,9 @@ export default function GuideDetailPage() {
         category: guide.category,
         savedAt: serverTimestamp(),
       };
-      setDoc(bookmarkRef, data)
-        .catch(async () => {
-          const permissionError = new FirestorePermissionError({
-            path: bookmarkRef.path,
-            operation: 'create',
-            requestResourceData: data,
-          });
-          errorEmitter.emit('permission-error', permissionError);
-        });
+      setDoc(bookmarkRef, data).catch(async () => {
+        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: bookmarkRef.path, operation: 'create', requestResourceData: data }));
+      });
       toast({ title: "Secured in vault" });
     }
   };
@@ -183,11 +169,7 @@ export default function GuideDetailPage() {
   const handleShare = () => {
     if (!guide) return;
     if (navigator.share) {
-      navigator.share({
-        title: guide.title,
-        text: guide.description,
-        url: window.location.href,
-      }).catch(() => {});
+      navigator.share({ title: guide.title, text: guide.description, url: window.location.href }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
       toast({ title: "Neural Link Copied" });
@@ -215,7 +197,7 @@ export default function GuideDetailPage() {
         <div className="glass p-12 rounded-3xl border-primary/20">
           <AlertTriangle className="w-16 h-16 text-rose-500 mx-auto mb-6" />
           <h2 className="text-2xl font-black uppercase tracking-tighter mb-4">Protocol Offline</h2>
-          <p className="text-muted-foreground mb-8 text-sm">Target manual could not be initialized. Please check your connection.</p>
+          <p className="text-muted-foreground mb-8 text-sm">Target manual could not be initialized.</p>
           <div className="flex flex-col gap-4">
              <Button onClick={() => window.location.reload()} className="rounded-2xl h-12 px-8 font-black uppercase tracking-widest text-[10px]">{t('common_retry')}</Button>
              <Link href="/guides">
@@ -235,7 +217,6 @@ export default function GuideDetailPage() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
-      {/* Mobile Back Header */}
       <div className="fixed top-14 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b border-black/5 dark:border-white/5 md:hidden">
         <div className="px-4 h-12 flex items-center justify-between">
            <Link href="/guides" className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
@@ -254,10 +235,7 @@ export default function GuideDetailPage() {
 
       <div className="container mx-auto px-4 pt-32 md:pt-40">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-start">
-          
-          {/* Main Content */}
           <div className="lg:col-span-8 space-y-12">
-            {/* Guide Header Section */}
             <section className="space-y-6">
               <div className="flex flex-wrap items-center gap-3">
                 <Badge variant="outline" className="rounded-full px-4 py-1 text-[10px] font-black uppercase tracking-widest bg-primary/5 border-primary/20 text-primary">
@@ -288,18 +266,8 @@ export default function GuideDetailPage() {
 
               {guide.thumbnail && (
                 <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl glass border-primary/10">
-                  <Image
-                    src={guide.thumbnail}
-                    alt={guide.title}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
+                  <Image src={guide.thumbnail} alt={guide.title} fill className="object-cover" priority />
                   <div className="absolute inset-0 scan-line opacity-10" />
-                  <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 bg-black/60 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-2xl">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">{t('guides_time')}</p>
-                    <p className="text-white font-black text-sm uppercase tracking-tight">{guide.timeEstimate}</p>
-                  </div>
                 </div>
               )}
 
@@ -308,7 +276,6 @@ export default function GuideDetailPage() {
                   <div className="space-y-4">
                     <Skeleton className="h-4 w-full" />
                     <Skeleton className="h-4 w-5/6" />
-                    <Skeleton className="h-4 w-4/6" />
                   </div>
                 ) : (
                   <p className="text-muted-foreground text-sm md:text-lg font-medium leading-relaxed whitespace-pre-wrap">
@@ -318,120 +285,89 @@ export default function GuideDetailPage() {
               </div>
             </section>
 
-            {/* Steps Section */}
             <section className="space-y-8">
               <div className="flex items-center gap-4 px-2">
                 <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter">{t('guides_steps')}</h2>
                 <div className="h-px flex-grow bg-primary/10" />
-                <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest opacity-40">{guide.steps?.length} Total Protocols</Badge>
+                <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest opacity-40">{guide.steps?.length} Protocols</Badge>
               </div>
 
               <div className="space-y-10">
-                {isTranslating ? (
-                  [1, 2, 3].map((i) => (
-                    <div key={i} className="glass rounded-3xl overflow-hidden border-primary/5 p-8 md:p-16">
-                      <div className="flex items-start gap-6 md:gap-10 mb-10">
-                         <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary/20 animate-pulse" />
-                         <div className="flex-grow pt-2 space-y-4">
-                            <Skeleton className="h-8 w-1/3 rounded-xl" />
-                            <div className="space-y-2">
-                               <Skeleton className="h-4 w-full" />
-                               <Skeleton className="h-4 w-5/6" />
-                               <Skeleton className="h-4 w-4/6" />
-                            </div>
-                         </div>
-                      </div>
-                      <Skeleton className="aspect-video w-full rounded-3xl" />
-                    </div>
-                  ))
-                ) : guide.steps && guide.steps.length > 0 ? (
-                  guide.steps.map((step: any, index: number) => {
-                    const activeImageIndex = stepImageIndexes[index] || 0;
-                    const images = step.images || (step.imageUrl ? [step.imageUrl] : []);
-                    const activeImage = images[activeImageIndex];
+                {guide.steps?.map((step: any, index: number) => {
+                  const activeImageIndex = stepImageIndexes[index] || 0;
+                  const images = step.images || (step.imageUrl ? [step.imageUrl] : []);
+                  const activeImage = images[activeImageIndex];
 
-                    return (
-                      <div key={index} className="glass rounded-3xl overflow-hidden border-primary/5 group/step transition-all hover:border-primary/20">
-                        <div className="p-8 md:p-16">
-                          <div className="flex items-start gap-6 md:gap-10 mb-10">
-                            <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-xl md:text-4xl shadow-2xl shadow-primary/30 group-hover/step:scale-110 transition-transform">
-                              {index + 1}
-                            </div>
-                            <div className="flex-grow pt-2">
-                              <h3 className="text-xl md:text-3xl font-black tracking-tight uppercase mb-4 text-foreground">
-                                {step.title || `${t('guides_step_title')} ${index + 1}`}
-                              </h3>
-                              <div className="text-muted-foreground text-sm md:text-lg leading-relaxed font-medium whitespace-pre-wrap">
-                                {step.description.split('\n\n').map((line: string, li: number) => {
-                                  const isWarning = line.includes('⚠️ [WARNING]');
-                                  return (
-                                    <p key={li} className={cn(
-                                      "mb-4 last:mb-0",
-                                      isWarning && "p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 font-bold"
-                                    )}>
-                                      {line}
-                                    </p>
-                                  );
-                                })}
-                              </div>
-                            </div>
+                  return (
+                    <div key={index} className="glass rounded-3xl overflow-hidden border-primary/5 group/step transition-all hover:border-primary/20">
+                      <div className="p-8 md:p-16">
+                        <div className="flex items-start gap-6 md:gap-10 mb-10">
+                          <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-xl md:text-4xl shadow-2xl shadow-primary/30">
+                            {index + 1}
                           </div>
-                          
-                          {activeImage && (
-                            <div className="space-y-4">
-                              <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 group-hover/step:scale-[1.01] transition-transform">
-                                <Image
-                                  src={activeImage}
-                                  alt={`${t('guides_step_title')} ${index + 1}`}
-                                  fill
-                                  className="object-cover"
-                                />
-                                <div className="absolute inset-0 scan-line opacity-0 group-hover/step:opacity-5 transition-opacity" />
+                          <div className="flex-grow pt-2">
+                            {isTranslating ? (
+                              <div className="space-y-4">
+                                <Skeleton className="h-8 w-1/3 rounded-xl" />
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-5/6" />
                               </div>
-                              
-                              {/* Gallery Switcher for multiple images in a single step */}
-                              {images.length > 1 && (
-                                <div className="flex gap-3 overflow-x-auto pb-2 px-1">
-                                  {images.map((img: string, i: number) => (
-                                    <button
-                                      key={i}
-                                      onClick={() => setStepImage(index, i)}
-                                      className={cn(
-                                        "relative w-20 h-20 md:w-28 md:h-28 rounded-2xl overflow-hidden shrink-0 border-2 transition-all",
-                                        activeImageIndex === i ? "border-primary scale-105 shadow-lg" : "border-transparent opacity-50 hover:opacity-100"
-                                      )}
-                                    >
-                                      <Image src={img} alt={`Angle ${i + 1}`} fill className="object-cover" />
-                                    </button>
-                                  ))}
+                            ) : (
+                              <>
+                                <h3 className="text-xl md:text-3xl font-black tracking-tight uppercase mb-4 text-foreground">
+                                  {step.title || `${t('guides_step_title')} ${index + 1}`}
+                                </h3>
+                                <div className="text-muted-foreground text-sm md:text-lg leading-relaxed font-medium whitespace-pre-wrap">
+                                  {step.description.split('\n\n').map((line: string, li: number) => {
+                                    const isWarning = line.includes('⚠️ [WARNING]');
+                                    return (
+                                      <p key={li} className={cn("mb-4 last:mb-0", isWarning && "p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 font-bold")}>
+                                        {line}
+                                      </p>
+                                    );
+                                  })}
                                 </div>
-                              )}
-                            </div>
-                          )}
+                              </>
+                            )}
+                          </div>
                         </div>
+                        
+                        {activeImage && (
+                          <div className="space-y-4">
+                            <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl border border-black/5 dark:border-white/5">
+                              <Image src={activeImage} alt={`${t('guides_step_title')} ${index + 1}`} fill className="object-cover" />
+                            </div>
+                            
+                            {images.length > 1 && (
+                              <div className="flex gap-3 overflow-x-auto pb-2 px-1">
+                                {images.map((img: string, i: number) => (
+                                  <button
+                                    key={i}
+                                    onClick={() => setStepImage(index, i)}
+                                    className={cn("relative w-20 h-20 md:w-28 md:h-28 rounded-2xl overflow-hidden shrink-0 border-2 transition-all", activeImageIndex === i ? "border-primary scale-105 shadow-lg" : "border-transparent opacity-50 hover:opacity-100")}
+                                  >
+                                    <Image src={img} alt={`Angle ${i + 1}`} fill className="object-cover" />
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                    );
-                  })
-                ) : (
-                  <div className="p-12 text-center glass rounded-3xl border-dashed border-primary/10">
-                    <p className="text-muted-foreground italic">{t('guides_not_found')}</p>
-                  </div>
-                )}
+                    </div>
+                  );
+                })}
               </div>
             </section>
           </div>
 
-          {/* Sidebar */}
           <div className="lg:col-span-4 space-y-8 sticky top-32">
             <div className="hidden lg:flex gap-4">
-              <Button 
-                onClick={handleBookmark}
-                className={`flex-1 rounded-2xl h-16 font-black uppercase tracking-widest text-[10px] gap-3 shadow-xl transition-all ${isBookmarked ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground'}`}
-              >
+              <Button onClick={handleBookmark} className={`flex-1 rounded-2xl h-16 font-black uppercase tracking-widest text-[10px] gap-3 shadow-xl ${isBookmarked ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground'}`}>
                 {isBookmarked ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
                 {isBookmarked ? t('guides_saved') : t('guides_save')}
               </Button>
-              <Button onClick={handleShare} variant="outline" size="icon" className="rounded-2xl h-16 w-16 glass border-primary/10 hover:border-primary/50 text-primary">
+              <Button onClick={handleShare} variant="outline" size="icon" className="rounded-2xl h-16 w-16 glass border-primary/10 text-primary">
                 <Share2 className="w-5 h-5" />
               </Button>
             </div>
@@ -442,46 +378,20 @@ export default function GuideDetailPage() {
                   <Wrench className="w-5 h-5 text-primary" />
                   <h3 className="font-black uppercase tracking-tight text-sm">{t('guides_tools')}</h3>
                 </div>
-                <Badge variant="outline" className="text-[8px] opacity-40 uppercase">{guide.tools?.length || 0} units</Badge>
               </div>
               <div className="p-8 space-y-5">
-                {guide.tools && guide.tools.length > 0 ? (
-                  guide.tools.map((tool: any, i: number) => (
-                    <div key={i} className="flex items-center gap-4 text-[10px] font-black uppercase tracking-tight text-foreground/70 group/tool">
-                      <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center group-hover/tool:bg-primary/10 transition-colors">
-                        <CheckCircle2 className="w-4 h-4 text-primary" />
-                      </div>
-                      {tool.name}
+                {guide.tools?.map((tool: any, i: number) => (
+                  <div key={i} className="flex items-center gap-4 text-[10px] font-black uppercase tracking-tight text-foreground/70 group/tool">
+                    <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
                     </div>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-[10px] italic">No specialized tools flagged.</p>
-                )}
+                    {tool.name}
+                  </div>
+                ))}
                 <Button variant="secondary" className="w-full mt-4 rounded-xl h-12 font-black uppercase tracking-widest text-[9px] bg-primary/10 text-primary hover:bg-primary/20 border-none">
                   {t('guides_buy_kit')}
                 </Button>
               </div>
-            </div>
-
-            <div className="p-8 glass rounded-3xl border-primary/20 bg-primary/5 relative overflow-hidden group">
-              <div className="absolute inset-0 scan-line opacity-5" />
-              <div className="flex items-center gap-4 mb-6 text-primary">
-                <div className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20">
-                  <MessageCircle className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-black uppercase tracking-tight text-lg leading-none">{t('guides_help_title')}</h3>
-                  <p className="text-[8px] font-black uppercase tracking-widest mt-1 opacity-50">Neural Support Engine</p>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground mb-8 font-medium leading-relaxed">
-                {t('guides_help_desc')}
-              </p>
-              <Link href="/troubleshoot">
-                <Button className="w-full rounded-2xl h-14 font-black uppercase tracking-widest text-[10px] bg-primary neon-glow shadow-xl hover:scale-105 transition-all">
-                  {t('guides_ask_ai')}
-                </Button>
-              </Link>
             </div>
           </div>
         </div>

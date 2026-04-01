@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview AI Flow to translate repair guide content into Filipino with strict formatting and completeness rules.
+ * @fileOverview AI Flow to translate repair guide content into Filipino with batched processing for large manuals.
  */
 
 import {ai} from '@/ai/genkit';
@@ -22,79 +22,99 @@ const TranslateGuideOutputSchema = z.object({
   steps: z.array(z.object({
     title: z.string().optional(),
     description: z.string(),
-  })).describe('An array of translated steps. MUST be the same length as the input steps array.'),
+  })),
 });
 export type TranslateGuideOutput = z.infer<typeof TranslateGuideOutputSchema>;
 
 const translatePrompt = ai.definePrompt({
   name: 'translateGuidePrompt',
-  input: {schema: TranslateGuideInputSchema},
+  input: {
+    schema: z.object({
+      title: z.string().optional(),
+      description: z.string().optional(),
+      steps: z.array(z.object({
+        title: z.string().optional(),
+        description: z.string(),
+      })),
+    })
+  },
   output: {schema: TranslateGuideOutputSchema},
   prompt: `You are a professional technical translator specializing in electronics repair manuals.
-Translate the following guide into clear, natural Filipino (Tagalog/Taglish).
+Translate the following guide content into clear, natural Filipino (Tagalog/Taglish).
 
 STRICT INTEGRITY AND FORMATTING RULES:
-1. COMPLETENESS: You MUST translate EVERY SINGLE STEP provided. Do not skip, merge, or omit any steps. The output steps array MUST have exactly {{steps.length}} items.
+1. COMPLETENESS: You MUST translate EVERY SINGLE STEP provided in this batch.
 2. BULLET POINTS: EVERY bullet point (•) MUST start on its own NEW LINE. 
-3. LINE BREAKS: Use double newlines (\\n\\n) between paragraphs or list items to ensure visual separation.
-4. TECHNICAL TERMS: Standard industry terms like "logic board", "spudger", "ribbon cable", "LCD connector" should be kept as is (Taglish) for technical accuracy.
-5. NO SUMMARIZATION: Translate everything provided. Do not summarize the content to save tokens.
+3. TECHNICAL TERMS: Standard industry terms like "logic board", "spudger", "ribbon cable" should be kept as is (Taglish).
+4. NO SUMMARIZATION: Translate everything provided.
 
 Source Content:
-Title: {{{title}}}
-Description: {{{description}}}
+{{#if title}}Title: {{{title}}}{{/if}}
+{{#if description}}Description: {{{description}}}{{/if}}
 
-Steps to translate (DO NOT SKIP ANY):
+Steps:
 {{#each steps}}
---- STEP {{@index}} (DO NOT OMIT) ---
+--- STEP {{@index}} ---
 Title: {{this.title}}
 Content:
 {{{this.description}}}
 {{/each}}`,
 });
 
+/**
+ * Translates a guide in batches to handle manuals with many steps (e.g., 20+ steps) 
+ * without hitting token limits or skipping data.
+ */
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
-  let attempts = 0;
-  const maxAttempts = 5;
-  const baseDelay = 5000;
+  const BATCH_SIZE = 5;
+  const totalSteps = input.steps.length;
+  const translatedSteps: any[] = [];
+  
+  // 1. Translate Title and Description in the first batch
+  let finalTitle = input.title;
+  let finalDescription = input.description;
 
-  while (attempts < maxAttempts) {
-    try {
-      const {output} = await translatePrompt(input);
-      if (!output) throw new Error('No output from AI');
-      
-      // STRICT INTEGRITY CHECK: Step count must match input count
-      if (output.steps.length !== input.steps.length) {
-        console.warn(`Neural Link returned ${output.steps.length} steps, expected ${input.steps.length}. Retrying...`);
-        throw new Error(`Integrity Check Failed: Expected ${input.steps.length} steps, but Neural Link returned ${output.steps.length}. Retrying for completeness...`);
-      }
+  // 2. Process steps in small batches for stability
+  for (let i = 0; i < totalSteps; i += BATCH_SIZE) {
+    const batch = input.steps.slice(i, i + BATCH_SIZE);
+    let attempts = 0;
+    const maxAttempts = 3;
 
-      return output;
-    } catch (error: any) {
-      attempts++;
-      
-      const errorMsg = error.message || "";
-      const isQuotaError = errorMsg.includes('429') || errorMsg.includes('quota');
-      const isRetryable = 
-        errorMsg.includes('503') || 
-        errorMsg.includes('high demand') || 
-        isQuotaError ||
-        errorMsg.includes('overloaded') ||
-        errorMsg.includes('Integrity Check Failed');
-      
-      if (isRetryable && attempts < maxAttempts) {
-        // Longer delay for longer guides or quota issues
-        const delay = isQuotaError 
-          ? 20000 + (attempts * 5000) 
-          : baseDelay * Math.pow(2, attempts - 1);
-          
-        await new Promise(resolve => setTimeout(resolve, delay));
-        continue;
+    while (attempts < maxAttempts) {
+      try {
+        const result = await translatePrompt({
+          title: i === 0 ? input.title : undefined,
+          description: i === 0 ? input.description : undefined,
+          steps: batch,
+        });
+
+        const output = result.output;
+        if (!output) throw new Error('No output from AI');
+
+        if (i === 0) {
+          finalTitle = output.title;
+          finalDescription = output.description;
+        }
+
+        // Integrity check for this batch
+        if (output.steps.length !== batch.length) {
+          throw new Error(`Integrity check failed: Expected ${batch.length} steps, got ${output.steps.length}`);
+        }
+
+        translatedSteps.push(...output.steps);
+        break;
+      } catch (error: any) {
+        attempts++;
+        if (attempts >= maxAttempts) throw error;
+        // Exponential backoff for quota issues
+        await new Promise(resolve => setTimeout(resolve, 5000 * attempts));
       }
-      
-      throw new Error(`Neural Link Busy: ${errorMsg}`);
     }
   }
-  
-  throw new Error('Neural translation failed after multiple retries.');
+
+  return {
+    title: finalTitle,
+    description: finalDescription,
+    steps: translatedSteps,
+  };
 }

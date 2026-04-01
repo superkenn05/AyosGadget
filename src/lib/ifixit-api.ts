@@ -1,5 +1,5 @@
 /**
- * @fileOverview Client for interacting with the iFixit API v2.0.
+ * @fileOverview Client for interacting with the iFixit API v2.0 with recursive prerequisite support.
  */
 
 import { CategoryName } from './repair-data';
@@ -66,6 +66,41 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
   }
 }
 
+/**
+ * Recursively fetches all steps for a guide, including all prerequisites.
+ * This ensures guides like "MacBook Battery Replacement" show all 20+ steps.
+ */
+export async function getFullIFixitProtocol(id: string): Promise<any> {
+  const guide = await getIFixitGuide(id);
+  if (!guide) return null;
+
+  let allSteps: any[] = [];
+  
+  // 1. Recursively fetch steps from prerequisites
+  if (guide.prerequisites && guide.prerequisites.length > 0) {
+    for (const prereq of guide.prerequisites) {
+      const prereqProtocol = await getFullIFixitProtocol(prereq.guideid.toString());
+      if (prereqProtocol && prereqProtocol.steps) {
+        allSteps = [...allSteps, ...prereqProtocol.steps];
+      }
+    }
+  }
+
+  // 2. Map current guide data
+  const internal = mapIFixitToInternal(guide);
+  
+  // 3. Append current guide steps to the prerequisite steps
+  if (internal && internal.steps) {
+    allSteps = [...allSteps, ...internal.steps];
+  }
+
+  // Return the combined protocol
+  return {
+    ...internal,
+    steps: allSteps
+  };
+}
+
 export async function getIFixitWiki(categoryName: string): Promise<IFixitWiki | null> {
   try {
     const mappedName = categoryName === 'Smartphones' ? 'Phone' : categoryName;
@@ -91,14 +126,12 @@ export function mapIFixitToInternal(ifixit: any) {
   
   const guideId = rawId.toString();
   
-  // Robust Mapping: Capture ALL steps and ALL lines within those steps
   const rawSteps = ifixit.steps || [];
   const mappedSteps = rawSteps.map((s: any) => {
     const stepLines = (s.lines || []).map((l: any) => {
       let text = l.text_rendered || l.text_raw || l.text || '';
       const bulletType = l.bullet || 'none';
       
-      // Map iFixit bullet colors to Emojis to match visual screw markers in photos
       const bulletIcons: Record<string, string> = {
         'black': '• ',
         'blue': '🔵 ',
@@ -116,7 +149,6 @@ export function mapIFixitToInternal(ifixit: any) {
       return prefix + stripHtml(text).trim();
     }).filter(Boolean);
 
-    // Capture ALL images for the gallery
     const images = (s.media?.data || []).map((m: any) => m.original || m.medium || m.thumbnail).filter(Boolean);
     const primaryImage = images[0] || '';
 
