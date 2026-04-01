@@ -1,4 +1,3 @@
-
 'use client';
 
 import RepairCard from '@/components/repair/RepairCard';
@@ -171,7 +170,7 @@ function GuidesContent() {
         </div>
       </section>
 
-      {/* Category Modules (Icon & Labels at Top Left, 2 Rows) */}
+      {/* Category Modules (Top Left, 2 Rows) */}
       {!selectedCategory && !searchQuery && (
         <section className="container mx-auto px-6 py-12">
           <div className="flex items-center gap-4 mb-10">
@@ -196,8 +195,8 @@ function GuidesContent() {
                   <span className="text-xs md:text-xl font-black uppercase tracking-tighter leading-tight group-hover:text-primary transition-colors">{cat.name}</span>
                 </div>
 
-                {/* Watermark */}
-                <div className="absolute -bottom-4 -right-4 opacity-[0.03] dark:opacity-[0.05] group-hover:opacity-[0.1] transition-opacity pointer-events-none scale-150 transform">
+                {/* Watermark - Adjusted size and visibility */}
+                <div className="absolute -bottom-2 -right-2 opacity-[0.06] dark:opacity-[0.12] group-hover:opacity-[0.2] transition-opacity pointer-events-none scale-110 transform">
                    <CategoryIcon name={cat.icon} className="w-16 h-16 md:w-24 md:h-24" />
                 </div>
               </button>

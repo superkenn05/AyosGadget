@@ -1,4 +1,3 @@
-
 'use client';
 
 import CategoryIcon from '@/components/repair/CategoryIcon';
@@ -69,7 +68,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Category Modules Grid (Icon & Labels at Top Left, 2 Rows) */}
+      {/* Category Modules Grid (Top Left Alignment, 2 Rows) */}
       <section className="container mx-auto px-6 mb-16">
         <div className="flex items-center justify-between mb-8 px-2">
           <div className="flex flex-col">
@@ -95,8 +94,8 @@ export default function Home() {
                   <span className="text-xs md:text-xl font-black uppercase tracking-tighter leading-tight group-hover:text-primary transition-colors">{cat.name}</span>
                 </div>
                 
-                {/* Background Watermark */}
-                <div className="absolute -bottom-4 -right-4 opacity-[0.03] dark:opacity-[0.05] group-hover:opacity-[0.1] transition-opacity pointer-events-none scale-150 transform">
+                {/* Background Watermark - Adjusted size and visibility */}
+                <div className="absolute -bottom-2 -right-2 opacity-[0.06] dark:opacity-[0.12] group-hover:opacity-[0.2] transition-opacity pointer-events-none scale-110 transform">
                    <CategoryIcon name={cat.icon} className="w-16 h-16 md:w-24 md:h-24" />
                 </div>
               </div>
