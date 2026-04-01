@@ -70,26 +70,24 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Category Modules Section */}
+      {/* Category Modules Section (MGA GAMIT) */}
       <section className="container mx-auto px-6 mb-16">
-        <div className="flex items-center justify-between mb-8 px-2">
-          <h2 className="text-[10px] font-black uppercase tracking-[0.5em] text-primary">{t('home_modules')}</h2>
-          <Link href="/guides" className="text-[9px] font-black text-primary uppercase tracking-widest flex items-center gap-2 group">
-            {t('home_global_hub')} <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+        <div className="flex items-center justify-between mb-12 px-2">
+          <h2 className="text-[11px] font-black uppercase tracking-[0.6em] text-primary">{t('home_modules')}</h2>
+          <Link href="/guides" className="text-[10px] font-black text-primary uppercase tracking-widest flex items-center gap-2 group">
+            {t('home_global_hub')} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
         
-        <div className="grid grid-cols-4 lg:grid-cols-4 gap-4 md:gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-12 gap-x-6 md:gap-x-12">
           {PRIMARY_CATEGORIES.map((cat) => (
-            <Link key={cat.name} href={`/guides?category=${cat.name}`}>
-              <div className="glass group relative overflow-hidden rounded-2xl p-4 flex flex-col items-center justify-center transition-all hover:border-primary/50 hover:bg-primary/5 active:scale-95 shadow-lg border-primary/5 aspect-square">
-                <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all relative z-10 mb-3">
-                  <CategoryIcon name={cat.icon} className="w-5 h-5 md:w-7 md:h-7" />
-                </div>
-                <span className="text-[8px] md:text-[9px] font-black uppercase tracking-tighter text-center leading-tight group-hover:text-primary transition-colors">
-                  {cat.name}
-                </span>
+            <Link key={cat.name} href={`/guides?category=${cat.name}`} className="group flex flex-col items-center">
+              <div className="w-24 h-24 md:w-32 md:h-32 bg-white dark:bg-card rounded-[2rem] shadow-xl flex items-center justify-center transition-all group-hover:scale-105 active:scale-95 group-hover:shadow-2xl border border-black/5 dark:border-white/5">
+                <CategoryIcon name={cat.icon} className="w-10 h-10 md:w-14 md:h-14 text-slate-800 dark:text-slate-200" />
               </div>
+              <span className="mt-6 text-[10px] md:text-[11px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 group-hover:text-primary transition-colors text-center">
+                {cat.name}
+              </span>
             </Link>
           ))}
         </div>
