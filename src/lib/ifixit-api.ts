@@ -89,16 +89,20 @@ export function mapIFixitToInternal(ifixit: any) {
   const guideId = rawId.toString();
   
   const mappedSteps = (ifixit.steps || []).map((s: any) => {
+    // Extract text from multiple lines within a step
     const stepLines = (s.lines || []).map((l: any) => {
       const text = l.text_rendered || l.text_raw || l.text || '';
       const prefix = l.bullet === 'black' ? '• ' : '';
       return prefix + stripHtml(text).trim();
     }).filter(Boolean);
 
+    // Get the highest resolution image available for the step
+    const imageUrl = s.media?.data?.[0]?.original || s.media?.data?.[0]?.medium || s.media?.data?.[0]?.thumbnail || '';
+
     return {
       title: s.title || '',
       description: stepLines.join('\n\n'),
-      imageUrl: s.media?.data?.[0]?.original || 'https://picsum.photos/seed/step/600/400'
+      imageUrl: imageUrl
     };
   });
 
@@ -110,7 +114,7 @@ export function mapIFixitToInternal(ifixit: any) {
     difficulty: mapDifficulty(ifixit.difficulty || 'Easy'),
     timeEstimate: ifixit.time_required || '30-60 mins',
     description: stripHtml(ifixit.summary || ifixit.text || ''),
-    thumbnail: ifixit.image?.original || ifixit.thumbnail || 'https://picsum.photos/seed/repair/600/400',
+    thumbnail: ifixit.image?.original || ifixit.thumbnail || '',
     type: ifixit.type || 'replacement',
     tools: (ifixit.tools || []).map((t: any) => ({ name: t.name })),
     parts: (ifixit.parts || []).map((p: any) => ({ name: p.name })),

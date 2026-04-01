@@ -3,7 +3,7 @@
 import { FEATURED_REPAIRS } from '@/lib/repair-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Wrench, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, Clock } from 'lucide-react';
+import { CheckCircle2, Wrench, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, Clock, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc } from '@/firebase';
@@ -39,7 +39,7 @@ export default function GuideDetailPage() {
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
-  // Initial Fetch
+  // Initial Fetch: Full Guide Fetch including Steps
   useEffect(() => {
     async function fetchGuide() {
       if (!id) return;
@@ -52,7 +52,7 @@ export default function GuideDetailPage() {
         if (local) {
           fetchedGuide = local;
         } else {
-          // 2. Fetch from iFixit
+          // 2. Fetch from iFixit (API 2.0 /guides/{id} returns full step data)
           const ifixit = await getIFixitGuide(id);
           if (ifixit) {
             fetchedGuide = mapIFixitToInternal(ifixit);
@@ -72,11 +72,12 @@ export default function GuideDetailPage() {
     fetchGuide();
   }, [id]);
 
-  // AI Live Translation
+  // AI Live Translation for Step-by-Step Instructions
   useEffect(() => {
     async function handleTranslation() {
-      if (!originalGuide) return;
+      if (!originalGuide || !originalGuide.steps) return;
 
+      // Only translate if language is Filipino and current guide state is not Filipino
       if (language === 'fil' && guide?.language !== 'fil') {
         setIsTranslating(true);
         try {
@@ -95,8 +96,8 @@ export default function GuideDetailPage() {
             description: translated.description,
             steps: originalGuide.steps.map((s: any, i: number) => ({
               ...s,
-              title: translated.steps[i].title,
-              description: translated.steps[i].description,
+              title: translated.steps[i]?.title || s.title,
+              description: translated.steps[i]?.description || s.description,
             })),
             language: 'fil'
           });
@@ -107,7 +108,7 @@ export default function GuideDetailPage() {
           setIsTranslating(false);
         }
       } else if (language === 'en' && guide?.language === 'fil') {
-        // Revert to original English
+        // Revert to original English content
         setGuide(originalGuide);
       }
     }
@@ -135,7 +136,7 @@ export default function GuideDetailPage() {
       const data = {
         guideId: guide.id,
         title: guide.title,
-        thumbnail: guide.thumbnail,
+        thumbnail: guide.thumbnail || '',
         category: guide.category,
         savedAt: serverTimestamp(),
       };
@@ -181,6 +182,7 @@ export default function GuideDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center text-center p-8 bg-background">
         <div className="glass p-12 rounded-[3rem] border-primary/20">
+          <AlertTriangle className="w-16 h-16 text-rose-500 mx-auto mb-6" />
           <h2 className="text-2xl font-black uppercase tracking-tighter mb-4">Protocol Offline</h2>
           <p className="text-muted-foreground mb-8 text-sm">Target manual could not be initialized. Please check your connection.</p>
           <div className="flex flex-col gap-4">
@@ -255,20 +257,22 @@ export default function GuideDetailPage() {
                 {guide.title}
               </h1>
 
-              <div className="relative aspect-video rounded-[2.5rem] md:rounded-[4rem] overflow-hidden shadow-2xl glass border-primary/10">
-                <Image
-                  src={guide.thumbnail}
-                  alt={guide.title}
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                <div className="absolute inset-0 scan-line opacity-10" />
-                <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 bg-black/60 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-2xl">
-                   <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">{t('guides_time')}</p>
-                   <p className="text-white font-black text-sm uppercase tracking-tight">{guide.timeEstimate}</p>
+              {guide.thumbnail && (
+                <div className="relative aspect-video rounded-[2.5rem] md:rounded-[4rem] overflow-hidden shadow-2xl glass border-primary/10">
+                  <Image
+                    src={guide.thumbnail}
+                    alt={guide.title}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                  <div className="absolute inset-0 scan-line opacity-10" />
+                  <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 bg-black/60 backdrop-blur-xl border border-white/10 px-6 py-3 rounded-2xl">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-1">{t('guides_time')}</p>
+                    <p className="text-white font-black text-sm uppercase tracking-tight">{guide.timeEstimate}</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="p-8 md:p-12 glass rounded-[2.5rem] md:rounded-[3.5rem] border-primary/5 bg-primary/[0.02]">
                 <p className="text-muted-foreground text-sm md:text-lg font-medium leading-relaxed whitespace-pre-wrap">
@@ -284,36 +288,42 @@ export default function GuideDetailPage() {
               </div>
 
               <div className="space-y-10">
-                {guide.steps.map((step: any, index: number) => (
-                  <div key={index} className="glass rounded-[2.5rem] md:rounded-[4rem] overflow-hidden border-primary/5 group/step transition-all hover:border-primary/20">
-                    <div className="p-8 md:p-16">
-                      <div className="flex items-start gap-6 md:gap-10 mb-10">
-                        <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl md:text-4xl shadow-2xl shadow-primary/30 group-hover/step:scale-110 transition-transform">
-                          {index + 1}
-                        </div>
-                        <div className="flex-grow pt-2">
-                          <h3 className="text-xl md:text-3xl font-black tracking-tight uppercase mb-4 text-foreground">
-                            {step.title || `${t('guides_step_title')} ${index + 1}`}
-                          </h3>
-                          <div className="text-muted-foreground text-sm md:text-lg leading-relaxed font-medium whitespace-pre-wrap">
-                            {step.description}
+                {guide.steps && guide.steps.length > 0 ? (
+                  guide.steps.map((step: any, index: number) => (
+                    <div key={index} className="glass rounded-[2.5rem] md:rounded-[4rem] overflow-hidden border-primary/5 group/step transition-all hover:border-primary/20">
+                      <div className="p-8 md:p-16">
+                        <div className="flex items-start gap-6 md:gap-10 mb-10">
+                          <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl md:text-4xl shadow-2xl shadow-primary/30 group-hover/step:scale-110 transition-transform">
+                            {index + 1}
+                          </div>
+                          <div className="flex-grow pt-2">
+                            <h3 className="text-xl md:text-3xl font-black tracking-tight uppercase mb-4 text-foreground">
+                              {step.title || `${t('guides_step_title')} ${index + 1}`}
+                            </h3>
+                            <div className="text-muted-foreground text-sm md:text-lg leading-relaxed font-medium whitespace-pre-wrap">
+                              {step.description}
+                            </div>
                           </div>
                         </div>
+                        {step.imageUrl && (
+                          <div className="relative aspect-video rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 group-hover/step:scale-[1.01] transition-transform">
+                            <Image
+                              src={step.imageUrl}
+                              alt={`${t('guides_step_title')} ${index + 1}`}
+                              fill
+                              className="object-cover"
+                            />
+                            <div className="absolute inset-0 scan-line opacity-0 group-hover/step:opacity-5 transition-opacity" />
+                          </div>
+                        )}
                       </div>
-                      {step.imageUrl && (
-                        <div className="relative aspect-video rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 group-hover/step:scale-[1.01] transition-transform">
-                          <Image
-                            src={step.imageUrl}
-                            alt={`${t('guides_step_title')} ${index + 1}`}
-                            fill
-                            className="object-cover"
-                          />
-                          <div className="absolute inset-0 scan-line opacity-0 group-hover/step:opacity-5 transition-opacity" />
-                        </div>
-                      )}
                     </div>
+                  ))
+                ) : (
+                  <div className="p-12 text-center glass rounded-3xl border-dashed border-primary/10">
+                    <p className="text-muted-foreground italic">{t('guides_not_found')}</p>
                   </div>
-                ))}
+                )}
               </div>
             </section>
           </div>
