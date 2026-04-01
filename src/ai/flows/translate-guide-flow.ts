@@ -30,16 +30,15 @@ const translatePrompt = ai.definePrompt({
   name: 'translateGuidePrompt',
   input: {schema: TranslateGuideInputSchema},
   output: {schema: TranslateGuideOutputSchema},
-  prompt: `You are a professional technical translator specializing in electronics repair. 
-Translate the following repair guide into Filipino (Tagalog). 
+  prompt: `You are a professional technical translator. 
+Translate the electronics repair guide into clear Filipino (Tagalog).
 
-CRITICAL FORMATTING RULES:
-1. PRESERVE ALL BULLETS: You MUST maintain every bullet point character (e.g., '•') exactly as it appears.
-2. PRESERVE ALL NEWLINES: Do NOT merge separate lines into a single paragraph. Every newline in the source must have a corresponding newline in the translation.
-3. DO NOT SUMMARIZE: Translate every instruction line by line.
-4. Language: Use clear Tagalog. Use technical terms (Taglish) for parts like "ribbon cable", "motherboard", "screws", "logic board" if it is more natural for a technician.
+FORMATTING PROTOCOL:
+- PRESERVE EVERY BULLET POINT (e.g., '•').
+- MAINTAIN ALL LINE BREAKS AND NEWLINES.
+- DO NOT COMBINE PARAGRAPHS.
+- Technical terms like "logic board", "motherboard", "ribbon cable" can be left as is or used in Taglish context.
 
-Guide to translate:
 Title: {{{title}}}
 Description: {{{description}}}
 
@@ -55,21 +54,23 @@ Content:
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
   let attempts = 0;
   const maxAttempts = 3;
-  const baseDelay = 1500; // 1.5 seconds
+  const baseDelay = 2000;
 
   while (attempts < maxAttempts) {
     try {
       const {output} = await translatePrompt(input);
-      if (!output) throw new Error('Translation failed: No output received');
+      if (!output) throw new Error('No output from AI');
       return output;
     } catch (error: any) {
       attempts++;
       
-      // If it's a 503 or 429 (overloaded/rate limited), wait and retry
-      const isRetryable = error.message?.includes('503') || error.message?.includes('high demand') || error.message?.includes('429');
+      const isRetryable = 
+        error.message?.includes('503') || 
+        error.message?.includes('high demand') || 
+        error.message?.includes('429') ||
+        error.message?.includes('overloaded');
       
       if (isRetryable && attempts < maxAttempts) {
-        // Exponential backoff
         const delay = baseDelay * Math.pow(2, attempts - 1);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
@@ -79,5 +80,5 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     }
   }
   
-  throw new Error('Translation failed after multiple attempts due to high demand.');
+  throw new Error('Neural translation failed after multiple retries.');
 }

@@ -98,20 +98,22 @@ export default function GuideDetailPage() {
             })),
           });
 
-          setGuide({
-            ...originalGuide,
-            title: translated.title,
-            description: translated.description,
-            steps: originalGuide.steps.map((s: any, i: number) => ({
-              ...s,
-              title: translated.steps[i]?.title || s.title,
-              description: translated.steps[i]?.description || s.description,
-            })),
-            language: 'fil'
-          });
+          if (translated) {
+            setGuide({
+              ...originalGuide,
+              title: translated.title,
+              description: translated.description,
+              steps: originalGuide.steps.map((s: any, i: number) => ({
+                ...s,
+                title: translated.steps[i]?.title || s.title,
+                description: translated.steps[i]?.description || s.description,
+              })),
+              language: 'fil'
+            });
+          }
         } catch (error) {
           console.error("AI Translation failed:", error);
-          toast({ variant: "destructive", title: "Neural Link Busy", description: "AI translation failed." });
+          toast({ variant: "destructive", title: "Neural Link Busy", description: "Masyadong maraming request sa AI. Pakisubukan muli mamaya." });
         } finally {
           setIsTranslating(false);
         }
