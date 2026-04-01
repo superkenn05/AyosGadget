@@ -31,7 +31,7 @@ export default function GuideDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isTranslating, setIsTranslating] = useState(false);
 
-  // Memoize document reference to avoid hydration/render loops
+  // Memoize document reference for bookmarks
   const bookmarkRef = useMemo(() => {
     if (!user || !guide?.id) return null;
     return doc(db, 'users', user.uid, 'bookmarks', guide.id);
@@ -48,7 +48,7 @@ export default function GuideDetailPage() {
       try {
         let fetchedGuide = null;
         
-        // 1. Try local data first
+        // 1. Check local manual data first
         const local = FEATURED_REPAIRS.find((g) => g.id === id);
         if (local) {
           fetchedGuide = local;
@@ -58,7 +58,7 @@ export default function GuideDetailPage() {
           if (ifixit) {
             fetchedGuide = mapIFixitToInternal(ifixit);
           } else {
-            // 3. FALLBACK: Check if this is actually a WIKI/DEVICE ID
+            // 3. FALLBACK: Check if this ID belongs to a Category/Wiki instead of a manual
             const wiki = await getIFixitWiki(id);
             if (wiki) {
               router.replace(`/guides?category=${encodeURIComponent(id)}`);
@@ -83,7 +83,7 @@ export default function GuideDetailPage() {
   // AI Live Translation for Step-by-Step Instructions
   useEffect(() => {
     async function handleTranslation() {
-      if (!originalGuide || !originalGuide.steps) return;
+      if (!originalGuide || !originalGuide.steps || originalGuide.steps.length === 0) return;
 
       if (language === 'fil' && guide?.language !== 'fil') {
         setIsTranslating(true);

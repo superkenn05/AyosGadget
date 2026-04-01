@@ -18,7 +18,7 @@ export interface IFixitGuide {
   steps: {
     title: string;
     lines: { text_raw: string; text_rendered: string; bullet: string }[];
-    media: { data: { original: string }[] };
+    media: { data: { original: string; medium: string; thumbnail: string }[] };
   }[];
 }
 
@@ -32,7 +32,7 @@ export interface IFixitWiki {
 
 export async function searchIFixitGuides(query: string) {
   try {
-    const res = await fetch(`https://www.ifixit.com/api/2.0/search/${encodeURIComponent(query)}?type=guide&limit=24`);
+    const res = await fetch(`https://www.ifixit.com/api/2.0/search/${encodeURIComponent(query)}?type=guide&limit=40`);
     if (!res.ok) return [];
     const data = await res.json();
     return data.results || [];
@@ -56,6 +56,7 @@ export async function getTrendingGuides(offset: number = 0, limit: number = 12) 
 
 export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
   try {
+    // We strictly use the numeric ID for the guides endpoint to get full details including steps
     const res = await fetch(`https://www.ifixit.com/api/2.0/guides/${id}`);
     if (!res.ok) return null;
     return await res.json();
@@ -85,7 +86,10 @@ export async function getIFixitWiki(categoryName: string): Promise<IFixitWiki | 
 }
 
 export function mapIFixitToInternal(ifixit: any) {
-  const rawId = ifixit.guideid ?? ifixit.id ?? Math.floor(Math.random() * 1000000);
+  // IFixit returns guideid in many places, but sometimes it's id
+  const rawId = ifixit.guideid ?? ifixit.id;
+  if (!rawId) return null;
+  
   const guideId = rawId.toString();
   
   const mappedSteps = (ifixit.steps || []).map((s: any) => {
@@ -97,7 +101,8 @@ export function mapIFixitToInternal(ifixit: any) {
     }).filter(Boolean);
 
     // Get the highest resolution image available for the step
-    const imageUrl = s.media?.data?.[0]?.original || s.media?.data?.[0]?.medium || s.media?.data?.[0]?.thumbnail || '';
+    const stepMedia = s.media?.data?.[0];
+    const imageUrl = stepMedia?.original || stepMedia?.medium || stepMedia?.thumbnail || '';
 
     return {
       title: s.title || '',
@@ -110,7 +115,7 @@ export function mapIFixitToInternal(ifixit: any) {
     id: guideId,
     title: ifixit.title || 'Untitled Guide',
     device: ifixit.subject || ifixit.type || 'Hardware Device',
-    category: mapCategory(ifixit.type || ifixit.subject || 'Appliances'),
+    category: mapCategory(ifixit.type || ifixit.subject || ifixit.category || 'Appliances'),
     difficulty: mapDifficulty(ifixit.difficulty || 'Easy'),
     timeEstimate: ifixit.time_required || '30-60 mins',
     description: stripHtml(ifixit.summary || ifixit.text || ''),
@@ -125,6 +130,7 @@ export function mapIFixitToInternal(ifixit: any) {
 }
 
 function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
+  if (!diff) return 'easy';
   const d = diff.toLowerCase();
   if (d.includes('easy')) return 'easy';
   if (d.includes('moderate') || d.includes('medium')) return 'medium';
@@ -132,6 +138,7 @@ function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
 }
 
 function mapCategory(type: string): CategoryName {
+  if (!type) return 'Appliances';
   const t = type.toLowerCase();
   if (t.includes('phone')) return 'Smartphones';
   if (t.includes('laptop') || t.includes('macbook')) return 'Laptops';
@@ -140,6 +147,7 @@ function mapCategory(type: string): CategoryName {
   if (t.includes('audio') || t.includes('headphone') || t.includes('speaker') || t.includes('earbud')) return 'Audio';
   if (t.includes('camera') || t.includes('lens') || t.includes('photography')) return 'Cameras';
   if (t.includes('desktop') || t.includes('pc') || t.includes('monitor') || t.includes('workstation')) return 'Desktop PCs';
+  if (t.includes('car') || t.includes('truck')) return 'Car and Truck';
   return 'Appliances';
 }
 
