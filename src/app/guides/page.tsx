@@ -4,7 +4,7 @@ import RepairCard from '@/components/repair/RepairCard';
 import CategoryIcon from '@/components/repair/CategoryIcon';
 import { REPAIR_CATEGORIES, PRIMARY_CATEGORIES } from '@/lib/repair-data';
 import { Input } from '@/components/ui/input';
-import { Search, Loader2, Sparkles, LayoutGrid, ArrowRight, Wrench, ChevronRight, ChevronLeft, ChevronDown } from 'lucide-react';
+import { Search, Loader2, Sparkles, LayoutGrid, ArrowRight, Wrench, ChevronRight, ChevronLeft, ChevronDown, Layers } from 'lucide-react';
 import { useState, useEffect, Suspense, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -56,8 +56,11 @@ function GuidesContent() {
       
       try {
         if (selectedCategory) {
+          // 1. Fetch Wiki Data (to see children/sub-categories)
           const wiki = await getIFixitWiki(selectedCategory);
           setCategoryWiki(wiki);
+          
+          // 2. Fetch Guides associated with this category/device
           const results = await searchIFixitGuides(selectedCategory);
           setGlobalGuides(deduplicateGuides(results.map(mapIFixitToInternal)));
         } else if (!searchQuery) {
@@ -110,7 +113,7 @@ function GuidesContent() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-background pb-24">
-      {/* Search Header for all views */}
+      {/* Search Header */}
       <section className="pt-24 pb-4 px-6 sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-black/5 dark:border-white/5">
         <div className="container mx-auto max-w-4xl">
           <div className="relative group">
@@ -128,9 +131,9 @@ function GuidesContent() {
       {/* Deeply Nested Category Navigation */}
       {selectedCategory && (
         <section className="container mx-auto px-4 mt-8">
-          {/* Breadcrumbs */}
-          <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-8 px-2 overflow-x-auto whitespace-nowrap pb-2">
-            <Link href="/guides" className="hover:text-primary transition-colors">DEVICES</Link>
+          {/* Breadcrumbs for tracking depth */}
+          <nav className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-8 px-2 overflow-x-auto whitespace-nowrap pb-2">
+            <Link href="/guides" className="hover:text-primary transition-colors">LIBRARY</Link>
             <ChevronRight className="w-3 h-3 flex-shrink-0" />
             <span className="text-primary truncate">{selectedCategory}</span>
           </nav>
@@ -143,7 +146,7 @@ function GuidesContent() {
           ) : (
             <>
               {categoryWiki && (
-                <div className="bg-white dark:bg-card rounded-3xl p-6 md:p-10 mb-12 border border-slate-100 dark:border-white/10 shadow-sm relative overflow-hidden">
+                <div className="bg-white dark:bg-card rounded-3xl p-6 md:p-10 mb-12 border border-slate-100 dark:border-white/10 shadow-sm relative overflow-hidden group">
                   <div className="absolute top-4 left-4">
                     <Button variant="ghost" size="sm" onClick={handleBack} className="text-[9px] font-black uppercase tracking-widest gap-2 h-8 rounded-xl">
                       <ChevronLeft className="w-3 h-3" /> Back
@@ -152,7 +155,7 @@ function GuidesContent() {
                   
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-8 md:pt-0">
                     <div className="md:col-span-4 flex justify-center">
-                      <div className="relative aspect-square w-full max-w-[240px]">
+                      <div className="relative aspect-square w-full max-w-[200px]">
                         <Image 
                           src={categoryWiki.image?.original || 'https://picsum.photos/seed/device/400/400'} 
                           alt={categoryWiki.title} 
@@ -161,21 +164,24 @@ function GuidesContent() {
                         />
                       </div>
                     </div>
-                    <div className="md:col-span-8 space-y-4">
+                    <div className="md:col-span-8 space-y-4 text-center md:text-left">
                       <h2 className="text-3xl md:text-5xl font-black tracking-tighter leading-none uppercase">{categoryWiki.title}</h2>
-                      <p className="text-muted-foreground text-sm font-medium leading-relaxed max-w-2xl line-clamp-3">
-                        {categoryWiki.description || "Browse the full collection of repair manuals and hardware documentation for this module."}
+                      <p className="text-muted-foreground text-xs md:text-sm font-medium leading-relaxed max-w-2xl line-clamp-3">
+                        {categoryWiki.description || "Browse technical manuals, teardowns, and maintenance protocols for this module."}
                       </p>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Recursive Sub-Categories Grid */}
+              {/* Infinite Sub-Modules/Categories Grid */}
               {categoryWiki?.children && categoryWiki.children.length > 0 && (
                 <div className="mb-16">
-                  <div className="flex items-center gap-4 mb-8 px-2">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">SELECT SUB-MODULE</h3>
+                  <div className="flex items-center gap-4 mb-10 px-2">
+                    <div className="flex items-center gap-2">
+                       <Layers className="w-4 h-4 text-primary" />
+                       <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">SELECT SUB-MODULE</h3>
+                    </div>
                     <div className="h-px flex-grow bg-primary/10" />
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -185,7 +191,7 @@ function GuidesContent() {
                         onClick={() => handleCategoryClick(child.title)}
                         className="group flex flex-col items-center gap-3 active:scale-95 transition-transform"
                       >
-                        <div className="relative aspect-square w-full bg-white dark:bg-card border border-black/5 dark:border-white/10 rounded-[1.5rem] md:rounded-[2rem] shadow-lg overflow-hidden p-6 flex items-center justify-center group-hover:border-primary/50 transition-all">
+                        <div className="relative aspect-square w-full bg-white dark:bg-card border border-black/5 dark:border-white/10 rounded-[2rem] shadow-lg overflow-hidden p-6 flex items-center justify-center group-hover:border-primary/50 transition-all">
                           {child.image?.thumbnail ? (
                             <Image 
                               src={child.image.thumbnail} 
@@ -197,7 +203,7 @@ function GuidesContent() {
                             <Wrench className="w-10 h-10 text-muted-foreground/20" />
                           )}
                         </div>
-                        <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-center line-clamp-2 group-hover:text-primary transition-colors">
+                        <span className="text-[9px] font-black uppercase tracking-tight text-center line-clamp-2 group-hover:text-primary transition-colors">
                           {child.title}
                         </span>
                       </button>
@@ -206,7 +212,7 @@ function GuidesContent() {
                 </div>
               )}
 
-              {/* Guides categorized by type */}
+              {/* Guides categorized by type - Nested View */}
               {(globalGuides.length > 0) && (
                 <div className="space-y-16">
                   <div className="flex items-center gap-4 px-2">
@@ -216,7 +222,10 @@ function GuidesContent() {
 
                   {sections.replacement.length > 0 && (
                     <div className="space-y-6">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 pl-4 border-l-4 border-primary">Replacement Guides</h3>
+                      <div className="flex items-center justify-between pl-4 border-l-4 border-primary">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Replacement Guides</h3>
+                        <span className="text-[8px] font-black text-primary uppercase opacity-40">{sections.replacement.length} manual(s)</span>
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {sections.replacement.map((guide) => (
                           <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
@@ -227,7 +236,10 @@ function GuidesContent() {
 
                   {sections.teardowns.length > 0 && (
                     <div className="space-y-6">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 pl-4 border-l-4 border-amber-500">Teardowns</h3>
+                      <div className="flex items-center justify-between pl-4 border-l-4 border-amber-500">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Teardowns</h3>
+                        <span className="text-[8px] font-black text-amber-500 uppercase opacity-40">{sections.teardowns.length} manual(s)</span>
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {sections.teardowns.map((guide) => (
                           <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
@@ -238,7 +250,10 @@ function GuidesContent() {
 
                   {sections.techniques.length > 0 && (
                     <div className="space-y-6">
-                      <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 pl-4 border-l-4 border-emerald-500">Techniques</h3>
+                      <div className="flex items-center justify-between pl-4 border-l-4 border-emerald-500">
+                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Techniques</h3>
+                        <span className="text-[8px] font-black text-emerald-500 uppercase opacity-40">{sections.techniques.length} manual(s)</span>
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {sections.techniques.map((guide) => (
                           <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
@@ -263,7 +278,7 @@ function GuidesContent() {
         </section>
       )}
 
-      {/* Global Landing View (No category selected) */}
+      {/* Global Landing View */}
       {!selectedCategory && (
         <section className="container mx-auto px-6 space-y-16 mt-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-2">
@@ -292,8 +307,8 @@ function GuidesContent() {
                     onClick={() => handleCategoryClick(cat.name)}
                     className="glass group relative overflow-hidden rounded-[2.5rem] p-6 md:p-8 flex flex-col items-center justify-center text-center transition-all hover:border-primary/50 active:scale-95 shadow-xl border-primary/5 bg-white dark:bg-card h-48 md:h-64"
                   >
-                    <div className="w-20 h-20 md:w-28 md:h-28 rounded-[2rem] bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all relative z-10 shadow-sm mb-6">
-                      <CategoryIcon name={cat.icon} className="w-10 h-10 md:w-14 md:h-14" />
+                    <div className="w-16 h-16 md:w-24 md:h-24 rounded-[2rem] bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all relative z-10 shadow-sm mb-6">
+                      <CategoryIcon name={cat.icon} className="w-8 h-8 md:w-12 md:h-12" />
                     </div>
                     <span className="text-xs md:text-lg font-black uppercase tracking-tighter leading-tight group-hover:text-primary transition-colors">{cat.name}</span>
                   </button>
