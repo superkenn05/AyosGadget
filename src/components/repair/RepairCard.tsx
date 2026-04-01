@@ -49,7 +49,7 @@ export default function RepairCard({ guide, variant = 'default' }: RepairCardPro
   if (variant === 'trouble') {
     return (
       <Link href={`/guides/${guide.id}`}>
-        <div className="glass group rounded-3xl overflow-hidden flex flex-col transition-all hover:border-amber-500/50 active:scale-95 bg-amber-500/[0.02]">
+        <div className="glass group rounded-2xl overflow-hidden flex flex-col transition-all hover:border-amber-500/50 active:scale-95 bg-amber-500/[0.02]">
           <div className="relative aspect-square">
             <Image src={guide.thumbnail} alt={guide.title} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -69,7 +69,7 @@ export default function RepairCard({ guide, variant = 'default' }: RepairCardPro
 
   return (
     <Link href={`/guides/${guide.id}`}>
-      <div className="glass-card group overflow-hidden rounded-[2.5rem] flex flex-col h-full relative">
+      <div className="glass-card group overflow-hidden rounded-3xl flex flex-col h-full relative">
         <div className="absolute inset-0 scan-line opacity-0 group-hover:opacity-10 transition-opacity" />
         
         <div className="relative aspect-[21/10] overflow-hidden">

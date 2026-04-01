@@ -35,7 +35,7 @@ export default function Home() {
       {/* Hero: Compact System Dashboard Header */}
       <section className="relative pt-28 pb-10 px-6">
         <div className="container mx-auto max-w-4xl text-center">
-          <div className="glass p-8 md:p-14 rounded-[3rem] border-primary/10 relative overflow-hidden group shadow-2xl">
+          <div className="glass p-8 md:p-14 rounded-3xl border-primary/10 relative overflow-hidden group shadow-2xl">
             <div className="absolute inset-0 scan-line opacity-5" />
             
             <div className="flex flex-col gap-8 relative z-10 items-center">
@@ -54,12 +54,12 @@ export default function Home() {
 
               <div className="flex flex-col sm:flex-row gap-5 w-full max-w-md">
                 <Link href="/troubleshoot" className="flex-1">
-                  <Button className="w-full rounded-[1.25rem] h-16 px-10 font-black uppercase tracking-widest text-[11px] bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all gap-4 neon-glow border-none">
+                  <Button className="w-full rounded-2xl h-16 px-10 font-black uppercase tracking-widest text-[11px] bg-primary text-primary-foreground shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all gap-4 neon-glow border-none">
                     <Cpu className="w-6 h-6" />
                     {t('home_start_scan')}
                   </Button>
                 </Link>
-                <Link href="/guides" className="w-full sm:w-16 h-16 rounded-[1.25rem] glass border-primary/20 flex items-center justify-center text-primary hover:bg-primary/10 transition-all hover:scale-105 shadow-lg">
+                <Link href="/guides" className="w-full sm:w-16 h-16 rounded-2xl glass border-primary/20 flex items-center justify-center text-primary hover:bg-primary/10 transition-all hover:scale-105 shadow-lg">
                    <Globe className="w-7 h-7" />
                 </Link>
               </div>
@@ -82,9 +82,9 @@ export default function Home() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8">
           {PRIMARY_CATEGORIES.map((cat) => (
             <Link key={cat.name} href={`/guides?category=${cat.name}`}>
-              <div className="glass group relative overflow-hidden rounded-[2.5rem] p-4 md:p-6 flex items-center justify-start transition-all hover:border-primary/50 hover:bg-primary/5 active:scale-95 shadow-xl border-primary/10 h-28 md:h-32">
+              <div className="glass group relative overflow-hidden rounded-3xl p-4 md:p-6 flex items-center justify-start transition-all hover:border-primary/50 hover:bg-primary/5 active:scale-95 shadow-xl border-primary/10 h-28 md:h-32">
                 {/* Icon at Left */}
-                <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all relative z-10 shadow-sm shrink-0 mr-4">
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all relative z-10 shadow-sm shrink-0 mr-4">
                   <CategoryIcon name={cat.icon} className="w-6 h-6 md:w-8 md:h-8" />
                 </div>
 
@@ -109,7 +109,6 @@ export default function Home() {
         <div className="flex items-center gap-6 mb-10 px-2">
           <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
           <div className="flex items-center gap-3">
-             <List className="w-4 h-4 text-muted-foreground/50" />
              <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-40">{t('home_auxiliary')}</span>
           </div>
           <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
@@ -147,7 +146,7 @@ export default function Home() {
         </div>
         
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-24 bg-white/5 dark:bg-white/[0.02] rounded-[4rem] border border-dashed border-primary/10">
+          <div className="flex flex-col items-center justify-center py-24 bg-white/5 dark:bg-white/[0.02] rounded-3xl border border-dashed border-primary/10">
             <Loader2 className="w-10 h-10 animate-spin text-primary mb-6" />
             <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
           </div>
@@ -158,7 +157,7 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <div className="p-16 glass rounded-[4rem] border-primary/5 max-w-2xl mx-auto text-center shadow-2xl">
+          <div className="p-16 glass rounded-3xl border-primary/5 max-w-2xl mx-auto text-center shadow-2xl">
             <Activity className="w-16 h-16 text-primary/40 mx-auto mb-8" />
             <h2 className="text-3xl font-black uppercase tracking-tighter mb-4">{t('common_error_link')}</h2>
             <p className="text-muted-foreground text-base mb-10 font-medium leading-relaxed">

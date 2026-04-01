@@ -182,10 +182,10 @@ function GuidesContent() {
               <button
                 key={cat.name}
                 onClick={() => handleCategoryClick(cat.name)}
-                className={`glass group relative overflow-hidden rounded-[2.5rem] p-4 md:p-6 flex items-center justify-start text-left transition-all hover:border-primary/50 active:scale-95 h-28 md:h-32 shadow-xl border-primary/5 ${selectedCategory === cat.name ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : ''}`}
+                className={`glass group relative overflow-hidden rounded-3xl p-4 md:p-6 flex items-center justify-start text-left transition-all hover:border-primary/50 active:scale-95 h-28 md:h-32 shadow-xl border-primary/5 ${selectedCategory === cat.name ? 'border-primary ring-1 ring-primary/20 bg-primary/5' : ''}`}
               >
                 {/* Icon at Left */}
-                <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all relative z-10 shadow-sm shrink-0 mr-4">
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all relative z-10 shadow-sm shrink-0 mr-4">
                   <CategoryIcon name={cat.icon} className="w-6 h-6 md:w-8 md:h-8" />
                 </div>
 
@@ -208,7 +208,7 @@ function GuidesContent() {
       {/* Device Landing Hero */}
       {categoryWiki && (
         <section className="container mx-auto px-6 mb-16 animate-in fade-in slide-in-from-bottom-4 pt-12">
-          <div className="glass rounded-[3rem] p-8 md:p-12 mb-12 relative overflow-hidden border-primary/10 shadow-2xl">
+          <div className="glass rounded-3xl p-8 md:p-12 mb-12 relative overflow-hidden border-primary/10 shadow-2xl">
             <div className="absolute inset-0 scan-line opacity-5" />
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-16 items-center">
               <div className="lg:col-span-8 space-y-6">
@@ -240,7 +240,7 @@ function GuidesContent() {
                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
                  {categoryWiki.children.map((child, i) => (
                    <Link key={`child-${i}`} href={`/guides?category=${child.title}`}>
-                     <div className="glass group rounded-[2rem] p-8 h-40 flex flex-col items-center justify-center text-center gap-4 hover:border-primary/50 transition-all active:scale-95 shadow-lg border-primary/5">
+                     <div className="glass group rounded-2xl p-8 h-40 flex flex-col items-center justify-center text-center gap-4 hover:border-primary/50 transition-all active:scale-95 shadow-lg border-primary/5">
                        <div className="relative w-12 h-12 opacity-40 group-hover:opacity-100 transition-opacity">
                          <Image 
                            src={child.image?.thumbnail || 'https://picsum.photos/seed/sub/100/100'} 
@@ -331,7 +331,7 @@ function GuidesContent() {
             </div>
           </>
         ) : (
-          <div className="text-center py-24 glass rounded-[3rem] border-dashed border-2 border-primary/10 max-w-2xl mx-auto">
+          <div className="text-center py-24 glass rounded-3xl border-dashed border-2 border-primary/10 max-w-2xl mx-auto">
             <h3 className="text-xl font-black uppercase tracking-tighter mb-4">{t('guides_not_found')}</h3>
             <p className="text-sm text-muted-foreground font-medium opacity-60">{t('guides_adjust')}</p>
           </div>
