@@ -66,10 +66,11 @@ export default function GuideDetailPage() {
                 const prereqData = await getIFixitGuide(prereq.guideid.toString());
                 if (prereqData) {
                   const mappedPrereq = mapIFixitToInternal(prereqData);
+                  // Filter out redundant steps or just add them all
                   prereqSteps.push(...mappedPrereq.steps);
                 }
               }
-              // Prepend prerequisite steps to the main steps
+              // Prepend prerequisite steps to the main steps to form the full protocol
               baseGuide.steps = [...prereqSteps, ...baseGuide.steps];
             }
             
@@ -86,6 +87,7 @@ export default function GuideDetailPage() {
         if (fetchedGuide) {
           setOriginalGuide(fetchedGuide);
           setGuide(fetchedGuide);
+          // Initialize image indexes for each step
           const initialIndexes: Record<number, number> = {};
           fetchedGuide.steps.forEach((_: any, i: number) => {
             initialIndexes[i] = 0;
@@ -112,7 +114,7 @@ export default function GuideDetailPage() {
         setIsTranslating(true);
         translationRef.current = translationKey;
         try {
-          // Process steps in chunks if they are too many (e.g. 20+ steps) for the AI
+          // Process steps for translation
           const translated = await translateGuide({
             title: originalGuide.title,
             description: originalGuide.description,
@@ -124,7 +126,7 @@ export default function GuideDetailPage() {
 
           if (translated) {
             const finalSteps = originalGuide.steps.map((s: any, i: number) => ({
-              ...s,
+              ...s, // Preserve images and other non-text data
               title: translated.steps[i]?.title || s.title,
               description: translated.steps[i]?.description || s.description,
             }));
@@ -399,6 +401,7 @@ export default function GuideDetailPage() {
                                 <div className="absolute inset-0 scan-line opacity-0 group-hover/step:opacity-5 transition-opacity" />
                               </div>
                               
+                              {/* Gallery Switcher for multiple images in a single step */}
                               {images.length > 1 && (
                                 <div className="flex gap-3 overflow-x-auto pb-2 px-1">
                                   {images.map((img: string, i: number) => (
