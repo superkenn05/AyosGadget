@@ -21,7 +21,7 @@ export default function GuideDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params?.id as string;
-  const { user } = user ? useUser() : { user: null }; // Safe check for hook usage if needed
+  const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
   const { t, language } = useLanguage();
@@ -59,8 +59,6 @@ export default function GuideDetailPage() {
             fetchedGuide = mapIFixitToInternal(ifixit);
           } else {
             // 3. FALLBACK: Check if this is actually a WIKI/DEVICE ID
-            // If the ID represents a device (e.g. "MacBook_Pro_13_Unibody_Mid_2009"),
-            // we redirect the user to the category view to see the list of guides.
             const wiki = await getIFixitWiki(id);
             if (wiki) {
               router.replace(`/guides?category=${encodeURIComponent(id)}`);
@@ -87,7 +85,6 @@ export default function GuideDetailPage() {
     async function handleTranslation() {
       if (!originalGuide || !originalGuide.steps) return;
 
-      // Only translate if language is Filipino and current guide state is not Filipino
       if (language === 'fil' && guide?.language !== 'fil') {
         setIsTranslating(true);
         try {
@@ -118,7 +115,6 @@ export default function GuideDetailPage() {
           setIsTranslating(false);
         }
       } else if (language === 'en' && guide?.language === 'fil') {
-        // Revert to original English content
         setGuide(originalGuide);
       }
     }
@@ -126,8 +122,7 @@ export default function GuideDetailPage() {
   }, [language, originalGuide, toast, guide?.language]);
 
   const handleBookmark = () => {
-    const { user: currentUser } = useUser();
-    if (!currentUser) {
+    if (!user) {
       toast({ title: t('common_login_required'), description: t('common_login_desc') });
       return;
     }
@@ -215,7 +210,6 @@ export default function GuideDetailPage() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
-      {/* AI Translation Overlay */}
       {isTranslating && (
         <div className="fixed inset-0 z-[100] bg-background/60 backdrop-blur-sm flex items-center justify-center">
           <div className="glass p-8 rounded-3xl flex flex-col items-center gap-4 border-primary/30">
