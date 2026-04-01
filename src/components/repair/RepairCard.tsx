@@ -20,6 +20,9 @@ export default function RepairCard({ guide, variant = 'default' }: RepairCardPro
     hard: 'text-rose-600 dark:text-rose-400 bg-rose-500/20',
   }[guide.difficulty as 'easy' | 'medium' | 'hard'] || 'bg-muted';
 
+  // Fallback image if thumbnail is missing to prevent NextJS Image error
+  const thumbnailSrc = guide.thumbnail || 'https://picsum.photos/seed/repair/800/600';
+
   if (variant === 'compact') {
     return (
       <Link href={`/guides/${guide.id}`}>
@@ -38,7 +41,13 @@ export default function RepairCard({ guide, variant = 'default' }: RepairCardPro
              </div>
           </div>
           <div className="relative w-32 h-full shrink-0 border-l border-black/5 dark:border-white/5">
-            <Image src={guide.thumbnail} alt={guide.title} fill className="object-cover transition-transform group-hover:scale-110" />
+            <Image 
+              src={thumbnailSrc} 
+              alt={guide.title} 
+              fill 
+              className="object-cover transition-transform group-hover:scale-110"
+              data-ai-hint="repair gadget"
+            />
             <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/20" />
           </div>
         </div>
@@ -51,7 +60,13 @@ export default function RepairCard({ guide, variant = 'default' }: RepairCardPro
       <Link href={`/guides/${guide.id}`}>
         <div className="glass group rounded-2xl overflow-hidden flex flex-col transition-all hover:border-amber-500/50 active:scale-95 bg-amber-500/[0.02]">
           <div className="relative aspect-square">
-            <Image src={guide.thumbnail} alt={guide.title} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
+            <Image 
+              src={thumbnailSrc} 
+              alt={guide.title} 
+              fill 
+              className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+              data-ai-hint="broken device"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute top-3 left-3 px-2 py-1 rounded-lg bg-amber-500 text-white text-[7px] font-black uppercase tracking-widest shadow-lg">
               FAULTS DETECTED
@@ -74,10 +89,11 @@ export default function RepairCard({ guide, variant = 'default' }: RepairCardPro
         
         <div className="relative aspect-[21/10] overflow-hidden">
           <Image
-            src={guide.thumbnail}
+            src={thumbnailSrc}
             alt={guide.title}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-110"
+            data-ai-hint="electronics repair"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
           
