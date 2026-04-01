@@ -70,7 +70,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Category Modules Section (MGA GAMIT) - Forced 4 Rows (2 Columns for 8 items) */}
+      {/* Category Modules Section (MGA GAMIT) - Updated to 4 Columns */}
       <section className="container mx-auto px-6 mb-16">
         <div className="flex items-center justify-between mb-12 px-2">
           <h2 className="text-[11px] font-black uppercase tracking-[0.6em] text-primary">{t('home_modules')}</h2>
@@ -79,7 +79,7 @@ export default function Home() {
           </Link>
         </div>
         
-        <div className="grid grid-cols-2 gap-y-12 gap-x-6 max-w-2xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-12 gap-x-6 max-w-4xl mx-auto">
           {PRIMARY_CATEGORIES.map((cat) => (
             <Link key={cat.name} href={`/guides?category=${cat.name}`} className="group flex flex-col items-center">
               <div className="w-24 h-24 md:w-32 md:h-32 bg-white dark:bg-card rounded-[2rem] shadow-xl flex items-center justify-center transition-all group-hover:scale-105 active:scale-95 group-hover:shadow-2xl border border-black/5 dark:border-white/5">
