@@ -69,7 +69,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Category Modules Grid (Labels on Left, Icon on Right, 2 Rows) */}
+      {/* Category Modules Grid (Icon on Left, Labels on Right, 2 Rows) */}
       <section className="container mx-auto px-6 mb-16">
         <div className="flex items-center justify-between mb-8 px-2">
           <div className="flex flex-col">
@@ -84,17 +84,17 @@ export default function Home() {
           {PRIMARY_CATEGORIES.map((cat) => (
             <Link key={cat.name} href={`/guides?category=${cat.name}`}>
               <div className="glass group relative overflow-hidden rounded-[2.5rem] p-6 md:p-8 flex items-center justify-between transition-all hover:border-primary/50 hover:bg-primary/5 active:scale-95 shadow-xl border-primary/10 h-32 md:h-40">
-                {/* Text on Left */}
-                <div className="flex flex-col text-left relative z-10 flex-grow pr-4">
-                  <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest opacity-40 leading-none mb-1 md:mb-2">{t('common_module')}</span>
-                  <span className="text-xs md:text-lg font-black uppercase tracking-tighter leading-tight group-hover:text-primary transition-colors">{cat.name}</span>
-                </div>
-                
-                {/* Icon on Right */}
+                {/* Icon on Left */}
                 <div className="w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all relative z-10 shadow-sm shrink-0">
                   <CategoryIcon name={cat.icon} className="w-5 h-5 md:w-8 md:h-8" />
                 </div>
 
+                {/* Text on Right */}
+                <div className="flex flex-col text-left relative z-10 flex-grow pl-4">
+                  <span className="text-[8px] md:text-[9px] font-black uppercase tracking-widest opacity-40 leading-none mb-1 md:mb-2">{t('common_module')}</span>
+                  <span className="text-xs md:text-lg font-black uppercase tracking-tighter leading-tight group-hover:text-primary transition-colors">{cat.name}</span>
+                </div>
+                
                 {/* Background Watermark */}
                 <div className="absolute -bottom-4 -right-4 opacity-[0.03] dark:opacity-[0.05] group-hover:opacity-[0.1] transition-opacity pointer-events-none scale-150 transform">
                    <CategoryIcon name={cat.icon} className="w-16 h-16 md:w-24 md:h-24" />
