@@ -17,6 +17,7 @@ import { useEffect, useState, useMemo, useRef } from 'react';
 import { getIFixitGuide, mapIFixitToInternal, getIFixitWiki } from '@/lib/ifixit-api';
 import { translateGuide } from '@/ai/flows/translate-guide-flow';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 export default function GuideDetailPage() {
   const params = useParams();
@@ -32,6 +33,9 @@ export default function GuideDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isTranslating, setIsTranslating] = useState(false);
   const translationRef = useRef<string | null>(null);
+
+  // Gallery state for each step
+  const [stepImageIndexes, setStepImageIndexes] = useState<Record<number, number>>({});
 
   // Memoize document reference for bookmarks
   const bookmarkRef = useMemo(() => {
@@ -69,6 +73,12 @@ export default function GuideDetailPage() {
         if (fetchedGuide) {
           setOriginalGuide(fetchedGuide);
           setGuide(fetchedGuide);
+          // Initialize gallery indexes to 0
+          const initialIndexes: Record<number, number> = {};
+          fetchedGuide.steps.forEach((_: any, i: number) => {
+            initialIndexes[i] = 0;
+          });
+          setStepImageIndexes(initialIndexes);
         }
       } catch (error) {
         console.error("Neural Fetch failed:", error);
@@ -84,7 +94,6 @@ export default function GuideDetailPage() {
     async function handleTranslation() {
       if (!originalGuide || !originalGuide.steps || originalGuide.steps.length === 0) return;
       
-      // Prevent multiple concurrent translations or re-translating if already in target language
       const translationKey = `${id}-${language}`;
       if (translationRef.current === translationKey) return;
 
@@ -183,6 +192,10 @@ export default function GuideDetailPage() {
       navigator.clipboard.writeText(window.location.href);
       toast({ title: "Neural Link Copied" });
     }
+  };
+
+  const setStepImage = (stepIndex: number, imageIndex: number) => {
+    setStepImageIndexes(prev => ({ ...prev, [stepIndex]: imageIndex }));
   };
 
   if (loading) {
@@ -348,36 +361,72 @@ export default function GuideDetailPage() {
                     </div>
                   ))
                 ) : guide.steps && guide.steps.length > 0 ? (
-                  guide.steps.map((step: any, index: number) => (
-                    <div key={index} className="glass rounded-3xl overflow-hidden border-primary/5 group/step transition-all hover:border-primary/20">
-                      <div className="p-8 md:p-16">
-                        <div className="flex items-start gap-6 md:gap-10 mb-10">
-                          <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground font-black text-xl md:text-4xl shadow-2xl shadow-primary/30 group-hover/step:scale-110 transition-transform">
-                            {index + 1}
-                          </div>
-                          <div className="flex-grow pt-2">
-                            <h3 className="text-xl md:text-3xl font-black tracking-tight uppercase mb-4 text-foreground">
-                              {step.title || `${t('guides_step_title')} ${index + 1}`}
-                            </h3>
-                            <div className="text-muted-foreground text-sm md:text-lg leading-relaxed font-medium whitespace-pre-wrap">
-                              {step.description}
+                  guide.steps.map((step: any, index: number) => {
+                    const activeImageIndex = stepImageIndexes[index] || 0;
+                    const images = step.images || (step.imageUrl ? [step.imageUrl] : []);
+                    const activeImage = images[activeImageIndex];
+
+                    return (
+                      <div key={index} className="glass rounded-3xl overflow-hidden border-primary/5 group/step transition-all hover:border-primary/20">
+                        <div className="p-8 md:p-16">
+                          <div className="flex items-start gap-6 md:gap-10 mb-10">
+                            <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-xl md:text-4xl shadow-2xl shadow-primary/30 group-hover/step:scale-110 transition-transform">
+                              {index + 1}
+                            </div>
+                            <div className="flex-grow pt-2">
+                              <h3 className="text-xl md:text-3xl font-black tracking-tight uppercase mb-4 text-foreground">
+                                {step.title || `${t('guides_step_title')} ${index + 1}`}
+                              </h3>
+                              <div className="text-muted-foreground text-sm md:text-lg leading-relaxed font-medium whitespace-pre-wrap">
+                                {step.description.split('\n\n').map((line: string, li: number) => {
+                                  const isWarning = line.includes('⚠️ [WARNING]');
+                                  return (
+                                    <p key={li} className={cn(
+                                      "mb-4 last:mb-0",
+                                      isWarning && "p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 font-bold"
+                                    )}>
+                                      {line}
+                                    </p>
+                                  );
+                                })}
+                              </div>
                             </div>
                           </div>
+                          
+                          {activeImage && (
+                            <div className="space-y-4">
+                              <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 group-hover/step:scale-[1.01] transition-transform">
+                                <Image
+                                  src={activeImage}
+                                  alt={`${t('guides_step_title')} ${index + 1}`}
+                                  fill
+                                  className="object-cover"
+                                />
+                                <div className="absolute inset-0 scan-line opacity-0 group-hover/step:opacity-5 transition-opacity" />
+                              </div>
+                              
+                              {images.length > 1 && (
+                                <div className="flex gap-3 overflow-x-auto pb-2 px-1">
+                                  {images.map((img: string, i: number) => (
+                                    <button
+                                      key={i}
+                                      onClick={() => setStepImage(index, i)}
+                                      className={cn(
+                                        "relative w-20 h-20 md:w-28 md:h-28 rounded-2xl overflow-hidden shrink-0 border-2 transition-all",
+                                        activeImageIndex === i ? "border-primary scale-105 shadow-lg" : "border-transparent opacity-50 hover:opacity-100"
+                                      )}
+                                    >
+                                      <Image src={img} alt={`Angle ${i + 1}`} fill className="object-cover" />
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        {step.imageUrl && (
-                          <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 group-hover/step:scale-[1.01] transition-transform">
-                            <Image
-                              src={step.imageUrl}
-                              alt={`${t('guides_step_title')} ${index + 1}`}
-                              fill
-                              className="object-cover"
-                            />
-                            <div className="absolute inset-0 scan-line opacity-0 group-hover/step:opacity-5 transition-opacity" />
-                          </div>
-                        )}
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="p-12 text-center glass rounded-3xl border-dashed border-primary/10">
                     <p className="text-muted-foreground italic">{t('guides_not_found')}</p>

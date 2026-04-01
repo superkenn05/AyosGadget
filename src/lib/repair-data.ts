@@ -4,6 +4,7 @@ export interface Step {
   title: string;
   description: string;
   imageUrl: string;
+  images?: string[]; // Added support for multiple images
 }
 
 export interface Part {

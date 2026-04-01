@@ -93,21 +93,25 @@ export function mapIFixitToInternal(ifixit: any) {
   
   const mappedSteps = (ifixit.steps || []).map((s: any) => {
     // Process ALL bullet types to ensure no content is skipped
+    // Also tag warnings specifically for UI treatment if desired
     const stepLines = (s.lines || []).map((l: any) => {
-      const text = l.text_rendered || l.text_raw || l.text || '';
-      // All colors indicate a bullet point/instruction item in iFixit
+      let text = l.text_rendered || l.text_raw || l.text || '';
       const isBullet = !!l.bullet && l.bullet !== 'none';
-      const prefix = isBullet ? '• ' : '';
+      const isWarning = l.bullet === 'caution' || l.bullet === 'warning' || l.bullet === 'red';
+      
+      const prefix = isWarning ? '⚠️ [WARNING]: ' : (isBullet ? '• ' : '');
       return prefix + stripHtml(text).trim();
     }).filter(Boolean);
 
-    const stepMedia = s.media?.data?.[0];
-    const imageUrl = stepMedia?.original || stepMedia?.medium || stepMedia?.thumbnail || '';
+    // Get ALL media items for the step gallery
+    const images = (s.media?.data || []).map((m: any) => m.original || m.medium || m.thumbnail).filter(Boolean);
+    const primaryImage = images[0] || '';
 
     return {
       title: s.title || '',
       description: stepLines.join('\n\n'),
-      imageUrl: imageUrl
+      imageUrl: primaryImage,
+      images: images
     };
   });
 
