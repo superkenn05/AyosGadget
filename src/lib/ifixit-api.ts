@@ -15,6 +15,7 @@ export interface IFixitGuide {
   type: string;
   tools: { name: string }[];
   parts: { name: string }[];
+  prerequisites: { guideid: number; title: string }[];
   steps: {
     title: string;
     lines: { text_raw: string; text_rendered: string; bullet: string }[];
@@ -56,7 +57,6 @@ export async function getTrendingGuides(offset: number = 0, limit: number = 12) 
 
 export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
   try {
-    // We strictly use the numeric ID for the guides endpoint to get full details including steps
     const res = await fetch(`https://www.ifixit.com/api/2.0/guides/${id}`);
     if (!res.ok) return null;
     return await res.json();
@@ -86,21 +86,21 @@ export async function getIFixitWiki(categoryName: string): Promise<IFixitWiki | 
 }
 
 export function mapIFixitToInternal(ifixit: any) {
-  // IFixit returns guideid in many places, but sometimes it's id
   const rawId = ifixit.guideid ?? ifixit.id;
   if (!rawId) return null;
   
   const guideId = rawId.toString();
   
   const mappedSteps = (ifixit.steps || []).map((s: any) => {
-    // Extract text from multiple lines within a step
+    // Process ALL bullet types to ensure no content is skipped
     const stepLines = (s.lines || []).map((l: any) => {
       const text = l.text_rendered || l.text_raw || l.text || '';
-      const prefix = l.bullet === 'black' ? '• ' : '';
+      // All colors indicate a bullet point/instruction item in iFixit
+      const isBullet = !!l.bullet && l.bullet !== 'none';
+      const prefix = isBullet ? '• ' : '';
       return prefix + stripHtml(text).trim();
     }).filter(Boolean);
 
-    // Get the highest resolution image available for the step
     const stepMedia = s.media?.data?.[0];
     const imageUrl = stepMedia?.original || stepMedia?.medium || stepMedia?.thumbnail || '';
 
@@ -123,6 +123,7 @@ export function mapIFixitToInternal(ifixit: any) {
     type: ifixit.type || 'replacement',
     tools: (ifixit.tools || []).map((t: any) => ({ name: t.name })),
     parts: (ifixit.parts || []).map((p: any) => ({ name: p.name })),
+    prerequisites: (ifixit.prerequisites || []).map((pr: any) => ({ id: pr.guideid, title: pr.title })),
     steps: mappedSteps,
     rating: 4.5,
     reviewsCount: Math.floor(Math.random() * 100) + 10,
@@ -159,5 +160,6 @@ function stripHtml(html: string) {
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"');
+    .replace(/&quot;/g, '"')
+    .trim();
 }

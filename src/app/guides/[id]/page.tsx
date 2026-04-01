@@ -3,7 +3,7 @@
 import { FEATURED_REPAIRS } from '@/lib/repair-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Wrench, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, Wrench, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, AlertTriangle, Info } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc } from '@/firebase';
@@ -49,17 +49,14 @@ export default function GuideDetailPage() {
       try {
         let fetchedGuide = null;
         
-        // 1. Check local manual data first
         const local = FEATURED_REPAIRS.find((g) => g.id === id);
         if (local) {
           fetchedGuide = local;
         } else {
-          // 2. Fetch from iFixit (API 2.0 /guides/{id} returns full step data)
           const ifixit = await getIFixitGuide(id);
           if (ifixit) {
             fetchedGuide = mapIFixitToInternal(ifixit);
           } else {
-            // 3. FALLBACK: Check if this ID belongs to a Category/Wiki instead of a manual
             const wiki = await getIFixitWiki(id);
             if (wiki) {
               router.replace(`/guides?category=${encodeURIComponent(id)}`);
@@ -293,6 +290,27 @@ export default function GuideDetailPage() {
               </div>
             </section>
 
+            {guide.prerequisites && guide.prerequisites.length > 0 && (
+              <section className="p-6 glass border-amber-500/20 bg-amber-500/5 rounded-3xl">
+                <div className="flex items-center gap-3 text-amber-500 mb-4">
+                  <Info className="w-5 h-5" />
+                  <h3 className="font-black uppercase tracking-widest text-xs">Prerequisite Steps Detected</h3>
+                </div>
+                <p className="text-xs text-muted-foreground mb-4">
+                  You may need to complete these guides before starting the main protocol:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {guide.prerequisites.map((pr: any) => (
+                    <Link key={pr.id} href={`/guides/${pr.id}`}>
+                      <Badge variant="secondary" className="rounded-xl h-8 px-4 cursor-pointer hover:bg-secondary/80">
+                        {pr.title}
+                      </Badge>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
             <section className="space-y-8">
               <div className="flex items-center gap-4 px-2">
                 <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter">{t('guides_steps')}</h2>
@@ -301,7 +319,6 @@ export default function GuideDetailPage() {
 
               <div className="space-y-10">
                 {isTranslating ? (
-                  // Translation Skeletons
                   [1, 2, 3].map((i) => (
                     <div key={i} className="glass rounded-3xl overflow-hidden border-primary/5 p-8 md:p-16">
                       <div className="flex items-start gap-6 md:gap-10 mb-10">

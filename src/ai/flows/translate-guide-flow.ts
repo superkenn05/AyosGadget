@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview AI Flow to translate repair guide content into Filipino with strict formatting preservation.
+ * @fileOverview AI Flow to translate repair guide content into Filipino with strict formatting and completeness rules.
  */
 
 import {ai} from '@/ai/genkit';
@@ -30,20 +30,20 @@ const translatePrompt = ai.definePrompt({
   name: 'translateGuidePrompt',
   input: {schema: TranslateGuideInputSchema},
   output: {schema: TranslateGuideOutputSchema},
-  prompt: `You are a professional technical translator specializing in repair manuals.
-Translate the following electronics repair guide into clear, natural Filipino (Tagalog/Taglish).
+  prompt: `You are a professional technical translator specializing in electronics repair manuals.
+Translate the following guide into clear, natural Filipino (Tagalog/Taglish).
 
-STRICT FORMATTING RULES:
-1. EVERY bullet point (•) MUST start on its own NEW LINE. 
-2. DO NOT merge lines or paragraphs. If the source has multiple lines, the translation MUST have the exact same structure.
-3. Use a double newline (\\n\\n) between distinct paragraphs or list items to ensure they are visually separated.
-4. Technical terms like "logic board", "ribbon cable", "spudger", "motherboard" can be left as is (Taglish) as they are standard in the industry.
+STRICT INTEGRITY AND FORMATTING RULES:
+1. COMPLETENESS: You MUST translate EVERY SINGLE STEP provided. Do not skip, merge, or omit any steps.
+2. BULLET POINTS: EVERY bullet point (•) MUST start on its own NEW LINE. 
+3. LINE BREAKS: Use double newlines (\\n\\n) between paragraphs or list items to ensure visual separation.
+4. TECHNICAL TERMS: Standard industry terms like "logic board", "spudger", "ribbon cable", "LCD connector" should be kept as is (Taglish) for technical accuracy.
 
 Source Content:
 Title: {{{title}}}
 Description: {{{description}}}
 
-Steps:
+Steps to translate:
 {{#each steps}}
 --- STEP {{@index}} ---
 Title: {{this.title}}
@@ -61,6 +61,12 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     try {
       const {output} = await translatePrompt(input);
       if (!output) throw new Error('No output from AI');
+      
+      // Basic validation to ensure the AI didn't return an empty step list if input was not empty
+      if (input.steps.length > 0 && output.steps.length === 0) {
+        throw new Error('AI returned zero steps for a non-empty input.');
+      }
+
       return output;
     } catch (error: any) {
       attempts++;
