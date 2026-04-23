@@ -68,7 +68,7 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
 
 /**
  * Recursively fetches all steps for a guide, including all prerequisites.
- * Uses a Set to track visited guides and avoid infinite loops.
+ * This ensures that a 20-step manual (like MacBook Battery) correctly shows all 20 steps.
  */
 export async function getFullIFixitProtocol(id: string, visited = new Set<string>()): Promise<any> {
   if (visited.has(id)) return null;
@@ -80,12 +80,14 @@ export async function getFullIFixitProtocol(id: string, visited = new Set<string
 
     let allSteps: any[] = [];
     
-    // 1. Recursively fetch steps from prerequisites FIRST to ensure chronological order
-    if (guide.prerequisites && guide.prerequisites.length > 0) {
+    // 1. Fetch steps from prerequisites FIRST
+    if (guide.prerequisites && Array.isArray(guide.prerequisites)) {
       for (const prereq of guide.prerequisites) {
-        const prereqProtocol = await getFullIFixitProtocol(prereq.guideid.toString(), visited);
-        if (prereqProtocol && prereqProtocol.steps) {
-          allSteps = [...allSteps, ...prereqProtocol.steps];
+        if (prereq.guideid) {
+          const prereqProtocol = await getFullIFixitProtocol(prereq.guideid.toString(), visited);
+          if (prereqProtocol && prereqProtocol.steps) {
+            allSteps = [...allSteps, ...prereqProtocol.steps];
+          }
         }
       }
     }
@@ -94,7 +96,7 @@ export async function getFullIFixitProtocol(id: string, visited = new Set<string
     const internal = mapIFixitToInternal(guide);
     if (!internal) return null;
 
-    // 3. Append current guide steps AFTER the prerequisite steps
+    // 3. Append current guide steps AFTER prerequisites
     if (internal.steps && internal.steps.length > 0) {
       allSteps = [...allSteps, ...internal.steps];
     }
@@ -183,7 +185,7 @@ export function mapIFixitToInternal(ifixit: any) {
     prerequisites: (ifixit.prerequisites || []).map((pr: any) => ({ id: pr.guideid, title: pr.title })),
     steps: mappedSteps,
     rating: 4.5,
-    reviewsCount: 42, // Static to avoid hydration mismatch
+    reviewsCount: 42,
   };
 }
 
