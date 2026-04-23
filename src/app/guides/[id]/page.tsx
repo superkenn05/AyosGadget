@@ -16,16 +16,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { getGuideWithAllSteps, getIFixitWiki } from '@/lib/ifixit-api';
 import { translateGuide } from '@/ai/flows/translate-guide-flow';
-import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-
-// Static params for common guides to make them "static"
-export async function generateStaticParams() {
-  return [
-    { id: '1032' }, // MacBook Pro 13" Unibody Mid 2009 Battery Replacement
-    { id: '123' }
-  ];
-}
 
 export default function GuideDetailPage() {
   const params = useParams();
@@ -63,7 +54,7 @@ export default function GuideDetailPage() {
         if (local) {
           fetchedGuide = local;
         } else {
-          // Robust fetching to get all 1-20+ steps
+          // Robust fetching to get all 1-20+ steps including prerequisites
           fetchedGuide = await getGuideWithAllSteps(id);
           
           if (!fetchedGuide) {
