@@ -80,7 +80,7 @@ export async function getFullIFixitProtocol(id: string, visited = new Set<string
 
     let allSteps: any[] = [];
     
-    // 1. Recursively fetch steps from prerequisites FIRST
+    // 1. Recursively fetch steps from prerequisites FIRST to ensure chronological order
     if (guide.prerequisites && guide.prerequisites.length > 0) {
       for (const prereq of guide.prerequisites) {
         const prereqProtocol = await getFullIFixitProtocol(prereq.guideid.toString(), visited);
@@ -183,7 +183,7 @@ export function mapIFixitToInternal(ifixit: any) {
     prerequisites: (ifixit.prerequisites || []).map((pr: any) => ({ id: pr.guideid, title: pr.title })),
     steps: mappedSteps,
     rating: 4.5,
-    reviewsCount: Math.floor(Math.random() * 100) + 10,
+    reviewsCount: 42, // Static to avoid hydration mismatch
   };
 }
 
