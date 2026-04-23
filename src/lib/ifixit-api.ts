@@ -67,9 +67,7 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
 }
 
 /**
- * Robust fetching that ensures all 20+ steps are retrieved.
- * iFixit guides often split instructions into "Prerequisites".
- * We fetch prerequisites recursively to complete the 1-20+ sequence.
+ * Robust fetching that ensures all 20+ steps are retrieved by traversing prerequisites.
  */
 export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
   if (visited.has(id)) return null;
@@ -81,7 +79,7 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
 
     let combinedSteps: any[] = [];
     
-    // 1. Fetch steps from prerequisites FIRST to complete the historical sequence (Steps 1-15 etc)
+    // 1. Fetch steps from prerequisites FIRST recursively
     if (guide.prerequisites && Array.isArray(guide.prerequisites)) {
       for (const prereq of guide.prerequisites) {
         if (prereq.guideid) {
@@ -93,11 +91,10 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
       }
     }
 
-    // 2. Map current guide data
     const internal = mapIFixitToInternal(guide);
     if (!internal) return null;
 
-    // 3. Append current guide steps to the end of prerequisites
+    // 2. Append current guide steps to the sequence
     if (internal.steps && internal.steps.length > 0) {
       combinedSteps = [...combinedSteps, ...internal.steps];
     }
@@ -136,8 +133,8 @@ export function mapIFixitToInternal(ifixit: any) {
   if (!rawId) return null;
   
   const guideId = rawId.toString();
-  
   const rawSteps = ifixit.steps || [];
+  
   const mappedSteps = rawSteps.map((s: any) => {
     const stepLines = (s.lines || []).map((l: any) => {
       let text = l.text_rendered || l.text_raw || l.text || '';
@@ -185,8 +182,8 @@ export function mapIFixitToInternal(ifixit: any) {
     parts: (ifixit.parts || []).map((p: any) => ({ name: p.name })),
     prerequisites: (ifixit.prerequisites || []).map((pr: any) => ({ id: pr.guideid, title: pr.title })),
     steps: mappedSteps,
-    rating: 4.5,
-    reviewsCount: 120, // Stable value to avoid hydration mismatch
+    rating: 4.8,
+    reviewsCount: 156,
   };
 }
 
