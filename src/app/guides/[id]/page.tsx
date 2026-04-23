@@ -3,7 +3,7 @@
 import { FEATURED_REPAIRS } from '@/lib/repair-data';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Wrench, ArrowLeft, Star, MessageCircle, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, AlertTriangle, Info } from 'lucide-react';
+import { CheckCircle2, Wrench, ArrowLeft, Star, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc } from '@/firebase';
@@ -55,7 +55,6 @@ export default function GuideDetailPage() {
         if (local) {
           fetchedGuide = local;
         } else {
-          // Recursive fetch to get all steps (e.g., 20+ steps for MacBook)
           fetchedGuide = await getFullIFixitProtocol(id);
           
           if (!fetchedGuide) {
@@ -69,6 +68,7 @@ export default function GuideDetailPage() {
         
         if (fetchedGuide) {
           setOriginalGuide(fetchedGuide);
+          // Set guide immediately to show original steps
           setGuide(fetchedGuide);
           const initialIndexes: Record<number, number> = {};
           fetchedGuide.steps.forEach((_: any, i: number) => {
@@ -128,7 +128,7 @@ export default function GuideDetailPage() {
           toast({ 
             variant: "destructive", 
             title: "Neural Link Busy", 
-            description: "Ang haba ng manual ay lumampas sa AI quota. Ipinapakita ang English version." 
+            description: "Showing original text due to AI load." 
           });
           setGuide(originalGuide);
         } finally {
@@ -140,7 +140,7 @@ export default function GuideDetailPage() {
       }
     }
     handleTranslation();
-  }, [language, originalGuide, id, guide?.language, toast, t]);
+  }, [language, originalGuide, id, guide?.language, toast]);
 
   const handleBookmark = () => {
     if (!user) {
@@ -259,13 +259,9 @@ export default function GuideDetailPage() {
                 </div>
               </div>
 
-              {isTranslating ? (
-                <Skeleton className="h-12 md:h-20 w-3/4 rounded-2xl md:rounded-3xl" />
-              ) : (
-                <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] text-foreground">
-                  {guide.title}
-                </h1>
-              )}
+              <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-[0.9] text-foreground">
+                {guide.title}
+              </h1>
 
               {guide.thumbnail && (
                 <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl glass border-primary/10">
@@ -275,16 +271,9 @@ export default function GuideDetailPage() {
               )}
 
               <div className="p-8 md:p-12 glass rounded-3xl border-primary/5 bg-primary/[0.02]">
-                {isTranslating ? (
-                  <div className="space-y-4">
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-5/6" />
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm md:text-lg font-medium leading-relaxed whitespace-pre-wrap">
-                    {guide.description}
-                  </p>
-                )}
+                <p className="text-muted-foreground text-sm md:text-lg font-medium leading-relaxed whitespace-pre-wrap">
+                  {guide.description}
+                </p>
               </div>
             </section>
 
@@ -309,29 +298,19 @@ export default function GuideDetailPage() {
                             {index + 1}
                           </div>
                           <div className="flex-grow pt-2">
-                            {isTranslating ? (
-                              <div className="space-y-4">
-                                <Skeleton className="h-8 w-1/3 rounded-xl" />
-                                <Skeleton className="h-4 w-full" />
-                                <Skeleton className="h-4 w-5/6" />
-                              </div>
-                            ) : (
-                              <>
-                                <h3 className="text-xl md:text-3xl font-black tracking-tight uppercase mb-4 text-foreground">
-                                  {step.title || `${t('guides_step_title')} ${index + 1}`}
-                                </h3>
-                                <div className="text-muted-foreground text-sm md:text-lg leading-relaxed font-medium whitespace-pre-wrap">
-                                  {step.description.split('\n\n').map((line: string, li: number) => {
-                                    const isWarning = line.includes('⚠️ [WARNING]');
-                                    return (
-                                      <p key={li} className={cn("mb-4 last:mb-0", isWarning && "p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 font-bold")}>
-                                        {line}
-                                      </p>
-                                    );
-                                  })}
-                                </div>
-                              </>
-                            )}
+                            <h3 className="text-xl md:text-3xl font-black tracking-tight uppercase mb-4 text-foreground">
+                              {step.title || `${t('guides_step_title')} ${index + 1}`}
+                            </h3>
+                            <div className="text-muted-foreground text-sm md:text-lg leading-relaxed font-medium whitespace-pre-wrap">
+                              {step.description.split('\n\n').map((line: string, li: number) => {
+                                const isWarning = line.includes('⚠️ [WARNING]');
+                                return (
+                                  <p key={li} className={cn("mb-4 last:mb-0", isWarning && "p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-rose-500 font-bold")}>
+                                    {line}
+                                  </p>
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
                         

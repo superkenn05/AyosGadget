@@ -67,7 +67,6 @@ Content:
  * without hitting token limits, skipping data, or timing out.
  */
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
-  // Smaller batch size for 20+ steps guides to ensure stability and completeness
   const BATCH_SIZE = 3; 
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
@@ -107,7 +106,7 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
         attempts++;
         if (attempts >= maxAttempts) throw error;
         // Exponential backoff for quota or timeout issues
-        await new Promise(resolve => setTimeout(resolve, 8000 * attempts));
+        await new Promise(resolve => setTimeout(resolve, 15000 * attempts));
       }
     }
   }

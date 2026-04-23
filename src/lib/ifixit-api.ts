@@ -68,35 +68,37 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
 
 /**
  * Recursively fetches all steps for a guide, including all prerequisites.
- * This ensures guides like "MacBook Battery Replacement" show all 20+ steps.
+ * Uses a Set to track visited guides and avoid infinite loops.
  */
-export async function getFullIFixitProtocol(id: string): Promise<any> {
+export async function getFullIFixitProtocol(id: string, visited = new Set<string>()): Promise<any> {
+  if (visited.has(id)) return null;
+  visited.add(id);
+
   try {
     const guide = await getIFixitGuide(id);
     if (!guide) return null;
 
     let allSteps: any[] = [];
     
-    // 1. Map current guide data to get the base information
-    const internal = mapIFixitToInternal(guide);
-    if (!internal) return null;
-
-    // 2. Recursively fetch steps from prerequisites FIRST to maintain chronological order
+    // 1. Recursively fetch steps from prerequisites FIRST
     if (guide.prerequisites && guide.prerequisites.length > 0) {
       for (const prereq of guide.prerequisites) {
-        const prereqProtocol = await getFullIFixitProtocol(prereq.guideid.toString());
+        const prereqProtocol = await getFullIFixitProtocol(prereq.guideid.toString(), visited);
         if (prereqProtocol && prereqProtocol.steps) {
           allSteps = [...allSteps, ...prereqProtocol.steps];
         }
       }
     }
 
+    // 2. Map current guide data
+    const internal = mapIFixitToInternal(guide);
+    if (!internal) return null;
+
     // 3. Append current guide steps AFTER the prerequisite steps
     if (internal.steps && internal.steps.length > 0) {
       allSteps = [...allSteps, ...internal.steps];
     }
 
-    // Return the combined protocol with the main guide's metadata but ALL steps
     return {
       ...internal,
       steps: allSteps
