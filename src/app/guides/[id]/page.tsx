@@ -14,10 +14,18 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { getFullIFixitProtocol, getIFixitWiki } from '@/lib/ifixit-api';
+import { getGuideWithAllSteps, getIFixitWiki } from '@/lib/ifixit-api';
 import { translateGuide } from '@/ai/flows/translate-guide-flow';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+
+// Static params for common guides to make them "static"
+export async function generateStaticParams() {
+  return [
+    { id: '1032' }, // MacBook Pro 13" Unibody Mid 2009 Battery Replacement
+    { id: '123' }
+  ];
+}
 
 export default function GuideDetailPage() {
   const params = useParams();
@@ -55,7 +63,8 @@ export default function GuideDetailPage() {
         if (local) {
           fetchedGuide = local;
         } else {
-          fetchedGuide = await getFullIFixitProtocol(id);
+          // Robust fetching to get all 1-20+ steps
+          fetchedGuide = await getGuideWithAllSteps(id);
           
           if (!fetchedGuide) {
             const wiki = await getIFixitWiki(id);
@@ -68,8 +77,7 @@ export default function GuideDetailPage() {
         
         if (fetchedGuide) {
           setOriginalGuide(fetchedGuide);
-          // Set guide immediately to show original steps
-          setGuide(fetchedGuide);
+          setGuide(fetchedGuide); // Show original text immediately
           const initialIndexes: Record<number, number> = {};
           fetchedGuide.steps.forEach((_: any, i: number) => {
             initialIndexes[i] = 0;

@@ -67,10 +67,11 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
 }
 
 /**
- * Recursively fetches all steps for a guide, including all prerequisites.
- * This ensures that a 20-step manual (like MacBook Battery) correctly shows all 20 steps.
+ * Robust fetching that ensures all 20+ steps are retrieved.
+ * iFixit guides often split instructions into "Prerequisites".
+ * To show 1-20 steps, we must fetch the prerequisite steps first.
  */
-export async function getFullIFixitProtocol(id: string, visited = new Set<string>()): Promise<any> {
+export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
   if (visited.has(id)) return null;
   visited.add(id);
 
@@ -78,15 +79,15 @@ export async function getFullIFixitProtocol(id: string, visited = new Set<string
     const guide = await getIFixitGuide(id);
     if (!guide) return null;
 
-    let allSteps: any[] = [];
+    let combinedSteps: any[] = [];
     
-    // 1. Fetch steps from prerequisites FIRST
+    // 1. Fetch steps from prerequisites FIRST to complete the 1-20 sequence
     if (guide.prerequisites && Array.isArray(guide.prerequisites)) {
       for (const prereq of guide.prerequisites) {
         if (prereq.guideid) {
-          const prereqProtocol = await getFullIFixitProtocol(prereq.guideid.toString(), visited);
-          if (prereqProtocol && prereqProtocol.steps) {
-            allSteps = [...allSteps, ...prereqProtocol.steps];
+          const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), visited);
+          if (prereqData && prereqData.steps) {
+            combinedSteps = [...combinedSteps, ...prereqData.steps];
           }
         }
       }
@@ -96,17 +97,17 @@ export async function getFullIFixitProtocol(id: string, visited = new Set<string
     const internal = mapIFixitToInternal(guide);
     if (!internal) return null;
 
-    // 3. Append current guide steps AFTER prerequisites
+    // 3. Append current guide steps
     if (internal.steps && internal.steps.length > 0) {
-      allSteps = [...allSteps, ...internal.steps];
+      combinedSteps = [...combinedSteps, ...internal.steps];
     }
 
     return {
       ...internal,
-      steps: allSteps
+      steps: combinedSteps
     };
   } catch (error) {
-    console.error(`Failed to fetch full protocol for ${id}:`, error);
+    console.error(`Failed to fetch complete instructions for ${id}:`, error);
     return null;
   }
 }
