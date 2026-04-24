@@ -69,7 +69,8 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     return result.output!;
   } catch (error) {
     console.error("Translation Flow failed", error);
-    // Fallback: Parallel processing for steps to try and recover
+    
+    // Fallback: Try translating header and steps independently to recover partial content
     const headerPromise = translatePrompt({
       title: input.title,
       description: input.description,

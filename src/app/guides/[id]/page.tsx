@@ -65,7 +65,7 @@ export default function GuideDetailPage() {
     fetchGuideData();
   }, [id, language]);
 
-  // 2. Handle Translation with AI Flow
+  // 2. Handle Translation with AI Flow (Zero-Leakage Logic)
   useEffect(() => {
     async function handleTranslation() {
       if (!originalGuide) return;
@@ -116,6 +116,7 @@ export default function GuideDetailPage() {
         setTranslatedVersion(language);
       } catch (error) {
         console.error("Translation Engine Failure:", error);
+        // Fallback to original but stay in Tagalog mode
         setGuide(originalGuide);
       } finally {
         setIsTranslating(false);
@@ -148,6 +149,7 @@ export default function GuideDetailPage() {
 
   if (!isMounted) return null;
 
+  // Strict check to avoid English leakage during initial Filipino load
   const showSkeleton = loading || isTranslating || (language === 'fil' && translatedVersion !== 'fil');
 
   if (showSkeleton) return (
