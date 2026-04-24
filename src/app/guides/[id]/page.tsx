@@ -98,7 +98,7 @@ export default function GuideDetailPage() {
           ...originalGuide,
           title: result.title || originalGuide.title,
           description: result.description || originalGuide.description,
-          steps: (result.steps || []).map((translatedStep, i) => ({
+          steps: (result.steps || []).map((translatedStep: any, i: number) => ({
             ...originalGuide.steps[i],
             title: translatedStep.title || originalGuide.steps[i].title,
             description: translatedStep.description || originalGuide.steps[i].description
