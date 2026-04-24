@@ -44,14 +44,9 @@ const translatePrompt = ai.definePrompt({
 Your task is to translate the following technical repair manual into natural, conversational MABABAW NA TAGALOG / TAGLISH.
 
 STRICT TRANSLATION RULES:
-1. ZERO ENGLISH LEAKAGE: Every single instruction, description, and title MUST be translated. You are strictly forbidden from leaving English sentences as they are.
+1. ZERO ENGLISH LEAKAGE: Every single instruction, description, and title MUST be translated. Do not leave English sentences as they are.
 2. TECHNICIAN PERSONA: Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo", "Kalikutin", "I-angat".
 3. TECHNICAL TERMS (KEEP AS IS): Only keep these specific words in English if necessary: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "RAM", "hard drive", "trackpad", "expansion bay".
-4. AGGRESSIVE TRANSLATION: 
-- "Remove both expansion bay modules" -> "Baklasin ang parehong expansion bay modules".
-- "Insert your index fingers" -> "Ipasok ang iyong mga hintuturo".
-- "Pull the tabs toward yourself" -> "Hugutin ang mga tabs palapit sa iyo".
-- "The keyboard will pop up" -> "Aangat na ang keyboard".
 
 Source Content to Translate:
 {{#if title}}Title: {{{title}}}{{/if}}
@@ -67,7 +62,7 @@ Instruction:
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
-  const BATCH_SIZE = 4; 
+  const BATCH_SIZE = 3; // Reduced batch size for higher reliability
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
@@ -100,24 +95,20 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       });
 
       if (result.output && result.output.steps) {
-        translatedSteps.push(...result.output.steps.map((s, idx) => ({
-          title: s.title || (input.steps[i + idx]?.title ? `Translated Title` : `Hakbang ${i + idx + 1}`),
-          description: s.description || SYNC_ERROR_MSG,
-        })));
+        // Ensure we handle potentially missing steps in output
+        for (let j = 0; j < batch.length; j++) {
+          const s = result.output.steps[j];
+          translatedSteps.push({
+            title: s?.title || `Hakbang ${i + j + 1}`,
+            description: s?.description || SYNC_ERROR_MSG,
+          });
+        }
       } else {
         translatedSteps.push(...batch.map(() => ({ description: SYNC_ERROR_MSG })));
       }
     } catch (error) {
       console.error(`Batch ${i} translation failed`, error);
       translatedSteps.push(...batch.map(() => ({ description: SYNC_ERROR_MSG })));
-    }
-  }
-
-  // Safety check: ensure lengths match
-  if (translatedSteps.length < totalSteps) {
-    const diff = totalSteps - translatedSteps.length;
-    for (let i = 0; i < diff; i++) {
-      translatedSteps.push({ description: SYNC_ERROR_MSG });
     }
   }
 

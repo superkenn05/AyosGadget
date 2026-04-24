@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, AlertTriangle, Wrench, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
+import Link from 'next/navigation';
 import { useUser, useFirestore, useDoc } from '@/firebase';
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
@@ -97,7 +97,6 @@ export default function GuideDetailPage() {
 
         if (!translated || !translated.steps) throw new Error("Translation process failed");
 
-        // We don't crash anymore. We accept partial translations with Tagalog error messages.
         const finalGuide = {
           ...originalGuide,
           title: translated.title || originalGuide.title,
@@ -116,17 +115,14 @@ export default function GuideDetailPage() {
         setTranslatedVersion(language);
       } catch (error) {
         console.error("Translation Engine Failure:", error);
-        toast({
-          variant: "destructive",
-          title: "Neural Sync Warning",
-          description: "May aberya sa pagsasalin. Pakisubukang i-refresh ang pahina."
-        });
+        // Fallback to original but keep translatedVersion null to indicate incomplete state
+        setGuide(originalGuide);
       } finally {
         setIsTranslating(false);
       }
     }
     handleTranslation();
-  }, [language, originalGuide, id, toast]);
+  }, [language, originalGuide, id]);
 
   const handleBookmark = () => {
     if (!user) {
@@ -150,7 +146,7 @@ export default function GuideDetailPage() {
     }
   };
 
-  // CRITICAL: Stay in skeleton if Filipino is selected but translation isn't 100% verified as 'fil'
+  // CRITICAL: Stay in skeleton if Filipino is selected but translation isn't verified as 'fil'
   const showSkeleton = loading || isTranslating || (language === 'fil' && translatedVersion !== 'fil');
 
   if (showSkeleton) return (
