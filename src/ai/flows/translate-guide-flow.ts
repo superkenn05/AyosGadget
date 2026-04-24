@@ -47,6 +47,7 @@ STRICT TRANSLATION RULES:
 1. ZERO ENGLISH LEAKAGE: Every single instruction, description, and title MUST be translated. Do not leave English sentences as they are.
 2. TECHNICIAN PERSONA: Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo", "Kalikutin", "I-angat".
 3. TECHNICAL TERMS (KEEP AS IS): Only keep these specific words in English if necessary: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "RAM", "hard drive", "trackpad", "expansion bay".
+4. FALLBACK: If you encounter an error, do not leave it blank, instead use technical Taglish to explain.
 
 Source Content to Translate:
 {{#if title}}Title: {{{title}}}{{/if}}

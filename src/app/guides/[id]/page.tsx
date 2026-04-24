@@ -3,11 +3,10 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, AlertTriangle, Wrench, CheckCircle2 } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
+import Link from 'next/link'; // Fixed: Use next/link instead of next/navigation
+import { useParams } from 'next/navigation';
 import { useUser, useFirestore, useDoc } from '@/firebase';
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -101,7 +100,7 @@ export default function GuideDetailPage() {
           description: translated?.description || originalGuide.description,
           steps: originalGuide.steps.map((s: any, i: number) => ({
             ...s,
-            title: translated?.steps?.[i]?.title || s.title,
+            title: translated?.steps?.[i]?.title || s.title || `Hakbang ${i + 1}`,
             description: translated?.steps?.[i]?.description || s.description,
           }))
         };
@@ -113,7 +112,7 @@ export default function GuideDetailPage() {
         setTranslatedVersion(language);
       } catch (error) {
         console.error("Translation Engine Failure:", error);
-        // Fallback to original but keep translatedVersion null to indicate incomplete state
+        // Fallback to original but don't show to user if it's Filipino mode
         setGuide(originalGuide);
       } finally {
         setIsTranslating(false);
@@ -144,7 +143,7 @@ export default function GuideDetailPage() {
     }
   };
 
-  // CRITICAL: Stay in skeleton if Filipino is selected but translation isn't verified as 'fil'
+  // CRITICAL: Stay in skeleton if Filipino is selected but translation isn't verified
   const showSkeleton = loading || isTranslating || (language === 'fil' && translatedVersion !== 'fil');
 
   if (showSkeleton) return (
@@ -281,3 +280,5 @@ export default function GuideDetailPage() {
     </div>
   );
 }
+
+import Image from 'next/image';
