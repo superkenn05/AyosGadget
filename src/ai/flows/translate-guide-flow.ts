@@ -44,9 +44,9 @@ const translatePrompt = ai.definePrompt({
 Translate the provided technical content into MABABAW NA TAGALOG / TAGLISH (Casual conversational Filipino).
 
 CRITICAL INSTRUCTIONS:
-1. TRANSLATE EVERYTHING: Every sentence, instruction, and description MUST be in Taglish. Do not leave English sentences untranslated.
+1. TRANSLATE EVERYTHING: Every single sentence, instruction, and description MUST be in Taglish. DO NOT leave any English sentences untranslated.
 2. NATURAL STYLE: Use the casual language used by technicians in Greenhills or hardware shops. Be very "mabait" and clear.
-3. TECHNICAL TERMS: KEEP technical terms in English: "battery", "connector", "logic board", "LCD", "screw", "flex", "adhesive", "isopropyl alcohol", "volts", "amps", "mAh", "module", "expansion bay", "lever", "keyboard".
+3. TECHNICAL TERMS: KEEP technical terms in English to avoid confusion: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "mAh", "module", "lever", "keyboard", "motherboard", "heatsink".
 4. FORMAT: Maintain the bullet points (•) and line breaks.
 
 EXAMPLES:
@@ -55,9 +55,6 @@ EXAMPLES:
 
 - English: "Remove both expansion bay modules using the levers on the front of the computer."
 - Taglish: "Baklasin mo yung dalawang expansion bay modules gamit yung mga lever sa harap ng computer."
-
-- English: "Pull the tabs toward yourself and the keyboard will pop up."
-- Taglish: "Hilahin mo yung mga tab papunta sa iyo at kusa nang lulutang o aangat yung keyboard."
 
 Source Content:
 {{#if title}}Title: {{{title}}}{{/if}}
@@ -73,7 +70,7 @@ Content:
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideInput> {
-  const BATCH_SIZE = 3; // Smaller batch for higher accuracy
+  const BATCH_SIZE = 4;
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
@@ -106,6 +103,7 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       if (result.output && result.output.steps && result.output.steps.length > 0) {
         translatedSteps.push(...result.output.steps);
       } else {
+        // Fallback to original if AI fails to return steps
         translatedSteps.push(...batch);
       }
     } catch (error) {
@@ -117,6 +115,6 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
   return {
     title: finalTitle,
     description: finalDescription,
-    steps: translatedSteps.length >= totalSteps ? translatedSteps : [...translatedSteps, ...input.steps.slice(translatedSteps.length)],
+    steps: translatedSteps.length >= totalSteps ? translatedSteps.slice(0, totalSteps) : [...translatedSteps, ...input.steps.slice(translatedSteps.length)],
   };
 }

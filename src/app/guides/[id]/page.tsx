@@ -67,7 +67,7 @@ export default function GuideDetailPage() {
         return;
       }
 
-      // Check cache first
+      // Check cache first to avoid re-translating same data
       if (translationCache.current[id]?.[language]) {
         setGuide(translationCache.current[id][language]);
         setIsTranslating(false);
@@ -195,7 +195,7 @@ export default function GuideDetailPage() {
                 <Badge variant="outline" className="opacity-40 font-black text-[10px]">{guide.steps?.length} {t('guides_step_title')}</Badge>
               </div>
 
-              <div className="space-y-12">
+              <div className="space-y-12" key={language}>
                 {guide.steps?.map((step: any, index: number) => (
                   <div key={`${id}-${index}-${language}`} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
                     <div className="p-8 md:p-14">
