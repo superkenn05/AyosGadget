@@ -116,8 +116,9 @@ export default function GuideDetailPage() {
         setTranslatedVersion(language);
       } catch (error) {
         console.error("Translation Engine Failure:", error);
-        // Fallback to original but stay in Tagalog mode
+        // Fallback to original but stay in Tagalog mode to avoid crash
         setGuide(originalGuide);
+        setTranslatedVersion(language);
       } finally {
         setIsTranslating(false);
       }
