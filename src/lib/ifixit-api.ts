@@ -80,7 +80,8 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
 
     let allSteps: any[] = [];
     
-    // 1. Resolve foundations (Prerequisites)
+    // 1. Resolve Foundations (Prerequisites) First
+    // This is crucial for MacBook repairs which often start with "MacBook Pro 14" 2021 Case Removal"
     if (guide.prerequisites && Array.isArray(guide.prerequisites)) {
       for (const prereq of guide.prerequisites) {
         const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), new Set(visited));
@@ -96,7 +97,7 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
       allSteps = [...allSteps, ...internal.steps];
     }
 
-    // 3. Flatten steps and ensure no empty sequences
+    // 3. Return consolidated data
     return {
       ...internal,
       steps: allSteps.length > 0 ? allSteps : (internal?.steps || [])
@@ -162,6 +163,7 @@ export function mapIFixitToInternal(ifixit: any) {
     description: stripHtml(ifixit.summary || ''),
     thumbnail: ifixit.image?.original || '',
     tools: (ifixit.tools || []).map((t: any) => ({ name: t.name })),
+    parts: (ifixit.parts || []).map((p: any) => ({ name: p.name })),
     steps: mappedSteps,
     rating: 4.8,
   };

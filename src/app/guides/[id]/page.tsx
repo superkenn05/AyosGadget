@@ -60,7 +60,7 @@ export default function GuideDetailPage() {
     async function handleTranslation() {
       if (!originalGuide) return;
 
-      // If language is English, show original and exit
+      // Reset to original if language is English
       if (language === 'en') {
         setGuide(originalGuide);
         setIsTranslating(false);
@@ -73,7 +73,7 @@ export default function GuideDetailPage() {
         return;
       }
 
-      // Start translation
+      // Start translation flow
       setIsTranslating(true);
       try {
         const translated = await translateGuide({
@@ -101,14 +101,13 @@ export default function GuideDetailPage() {
         setGuide(finalGuide);
       } catch (error) {
         console.error("Translation failed:", error);
-        toast({ title: "Neural Link Busy", description: "Showing technical context." });
         setGuide(originalGuide);
       } finally {
         setIsTranslating(false);
       }
     }
     handleTranslation();
-  }, [language, originalGuide, id, toast]);
+  }, [language, originalGuide, id]);
 
   const handleBookmark = () => {
     if (!user) {
@@ -132,9 +131,9 @@ export default function GuideDetailPage() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-primary w-12 h-12" /></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin text-primary w-12 h-12" /></div>;
 
-  if (!guide) return <div className="min-h-screen flex items-center justify-center"><AlertTriangle className="text-rose-500 mr-2" /> Protocol Offline</div>;
+  if (!guide) return <div className="min-h-screen flex items-center justify-center bg-background"><AlertTriangle className="text-rose-500 mr-2" /> Protocol Offline</div>;
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -142,13 +141,13 @@ export default function GuideDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-8 space-y-12">
             <header className="space-y-6">
-              <Link href="/guides" className="text-xs font-black uppercase tracking-widest text-primary flex items-center gap-2 mb-8">
+              <Link href="/guides" className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-2 mb-8 hover:opacity-70 transition-opacity">
                 <ArrowLeft className="w-3 h-3" /> {t('guides_back')}
               </Link>
               
               <div className="flex flex-wrap items-center gap-3">
-                <Badge className="bg-primary/10 text-primary border-none">{guide.category}</Badge>
-                <Badge variant="outline">{guide.difficulty}</Badge>
+                <Badge className="bg-primary/10 text-primary border-none font-black uppercase tracking-widest text-[8px]">{guide.category}</Badge>
+                <Badge variant="outline" className="font-black uppercase tracking-widest text-[8px]">{guide.difficulty}</Badge>
                 {isTranslating && (
                   <div className="flex items-center gap-2 text-primary animate-pulse ml-4">
                     <Sparkles className="w-3 h-3" />
@@ -157,17 +156,17 @@ export default function GuideDetailPage() {
                 )}
               </div>
 
-              <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase leading-none">
+              <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-none">
                 {guide.title}
               </h1>
 
               {guide.thumbnail && (
-                <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl glass">
+                <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl glass border-primary/5">
                   <Image src={guide.thumbnail} alt={guide.title} fill className="object-cover" priority />
                 </div>
               )}
 
-              <p className="text-muted-foreground text-sm md:text-lg leading-relaxed glass p-6 md:p-8 rounded-3xl border-primary/5">
+              <p className="text-muted-foreground text-sm md:text-lg leading-relaxed glass p-8 rounded-3xl border-primary/5">
                 {guide.description}
               </p>
             </header>
@@ -176,28 +175,28 @@ export default function GuideDetailPage() {
               <div className="flex items-center gap-4">
                 <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter">{t('guides_steps')}</h2>
                 <div className="h-px flex-grow bg-primary/10" />
-                <Badge variant="outline" className="opacity-40">{guide.steps?.length} {t('guides_step_title')}</Badge>
+                <Badge variant="outline" className="opacity-40 font-black text-[10px]">{guide.steps?.length} {t('guides_step_title')}</Badge>
               </div>
 
               <div className="space-y-12">
                 {guide.steps?.map((step: any, index: number) => (
-                  <div key={index} className="glass rounded-3xl overflow-hidden border-primary/5 hover:border-primary/20 transition-all">
-                    <div className="p-6 md:p-12">
-                      <div className="flex items-start gap-4 md:gap-10 mb-8">
-                        <div className="w-10 h-10 md:w-16 md:h-16 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-lg md:text-xl shadow-lg">
+                  <div key={index} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
+                    <div className="p-8 md:p-14">
+                      <div className="flex items-start gap-6 md:gap-12 mb-10">
+                        <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-xl md:text-3xl shadow-xl neon-glow">
                           {index + 1}
                         </div>
                         <div className="flex-grow">
-                          <h3 className="text-lg md:text-2xl font-black uppercase mb-4">{step.title || `${t('guides_step_title')} ${index + 1}`}</h3>
-                          <div className="text-muted-foreground text-sm md:text-lg whitespace-pre-wrap leading-relaxed">
+                          <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight mb-6">{step.title || `${t('guides_step_title')} ${index + 1}`}</h3>
+                          <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
                             {step.description}
                           </div>
                         </div>
                       </div>
                       
                       {step.imageUrl && (
-                        <div className="relative aspect-video rounded-2xl overflow-hidden shadow-xl border border-black/5 dark:border-white/5">
-                          <Image src={step.imageUrl} alt={`Step ${index + 1}`} fill className="object-cover" />
+                        <div className="relative aspect-video rounded-[2rem] overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 bg-black/5">
+                          <Image src={step.imageUrl} alt={`Step ${index + 1}`} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                         </div>
                       )}
                     </div>
@@ -209,30 +208,30 @@ export default function GuideDetailPage() {
 
           <aside className="lg:col-span-4 space-y-8 sticky top-32">
             <div className="flex gap-4">
-              <Button onClick={handleBookmark} className="flex-1 rounded-2xl h-16 font-black uppercase tracking-widest text-[10px] gap-3 shadow-xl">
-                {isBookmarked ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
+              <Button onClick={handleBookmark} className="flex-1 rounded-[1.5rem] h-20 font-black uppercase tracking-[0.2em] text-[10px] gap-3 shadow-2xl neon-glow border-none">
+                {isBookmarked ? <BookmarkCheck className="w-6 h-6" /> : <Bookmark className="w-6 h-6" />}
                 {isBookmarked ? t('guides_saved') : t('guides_save')}
               </Button>
-              <Button variant="outline" size="icon" className="rounded-2xl h-16 w-16 glass border-primary/10 text-primary">
-                <Share2 className="w-5 h-5" />
+              <Button variant="outline" size="icon" className="rounded-[1.5rem] h-20 w-20 glass border-primary/10 text-primary hover:bg-primary/5 transition-all">
+                <Share2 className="w-6 h-6" />
               </Button>
             </div>
 
-            <div className="glass rounded-3xl border-primary/5 overflow-hidden p-8">
-              <h3 className="font-black uppercase tracking-tight text-sm mb-6 flex items-center gap-3">
-                <Wrench className="w-5 h-5 text-primary" />
+            <div className="glass rounded-[2.5rem] border-primary/5 overflow-hidden p-10">
+              <h3 className="font-black uppercase tracking-[0.1em] text-xs mb-8 flex items-center gap-4 text-primary">
+                <Wrench className="w-6 h-6" />
                 {t('guides_tools')}
               </h3>
-              <div className="space-y-4">
+              <div className="space-y-5">
                 {guide.tools?.length > 0 ? (
                   guide.tools.map((tool: any, i: number) => (
-                    <div key={i} className="flex items-center gap-3 text-[10px] font-black uppercase text-foreground/70">
+                    <div key={i} className="flex items-center gap-4 text-[10px] font-black uppercase text-foreground/80">
                       <CheckCircle2 className="w-4 h-4 text-primary" />
                       {tool.name}
                     </div>
                   ))
                 ) : (
-                  <p className="text-[8px] font-black uppercase opacity-40">Standard hardware kit required</p>
+                  <p className="text-[10px] font-black uppercase opacity-30 italic">Standard hardware kit required</p>
                 )}
               </div>
             </div>
