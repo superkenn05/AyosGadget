@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, AlertTriangle, Wrench, CheckCircle2 } from 'lucide-react';
-import Link from 'next/link'; // Fixed: Use next/link instead of next/navigation
+import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useUser, useFirestore, useDoc } from '@/firebase';
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
@@ -12,6 +12,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { getGuideWithAllSteps } from '@/lib/ifixit-api';
 import { translateGuide } from '@/ai/flows/translate-guide-flow';
+import Image from 'next/image';
 
 export default function GuideDetailPage() {
   const params = useParams();
@@ -21,6 +22,7 @@ export default function GuideDetailPage() {
   const { toast } = useToast();
   const { t, language } = useLanguage();
   
+  const [isMounted, setIsMounted] = useState(false);
   const [guide, setGuide] = useState<any>(null);
   const [originalGuide, setOriginalGuide] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -28,8 +30,12 @@ export default function GuideDetailPage() {
   const [translatedVersion, setTranslatedVersion] = useState<string | null>(null);
   const translationCache = useRef<Record<string, Record<string, any>>>({});
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const bookmarkRef = useMemo(() => {
-    if (!user || !id) return null;
+    if (!user || !id || !db) return null;
     return doc(db, 'users', user.uid, 'bookmarks', id);
   }, [user, id, db]);
 
@@ -112,8 +118,10 @@ export default function GuideDetailPage() {
         setTranslatedVersion(language);
       } catch (error) {
         console.error("Translation Engine Failure:", error);
-        // Fallback to original but don't show to user if it's Filipino mode
-        setGuide(originalGuide);
+        // Fallback to original ONLY if we are in English, otherwise show nothing or error
+        if (language === 'en') {
+          setGuide(originalGuide);
+        }
       } finally {
         setIsTranslating(false);
       }
@@ -142,6 +150,8 @@ export default function GuideDetailPage() {
       toast({ title: "Saved to vault" });
     }
   };
+
+  if (!isMounted) return null;
 
   // CRITICAL: Stay in skeleton if Filipino is selected but translation isn't verified
   const showSkeleton = loading || isTranslating || (language === 'fil' && translatedVersion !== 'fil');
@@ -280,5 +290,3 @@ export default function GuideDetailPage() {
     </div>
   );
 }
-
-import Image from 'next/image';

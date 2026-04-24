@@ -2,6 +2,7 @@
 /**
  * @fileOverview AI Flow to translate repair guide content into natural, easy-to-understand Taglish.
  * Optimized for technical terms used in the Philippines with Zero-Leakage English policy.
+ * Persona: Raon / Greenhills Hardware Technician.
  */
 
 import {ai} from '@/ai/genkit';
@@ -40,7 +41,7 @@ const translatePrompt = ai.definePrompt({
     })
   },
   output: {schema: TranslateGuideOutputSchema},
-  prompt: `You are a professional Filipino hardware technician from Greenhills or Raon.
+  prompt: `You are a professional Filipino hardware technician from Greenhills or Raon. 
 Your task is to translate the following technical repair manual into natural, conversational MABABAW NA TAGALOG / TAGLISH.
 
 STRICT TRANSLATION RULES:
@@ -56,7 +57,7 @@ Source Content to Translate:
 Steps:
 {{#each steps}}
 --- STEP {{@index}} ---
-{{#if this.title}}Step Title: {{this.title}}{{/if}}
+{{#if this.title}}Step Title: {{this.title}}{{getGuideWithAllSteps}}{{/if}}
 Instruction:
 {{{this.description}}}
 {{/each}}`,
