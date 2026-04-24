@@ -65,7 +65,7 @@ export default function GuideDetailPage() {
     fetchGuideData();
   }, [id, language]);
 
-  // 2. Handle Translation with Zero-Leakage English Logic
+  // 2. Handle Translation with Fast Parallel Logic
   useEffect(() => {
     async function handleTranslation() {
       if (!originalGuide) return;
@@ -85,9 +85,7 @@ export default function GuideDetailPage() {
         return;
       }
 
-      // Force UI back to skeleton for Filipino to ensure zero English leakage
-      setGuide(null);
-      setTranslatedVersion(null);
+      // Start Translation Process
       setIsTranslating(true);
       
       try {
@@ -118,7 +116,6 @@ export default function GuideDetailPage() {
         setTranslatedVersion(language);
       } catch (error) {
         console.error("Translation Engine Failure:", error);
-        // Fallback to original ONLY if we are in English, otherwise show nothing or error
         if (language === 'en') {
           setGuide(originalGuide);
         }
@@ -153,7 +150,7 @@ export default function GuideDetailPage() {
 
   if (!isMounted) return null;
 
-  // CRITICAL: Stay in skeleton if Filipino is selected but translation isn't verified
+  // Show Skeleton if loading or if we need a translation that isn't ready
   const showSkeleton = loading || isTranslating || (language === 'fil' && translatedVersion !== 'fil');
 
   if (showSkeleton) return (
