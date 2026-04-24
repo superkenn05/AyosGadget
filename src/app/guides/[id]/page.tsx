@@ -58,7 +58,7 @@ export default function GuideDetailPage() {
     fetchGuideData();
   }, [id, language]);
 
-  // 2. Handle Translation when Language or Original Guide changes
+  // 2. Handle Translation with Zero-Leakage English Logic
   useEffect(() => {
     async function handleTranslation() {
       if (!originalGuide) return;
@@ -69,17 +69,17 @@ export default function GuideDetailPage() {
         return;
       }
 
-      // If switching to Filipino, immediately set guide to null to force skeleton
-      // until the translated version is ready.
-      if (!translationCache.current[id]?.[language]) {
-        setGuide(null);
-      } else {
+      // Check Cache
+      if (translationCache.current[id]?.[language]) {
         setGuide(translationCache.current[id][language]);
         setIsTranslating(false);
         return;
       }
 
+      // Start Translation - Clear guide to force skeleton
+      setGuide(null);
       setIsTranslating(true);
+      
       try {
         const translated = await translateGuide({
           title: originalGuide.title,
@@ -90,7 +90,11 @@ export default function GuideDetailPage() {
           })),
         });
 
-        if (!translated) throw new Error("Translation returned null");
+        if (!translated) throw new Error("Translation failed");
+
+        // Validate that no step is still in English or has sync error
+        const hasSyncError = translated.steps.some(s => s.description.includes("[SYNC ERROR]"));
+        if (hasSyncError) throw new Error("Partial translation failure");
 
         const finalGuide = {
           ...originalGuide,
@@ -98,26 +102,30 @@ export default function GuideDetailPage() {
           description: translated.description || originalGuide.description,
           steps: originalGuide.steps.map((s: any, i: number) => ({
             ...s,
-            title: translated.steps?.[i]?.title || s.title,
-            description: translated.steps?.[i]?.description || s.description,
+            title: translated.steps[i]?.title || s.title,
+            description: translated.steps[i]?.description || s.description,
           }))
         };
 
-        // Cache the result
         if (!translationCache.current[id]) translationCache.current[id] = {};
         translationCache.current[id][language] = finalGuide;
         
         setGuide(finalGuide);
       } catch (error) {
-        console.error("Translation failed:", error);
-        // Fallback to original if AI fails, but ideally we'd show an error
-        setGuide(originalGuide); 
+        console.error("Translation Engine Failure:", error);
+        // Do NOT set guide to originalGuide if in Filipino mode. 
+        // We'd rather keep showing the loader or show an error.
+        toast({
+          variant: "destructive",
+          title: "Neural Sync Error",
+          description: "Hindi ma-translate ang manual. Pakisubukang i-refresh."
+        });
       } finally {
         setIsTranslating(false);
       }
     }
     handleTranslation();
-  }, [language, originalGuide, id]);
+  }, [language, originalGuide, id, toast]);
 
   const handleBookmark = () => {
     if (!user) {
@@ -148,14 +156,17 @@ export default function GuideDetailPage() {
         <Loader2 className="animate-spin text-primary w-16 h-16 mb-6" />
         <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-primary animate-pulse" />
       </div>
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-4">
         <p className="text-[12px] font-black uppercase tracking-[0.4em] text-primary animate-pulse">
           {language === 'fil' ? 'NEURAL TRANSLATION PROTOCOL...' : t('common_syncing')}
         </p>
         {language === 'fil' && (
-          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
-            Hinihimay ang bawat hakbang...
-          </p>
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
+              Hinihimay ang bawat hakbang...
+            </p>
+            <p className="text-[8px] font-black text-primary/40 uppercase tracking-[0.2em]">Raon/Greenhills Technician Mode: ON</p>
+          </div>
         )}
       </div>
     </div>

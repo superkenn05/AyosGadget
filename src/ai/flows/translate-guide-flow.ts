@@ -44,11 +44,11 @@ const translatePrompt = ai.definePrompt({
 Your task is to translate the provided technical repair instructions into natural, conversational MABABAW NA TAGALOG / TAGLISH (Casual Greenhills/Raon Style).
 
 CRITICAL RULES:
-1. NO ENGLISH SENTENCES ALLOWED: Every single instruction, action, and description MUST be translated into Taglish. You are forbidden from leaving English sentences as is.
+1. NO ENGLISH SENTENCES ALLOWED: Every single instruction, action, and description MUST be translated into Taglish. You are strictly forbidden from leaving English sentences as is.
 2. AGGRESSIVE TRANSLATION: If you see "Remove the modules", you MUST output "Baklasin ang mga modules". If you see "Pull the tabs", output "Hugutin ang mga tabs".
-3. PERSONA: Talk like a real technician from Raon or Greenhills. Use "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo", "Bunutin ang connector".
-4. TECHNICAL TERMS (KEEP IN ENGLISH): Only keep these specific words in English: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "expansion bay", "index finger", "ribbed tabs", "power button", "volume button", "RAM", "hard drive", "tabs".
-5. BULLET POINTS: You MUST preserve the formatting of bullet points (•) and numbered lists.
+3. PERSONA: Talk like a real technician from Raon or Greenhills. Use technician lingo: "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo", "Bunutin ang connector".
+4. TECHNICAL TERMS (KEEP IN ENGLISH): Only keep these specific words in English: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "expansion bay", "index finger", "ribbed tabs", "power button", "volume button", "RAM", "hard drive", "tabs", "trackpad".
+5. BULLET POINTS: You MUST preserve the formatting of bullet points (•) and numbered lists exactly as they appear in the source.
 
 Source Content to Translate:
 {{#if title}}Title: {{{title}}}{{/if}}
@@ -93,33 +93,24 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       });
 
       if (result.output && result.output.steps && result.output.steps.length > 0) {
-        // Ensure we preserve the bullet points if AI stripped them (unlikely but safe)
         const mappedBatch = result.output.steps.map((s, idx) => ({
           title: s.title || batch[idx].title,
           description: s.description || batch[idx].description,
         }));
         translatedSteps.push(...mappedBatch);
       } else {
-        translatedSteps.push(...batch);
+        // If AI fails to return structured data, we return empty to trigger fallback in UI
+        translatedSteps.push(...batch.map(b => ({ ...b, description: "[SYNC ERROR: Retrying...]" })));
       }
     } catch (error) {
       console.error("Batch translation failed", error);
-      translatedSteps.push(...batch);
+      translatedSteps.push(...batch.map(b => ({ ...b, description: "[SYNC ERROR: Retrying...]" })));
     }
   }
-
-  // Final check to ensure we have all steps
-  const finalSteps = input.steps.map((originalStep, index) => {
-    const translatedStep = translatedSteps[index];
-    return {
-      title: translatedStep?.title || originalStep.title,
-      description: translatedStep?.description || originalStep.description,
-    };
-  });
 
   return {
     title: finalTitle,
     description: finalDescription,
-    steps: finalSteps,
+    steps: translatedSteps,
   };
 }
