@@ -57,14 +57,14 @@ Source Content to Translate:
 Steps:
 {{#each steps}}
 --- STEP {{@index}} ---
-{{#if this.title}}Step Title: {{this.title}}{{getGuideWithAllSteps}}{{/if}}
+{{#if this.title}}Step Title: {{this.title}}{{/if}}
 Instruction:
 {{{this.description}}}
 {{/each}}`,
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
-  const BATCH_SIZE = 3; 
+  const BATCH_SIZE = 2; // Reduced batch size for stability
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
@@ -95,7 +95,7 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       });
 
       if (result.output && result.output.steps) {
-        for (let j = 0; j < batch.length; j++) {
+        for (let j = 0; j < result.output.steps.length; j++) {
           const s = result.output.steps[j];
           translatedSteps.push({
             title: s?.title || `Hakbang ${i + j + 1}`,
@@ -103,11 +103,17 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
           });
         }
       } else {
-        translatedSteps.push(...batch.map(() => ({ description: SYNC_ERROR_MSG })));
+        translatedSteps.push(...batch.map((_, idx) => ({ 
+          title: `Hakbang ${i + idx + 1}`,
+          description: SYNC_ERROR_MSG 
+        })));
       }
     } catch (error) {
       console.error(`Batch ${i} translation failed`, error);
-      translatedSteps.push(...batch.map(() => ({ description: SYNC_ERROR_MSG })));
+      translatedSteps.push(...batch.map((_, idx) => ({ 
+        title: `Hakbang ${i + idx + 1}`,
+        description: SYNC_ERROR_MSG 
+      })));
     }
   }
 
