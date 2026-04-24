@@ -45,7 +45,7 @@ export default function GuideDetailPage() {
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setOriginalGuide(fetchedGuide);
-          // Only set guide immediately if English, otherwise wait for translation
+          // If English, we can show it immediately
           if (language === 'en') {
             setGuide(fetchedGuide);
           }
@@ -57,9 +57,9 @@ export default function GuideDetailPage() {
       }
     }
     fetchGuideData();
-  }, [id, language]);
+  }, [id]);
 
-  // 2. Handle Translation when Language changes
+  // 2. Handle Translation when Language or Original Guide changes
   useEffect(() => {
     async function handleTranslation() {
       if (!originalGuide) return;
@@ -70,7 +70,8 @@ export default function GuideDetailPage() {
         return;
       }
 
-      // If Filipino, clear the current guide to prevent English leakage while translating
+      // STRICT RULE: If language is 'fil', CLEAR the guide so English is never shown
+      // during the translation process.
       setGuide(null);
 
       // Check cache first
@@ -111,8 +112,10 @@ export default function GuideDetailPage() {
         setGuide(finalGuide);
       } catch (error) {
         console.error("Translation failed:", error);
-        // Fallback to original if AI fails after multiple attempts, but this is a last resort
-        setGuide(originalGuide);
+        // If it absolutely fails, we still don't show English if the user forbids it,
+        // but for now, we'll try to at least show the original if AI is down.
+        // However, the user said "wag lumabas kung hindi tagalog", so maybe we should keep it null.
+        setGuide(null); 
       } finally {
         setIsTranslating(false);
       }
@@ -142,8 +145,8 @@ export default function GuideDetailPage() {
     }
   };
 
-  // Show loading skeleton if fetching initial data or if translating in Filipino mode
-  if (loading || (language === 'fil' && isTranslating && !guide)) return (
+  // Show loading skeleton if fetching initial data OR if translating in Filipino mode
+  if (loading || (language === 'fil' && !guide)) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background">
       <div className="relative">
         <Loader2 className="animate-spin text-primary w-16 h-16 mb-6" />

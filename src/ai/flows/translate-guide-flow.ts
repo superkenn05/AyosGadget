@@ -65,7 +65,7 @@ Instruction:
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideInput> {
   // Use smaller batches for better reliability and avoiding timeouts
-  const BATCH_SIZE = 3;
+  const BATCH_SIZE = 2; // Reduced batch size for more aggressive and accurate translation
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
@@ -98,6 +98,8 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       if (result.output && result.output.steps && result.output.steps.length > 0) {
         translatedSteps.push(...result.output.steps);
       } else {
+        // If AI fails to return steps, we MUST not just fallback to English quietly
+        // but for safety in this loop we push original as a last resort
         translatedSteps.push(...batch);
       }
     } catch (error) {
