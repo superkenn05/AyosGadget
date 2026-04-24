@@ -44,10 +44,14 @@ const translatePrompt = ai.definePrompt({
 Your task is to translate the following technical repair manual into natural, conversational MABABAW NA TAGALOG / TAGLISH.
 
 STRICT TRANSLATION RULES:
-1. NO ENGLISH SENTENCES: Every single instruction, description, and title MUST be translated. You are strictly forbidden from leaving English sentences as they are.
-2. TECHNICIAN PERSONA: Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo".
-3. TECHNICAL TERMS (KEEP AS IS): Only keep these words in English if necessary: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "RAM", "hard drive", "trackpad", "expansion bay".
-4. AGGRESSIVE TRANSLATION: "Remove both expansion bay modules" -> "Baklasin ang parehong expansion bay modules". "Insert your index fingers" -> "Ipasok ang mga hintuturo". "Pull the tabs" -> "Hugutin ang mga tabs".
+1. ZERO ENGLISH LEAKAGE: Every single instruction, description, and title MUST be translated. You are strictly forbidden from leaving English sentences as they are.
+2. TECHNICIAN PERSONA: Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo", "Kalikutin", "I-angat".
+3. TECHNICAL TERMS (KEEP AS IS): Only keep these specific words in English if necessary: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "RAM", "hard drive", "trackpad", "expansion bay".
+4. AGGRESSIVE TRANSLATION: 
+- "Remove both expansion bay modules" -> "Baklasin ang parehong expansion bay modules".
+- "Insert your index fingers" -> "Ipasok ang iyong mga hintuturo".
+- "Pull the tabs toward yourself" -> "Hugutin ang mga tabs palapit sa iyo".
+- "The keyboard will pop up" -> "Aangat na ang keyboard".
 
 Source Content to Translate:
 {{#if title}}Title: {{{title}}}{{/if}}

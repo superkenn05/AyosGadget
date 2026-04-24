@@ -95,7 +95,13 @@ export default function GuideDetailPage() {
           })),
         });
 
-        if (!translated) throw new Error("Translation failed");
+        if (!translated || !translated.steps) throw new Error("Translation failed");
+
+        // Verification step: Ensure no critical sync errors in core steps
+        const syncErrorCount = translated.steps.filter(s => s.description.includes("SYNC ERROR")).length;
+        if (syncErrorCount > (originalGuide.steps.length / 2)) {
+           throw new Error("Too many sync errors");
+        }
 
         const finalGuide = {
           ...originalGuide,
