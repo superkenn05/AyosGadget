@@ -101,7 +101,7 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
 
       if (result.output && result.output.steps) {
         translatedSteps.push(...result.output.steps.map((s, idx) => ({
-          title: s.title || `Hakbang ${i + idx + 1}`,
+          title: s.title || (input.steps[i + idx]?.title ? `Translated Title` : `Hakbang ${i + idx + 1}`),
           description: s.description || SYNC_ERROR_MSG,
         })));
       } else {
@@ -113,9 +113,17 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     }
   }
 
+  // Safety check: ensure lengths match
+  if (translatedSteps.length < totalSteps) {
+    const diff = totalSteps - translatedSteps.length;
+    for (let i = 0; i < diff; i++) {
+      translatedSteps.push({ description: SYNC_ERROR_MSG });
+    }
+  }
+
   return {
     title: finalTitle,
     description: finalDescription,
-    steps: translatedSteps,
+    steps: translatedSteps.slice(0, totalSteps),
   };
 }

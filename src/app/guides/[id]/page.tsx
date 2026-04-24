@@ -95,14 +95,9 @@ export default function GuideDetailPage() {
           })),
         });
 
-        if (!translated || !translated.steps) throw new Error("Translation failed");
+        if (!translated || !translated.steps) throw new Error("Translation process failed");
 
-        // Verification step: Ensure no critical sync errors in core steps
-        const syncErrorCount = translated.steps.filter(s => s.description.includes("SYNC ERROR")).length;
-        if (syncErrorCount > (originalGuide.steps.length / 2)) {
-           throw new Error("Too many sync errors");
-        }
-
+        // We don't crash anymore. We accept partial translations with Tagalog error messages.
         const finalGuide = {
           ...originalGuide,
           title: translated.title || originalGuide.title,
@@ -123,8 +118,8 @@ export default function GuideDetailPage() {
         console.error("Translation Engine Failure:", error);
         toast({
           variant: "destructive",
-          title: "Neural Sync Error",
-          description: "Hindi ma-translate ang manual sa ngayon. Pakisubukang i-refresh."
+          title: "Neural Sync Warning",
+          description: "May aberya sa pagsasalin. Pakisubukang i-refresh ang pahina."
         });
       } finally {
         setIsTranslating(false);
