@@ -1,5 +1,6 @@
 /**
  * @fileOverview Client for interacting with the iFixit API v2.0 with recursive prerequisite support.
+ * Ensures all 20+ steps are retrieved by traversing all levels of prerequisite manuals.
  */
 
 import { CategoryName } from './repair-data';
@@ -67,7 +68,8 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
 }
 
 /**
- * Robust fetching that ensures all 20+ steps are retrieved by traversing prerequisites.
+ * Robust fetching that ensures all 20+ steps are retrieved by recursively traversing prerequisites.
+ * MacBook guides often hide the first ~15 steps in "Lower Case" or "Battery" prerequisites.
  */
 export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
   if (visited.has(id)) return null;
@@ -79,7 +81,7 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
 
     let combinedSteps: any[] = [];
     
-    // 1. Fetch steps from prerequisites FIRST recursively
+    // 1. Fetch steps from prerequisites FIRST recursively to build the sequence
     if (guide.prerequisites && Array.isArray(guide.prerequisites)) {
       for (const prereq of guide.prerequisites) {
         if (prereq.guideid) {
@@ -94,7 +96,7 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
     const internal = mapIFixitToInternal(guide);
     if (!internal) return null;
 
-    // 2. Append current guide steps to the sequence
+    // 2. Append current guide steps to the end of the prerequisite steps
     if (internal.steps && internal.steps.length > 0) {
       combinedSteps = [...combinedSteps, ...internal.steps];
     }
@@ -111,7 +113,11 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
 
 export async function getIFixitWiki(categoryName: string): Promise<IFixitWiki | null> {
   try {
-    const mappedName = categoryName === 'Smartphones' ? 'Phone' : categoryName;
+    // Normalize common categories for better API matching
+    let mappedName = categoryName;
+    if (categoryName === 'Smartphones') mappedName = 'Phone';
+    if (categoryName === 'Desktop PCs') mappedName = 'Desktop';
+    
     const res = await fetch(`https://www.ifixit.com/api/2.0/wikis/CATEGORY/${encodeURIComponent(mappedName)}`);
     if (!res.ok) return null;
     const data = await res.json();
@@ -199,13 +205,13 @@ function mapCategory(type: string): CategoryName {
   if (!type) return 'Appliances';
   const t = type.toLowerCase();
   if (t.includes('phone')) return 'Smartphones';
-  if (t.includes('laptop') || t.includes('macbook')) return 'Laptops';
+  if (t.includes('laptop') || t.includes('macbook') || t.includes('mac')) return 'Laptops';
   if (t.includes('tablet') || t.includes('ipad')) return 'Tablets';
   if (t.includes('console') || t.includes('switch') || t.includes('playstation') || t.includes('xbox') || t.includes('gaming')) return 'Consoles';
   if (t.includes('audio') || t.includes('headphone') || t.includes('speaker') || t.includes('earbud')) return 'Audio';
   if (t.includes('camera') || t.includes('lens') || t.includes('photography')) return 'Cameras';
   if (t.includes('desktop') || t.includes('pc') || t.includes('monitor') || t.includes('workstation')) return 'Desktop PCs';
-  if (t.includes('car') || t.includes('truck')) return 'Car and Truck';
+  if (t.includes('car') || t.includes('truck') || t.includes('vehicle')) return 'Car and Truck';
   return 'Appliances';
 }
 

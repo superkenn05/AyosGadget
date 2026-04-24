@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview AI Flow to translate repair guide content into Filipino with batched processing for large manuals.
- * Optimized for stability with 20+ steps guides.
+ * Optimized for stability with 20+ steps guides and prevents Internal Server Errors via smaller batching.
  */
 
 import {ai} from '@/ai/genkit';
@@ -67,7 +67,7 @@ Content:
  * without hitting token limits, skipping data, or timing out.
  */
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
-  const BATCH_SIZE = 3; 
+  const BATCH_SIZE = 2; // Reduced to 2 steps per batch for maximum stability with large guides
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
@@ -106,7 +106,7 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
         attempts++;
         if (attempts >= maxAttempts) throw error;
         // Exponential backoff for quota or timeout issues
-        await new Promise(resolve => setTimeout(resolve, 15000 * attempts));
+        await new Promise(resolve => setTimeout(resolve, 5000 * attempts));
       }
     }
   }
