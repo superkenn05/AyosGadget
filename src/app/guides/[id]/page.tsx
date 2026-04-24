@@ -2,6 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, AlertTriangle, Wrench, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -23,12 +24,13 @@ export default function GuideDetailPage() {
   const { t, language } = useLanguage();
   
   const [isMounted, setIsMounted] = useState(false);
-  const [guide, setGuide] = useState<any>(null);
   const [originalGuide, setOriginalGuide] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isTranslating, setIsTranslating] = useState(false);
-  const [translatedVersion, setTranslatedVersion] = useState<string | null>(null);
-  const translationCache = useRef<Record<string, Record<string, any>>>({});
+  
+  // Per-item translation state
+  const [translatedMeta, setTranslatedMeta] = useState<{ title?: string; description?: string } | null>(null);
+  const [translatedSteps, setTranslatedSteps] = useState<Record<number, { title?: string; description: string }>>({});
+  const translationCache = useRef<Record<string, any>>({});
 
   useEffect(() => {
     setIsMounted(true);
@@ -42,6 +44,7 @@ export default function GuideDetailPage() {
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
+  // 1. Initial Fetch (English)
   useEffect(() => {
     async function fetchGuideData() {
       if (!id) return;
@@ -50,10 +53,6 @@ export default function GuideDetailPage() {
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setOriginalGuide(fetchedGuide);
-          if (language === 'en') {
-            setGuide(fetchedGuide);
-            setTranslatedVersion('en');
-          }
         }
       } catch (error) {
         console.error("Fetch failed:", error);
@@ -62,63 +61,61 @@ export default function GuideDetailPage() {
       }
     }
     fetchGuideData();
-  }, [id, language]);
+  }, [id]);
 
+  // 2. Progressive Translation Effect
   useEffect(() => {
-    async function handleTranslation() {
-      if (!originalGuide) return;
+    if (!originalGuide || language !== 'fil') {
+      setTranslatedMeta(null);
+      setTranslatedSteps({});
+      return;
+    }
 
-      if (language === 'en') {
-        setGuide(originalGuide);
-        setTranslatedVersion('en');
-        setIsTranslating(false);
-        return;
-      }
+    const cacheKey = `${id}-fil`;
+    if (translationCache.current[cacheKey]) {
+      const cached = translationCache.current[cacheKey];
+      setTranslatedMeta(cached.meta);
+      setTranslatedSteps(cached.steps);
+      return;
+    }
 
-      if (translationCache.current[id]?.[language]) {
-        setGuide(translationCache.current[id][language]);
-        setTranslatedVersion(language);
-        setIsTranslating(false);
-        return;
-      }
-
-      setIsTranslating(true);
-      
+    async function startProgressiveTranslation() {
+      // Step A: Translate Title & Description
       try {
-        const result = await translateGuide({
+        const metaRes = await translateGuide({
           title: originalGuide.title,
-          description: originalGuide.description,
-          steps: originalGuide.steps.map((s: any) => ({
-            title: s.title,
-            description: s.description
-          }))
+          description: originalGuide.description
         });
+        setTranslatedMeta({ title: metaRes.title, description: metaRes.description });
+      } catch (e) {
+        console.error("Meta translation error", e);
+      }
 
-        const finalGuide = {
-          ...originalGuide,
-          title: result.title || originalGuide.title,
-          description: result.description || originalGuide.description,
-          steps: (result.steps || []).map((translatedStep: any, i: number) => ({
-            ...originalGuide.steps[i],
-            title: translatedStep.title || originalGuide.steps[i].title,
-            description: translatedStep.description || originalGuide.steps[i].description
-          }))
-        };
-
-        if (!translationCache.current[id]) translationCache.current[id] = {};
-        translationCache.current[id][language] = finalGuide;
-        
-        setGuide(finalGuide);
-        setTranslatedVersion(language);
-      } catch (error) {
-        console.error("Translation Engine Failure:", error);
-        setGuide(originalGuide);
-        setTranslatedVersion(language);
-      } finally {
-        setIsTranslating(false);
+      // Step B: Translate each step one-by-one
+      const steps = originalGuide.steps || [];
+      for (let i = 0; i < steps.length; i++) {
+        try {
+          const stepRes = await translateGuide({
+            steps: [{ title: steps[i].title, description: steps[i].description }]
+          });
+          if (stepRes.steps?.[0]) {
+            setTranslatedSteps(prev => {
+              const next = { ...prev, [i]: stepRes.steps![0] };
+              // Cache updated results
+              translationCache.current[cacheKey] = {
+                meta: translatedMeta,
+                steps: next
+              };
+              return next;
+            });
+          }
+        } catch (e) {
+          console.error(`Step ${i} translation error`, e);
+        }
       }
     }
-    handleTranslation();
+
+    startProgressiveTranslation();
   }, [language, originalGuide, id]);
 
   const handleBookmark = () => {
@@ -126,7 +123,7 @@ export default function GuideDetailPage() {
       toast({ title: t('common_login_required') });
       return;
     }
-    if (!guide || !bookmarkRef) return;
+    if (!originalGuide || !bookmarkRef) return;
 
     if (isBookmarked) {
       deleteDoc(bookmarkRef);
@@ -134,9 +131,9 @@ export default function GuideDetailPage() {
     } else {
       setDoc(bookmarkRef, {
         guideId: id,
-        title: guide.title,
-        thumbnail: guide.thumbnail || '',
-        category: guide.category,
+        title: originalGuide.title,
+        thumbnail: originalGuide.thumbnail || '',
+        category: originalGuide.category,
         savedAt: serverTimestamp(),
       });
       toast({ title: "Saved to vault" });
@@ -145,38 +142,26 @@ export default function GuideDetailPage() {
 
   if (!isMounted) return null;
 
-  const showSkeleton = loading || isTranslating || (language === 'fil' && translatedVersion !== 'fil');
-
-  if (showSkeleton) return (
+  if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-      <div className="relative">
-        <Loader2 className="animate-spin text-primary w-16 h-16 mb-6" />
-        <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-primary animate-pulse" />
-      </div>
-      <div className="text-center space-y-4">
-        <p className="text-[12px] font-black uppercase tracking-[0.4em] text-primary animate-pulse">
-          {language === 'fil' ? 'NEURAL TRANSLATION ENGINE...' : t('common_syncing')}
-        </p>
-        {language === 'fil' && (
-          <div className="space-y-1">
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
-              Isinasalin ang mga hakbang sa Taglish...
-            </p>
-          </div>
-        )}
-      </div>
+      <Loader2 className="animate-spin text-primary w-12 h-12 mb-4" />
+      <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
     </div>
   );
 
-  if (!guide) return (
+  if (!originalGuide) return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <AlertTriangle className="text-rose-500 mr-2" /> 
       <span className="font-black uppercase tracking-tighter">Protocol Offline</span>
     </div>
   );
 
+  const displayTitle = (language === 'fil' ? translatedMeta?.title : originalGuide.title) || originalGuide.title;
+  const displayDesc = (language === 'fil' ? translatedMeta?.description : originalGuide.description) || originalGuide.description;
+  const isTranslatingMeta = language === 'fil' && !translatedMeta;
+
   return (
-    <div className="min-h-screen bg-background pb-32" key={`${id}-${language}`}>
+    <div className="min-h-screen bg-background pb-32">
       <div className="container mx-auto px-4 pt-24 md:pt-32">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-8 space-y-12">
@@ -186,24 +171,39 @@ export default function GuideDetailPage() {
               </Link>
               
               <div className="flex flex-wrap items-center gap-3">
-                <Badge className="bg-primary/10 text-primary border-none font-black uppercase tracking-widest text-[8px]">{guide.category}</Badge>
-                <Badge variant="outline" className="font-black uppercase tracking-widest text-[8px]">{guide.difficulty}</Badge>
+                <Badge className="bg-primary/10 text-primary border-none font-black uppercase tracking-widest text-[8px]">{originalGuide.category}</Badge>
+                <Badge variant="outline" className="font-black uppercase tracking-widest text-[8px]">{originalGuide.difficulty}</Badge>
+                {language === 'fil' && (
+                  <Badge className="bg-amber-500/10 text-amber-500 border-none font-black uppercase tracking-widest text-[8px] animate-pulse">
+                    <Sparkles className="w-2 h-2 mr-1" /> Neural Sync Active
+                  </Badge>
+                )}
               </div>
 
-              <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-none">
-                {guide.title}
-              </h1>
+              {isTranslatingMeta ? (
+                <Skeleton className="h-12 w-3/4 rounded-xl" />
+              ) : (
+                <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-none">
+                  {displayTitle}
+                </h1>
+              )}
 
-              {guide.thumbnail && (
+              {originalGuide.thumbnail && (
                 <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl glass border-primary/5">
-                  <Image src={guide.thumbnail} alt={guide.title} fill className="object-cover" priority />
+                  <Image src={originalGuide.thumbnail} alt={originalGuide.title} fill className="object-cover" priority />
                 </div>
               )}
 
               <div className="space-y-4">
                 <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">BEFORE YOU BEGIN</h2>
-                <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium glass p-8 rounded-3xl border-primary/5">
-                  {guide.description}
+                <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium glass p-8 rounded-3xl border-primary/5 min-h-[100px]">
+                  {isTranslatingMeta ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-5/6" />
+                      <Skeleton className="h-4 w-4/6" />
+                    </div>
+                  ) : displayDesc}
                 </div>
               </div>
             </header>
@@ -212,35 +212,53 @@ export default function GuideDetailPage() {
               <div className="flex items-center gap-4">
                 <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter">{t('guides_steps')}</h2>
                 <div className="h-px flex-grow bg-primary/10" />
-                <Badge variant="outline" className="opacity-40 font-black text-[10px]">{guide.steps?.length} {t('guides_step_title')}</Badge>
+                <Badge variant="outline" className="opacity-40 font-black text-[10px]">{originalGuide.steps?.length} {t('guides_step_title')}</Badge>
               </div>
 
               <div className="space-y-12">
-                {guide.steps?.map((step: any, index: number) => (
-                  <div key={`${id}-${index}-${language}`} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
-                    <div className="p-8 md:p-14">
-                      <div className="flex items-start gap-6 md:gap-12 mb-10">
-                        <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-xl md:text-3xl shadow-xl neon-glow">
-                          {index + 1}
-                        </div>
-                        <div className="flex-grow">
-                          <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight mb-6">
-                            {step.title || (language === 'en' ? `Step ${index + 1}` : `Hakbang ${index + 1}`)}
-                          </h3>
-                          <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
-                            {step.description}
+                {originalGuide.steps?.map((step: any, index: number) => {
+                  const isStepTranslated = language !== 'fil' || translatedSteps[index];
+                  const currentStep = language === 'fil' ? translatedSteps[index] : step;
+
+                  return (
+                    <div key={`${index}-${language}`} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
+                      <div className="p-8 md:p-14">
+                        <div className="flex items-start gap-6 md:gap-12 mb-10">
+                          <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-xl md:text-3xl shadow-xl neon-glow">
+                            {index + 1}
+                          </div>
+                          <div className="flex-grow">
+                            {!isStepTranslated ? (
+                              <div className="space-y-4">
+                                <Skeleton className="h-8 w-1/2 rounded-lg" />
+                                <div className="space-y-2">
+                                  <Skeleton className="h-4 w-full" />
+                                  <Skeleton className="h-4 w-full" />
+                                  <Skeleton className="h-4 w-3/4" />
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight mb-6">
+                                  {currentStep?.title || (language === 'en' ? `Step ${index + 1}` : `Hakbang ${index + 1}`)}
+                                </h3>
+                                <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
+                                  {currentStep?.description}
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
+                        
+                        {step.imageUrl && (
+                          <div className="relative aspect-video rounded-[2rem] overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 bg-black/5">
+                            <Image src={step.imageUrl} alt={`Step ${index + 1}`} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                          </div>
+                        )}
                       </div>
-                      
-                      {step.imageUrl && (
-                        <div className="relative aspect-video rounded-[2rem] overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 bg-black/5">
-                          <Image src={step.imageUrl} alt={`Step ${index + 1}`} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
-                        </div>
-                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           </div>
@@ -262,8 +280,8 @@ export default function GuideDetailPage() {
                 {t('guides_tools')}
               </h3>
               <div className="space-y-5">
-                {guide.tools?.length > 0 ? (
-                  guide.tools.map((tool: any, i: number) => (
+                {originalGuide.tools?.length > 0 ? (
+                  originalGuide.tools.map((tool: any, i: number) => (
                     <div key={i} className="flex items-center gap-4 text-[10px] font-black uppercase text-foreground/80">
                       <CheckCircle2 className="w-4 h-4 text-primary" />
                       {tool.name}
