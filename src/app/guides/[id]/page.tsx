@@ -60,20 +60,17 @@ export default function GuideDetailPage() {
     async function handleTranslation() {
       if (!originalGuide) return;
 
-      // Reset to original if language is English
       if (language === 'en') {
         setGuide(originalGuide);
         setIsTranslating(false);
         return;
       }
 
-      // Check cache first
       if (translationCache.current[id]?.[language]) {
         setGuide(translationCache.current[id][language]);
         return;
       }
 
-      // Start translation flow
       setIsTranslating(true);
       try {
         const translated = await translateGuide({
@@ -166,7 +163,7 @@ export default function GuideDetailPage() {
                 </div>
               )}
 
-              <p className="text-muted-foreground text-sm md:text-lg leading-relaxed glass p-8 rounded-3xl border-primary/5">
+              <p className="text-muted-foreground text-sm md:text-lg leading-relaxed glass p-8 rounded-3xl border-primary/5 whitespace-pre-wrap">
                 {guide.description}
               </p>
             </header>

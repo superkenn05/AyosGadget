@@ -68,10 +68,10 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
 
 /**
  * Deep recursive fetch to get ALL steps (1-20+) by resolving all prerequisites first.
- * Ensures foundational steps like case removal are included.
+ * Ensures foundational steps like case removal and preparation are included.
  */
 export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
-  if (visited.has(id) || visited.size > 15) return null;
+  if (visited.has(id) || visited.size > 20) return null;
   visited.add(id);
 
   try {
@@ -79,14 +79,18 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
     if (!guide) return null;
 
     let allSteps: any[] = [];
+    let consolidatedDescription = stripHtml(guide.summary || '');
     
     // 1. Resolve Foundations (Prerequisites) First
-    // This is crucial for MacBook repairs which often start with "MacBook Pro 14" 2021 Case Removal"
     if (guide.prerequisites && Array.isArray(guide.prerequisites)) {
       for (const prereq of guide.prerequisites) {
         const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), new Set(visited));
         if (prereqData && prereqData.steps) {
           allSteps = [...allSteps, ...prereqData.steps];
+          // Prepend prerequisite summaries to provide context
+          if (prereqData.description && !consolidatedDescription.includes(prereqData.description)) {
+            consolidatedDescription = prereqData.description + "\n\n" + consolidatedDescription;
+          }
         }
       }
     }
@@ -100,6 +104,7 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
     // 3. Return consolidated data
     return {
       ...internal,
+      description: consolidatedDescription.trim(),
       steps: allSteps.length > 0 ? allSteps : (internal?.steps || [])
     };
   } catch (error) {
