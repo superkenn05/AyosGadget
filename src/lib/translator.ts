@@ -1,20 +1,22 @@
 /**
  * @fileOverview Heuristic pattern-based translator for repair guides.
  * Converts technical English to "Pinoy Technician Taglish" without using AI.
+ * Persona: Professional Hardware Technician from Raon / Greenhills.
  */
 
 const DICTIONARY: Record<string, string> = {
+  // Action Verbs (Mababaw na Salita)
   "remove": "baklasin",
   "unscrew": "luwagan ang tornilyo",
-  "disconnect": "i-disconnect",
+  "disconnect": "hugutin ang connector",
   "pull": "hilahin",
   "push": "itulak",
   "lift": "i-angat",
-  "slide": "i-slide",
+  "slide": "i-usog",
   "pry": "tuklapin",
   "open": "buksan",
   "close": "isara",
-  "insert": "isaksak",
+  "insert": "isuksok",
   "search": "hanapin",
   "located": "makikita",
   "toward": "papunta sa",
@@ -27,15 +29,26 @@ const DICTIONARY: Record<string, string> = {
   "lower": "ibaba",
   "near": "malapit sa",
   "inside": "sa loob ng",
-  "search for": "hanapin",
+  "search for": "hanapin ang",
   "with": "gamit ang",
   "and": "at",
   "both": "parehong",
-  "front of": "harap ng",
-  "corners of": "sulok ng",
   "underside of": "ilalim ng",
   "your": "iyong",
-  "index fingers": "hintuturo",
+  "index fingers": "mga hintuturo",
+  "levers": "mga lever",
+  "tabs": "mga tab",
+  "ribbed": "may guhit",
+  "keyboard": "keyboard",
+  "expansion bay": "expansion bay",
+  "module": "module",
+  "computer": "computer",
+  "battery": "battery",
+  "screw": "tornilyo",
+  "screws": "mga tornilyo",
+  "case": "case",
+  "top": "itaas",
+  "bottom": "ibaba",
 };
 
 /**
@@ -47,13 +60,17 @@ export function heuristicTranslate(text: string): string {
   
   let result = text.toLowerCase();
 
-  // 1. Replace multi-word phrases first
+  // 1. Replace multi-word phrases first (Specific common repair sequences)
   const phrases = [
-    ["search for", "hanapin"],
+    ["search for", "hanapin ang"],
+    ["front of the computer", "harap ng computer"],
     ["front of", "harap ng"],
     ["corners of", "sulok ng"],
+    ["underside of the", "ilalim ng"],
     ["underside of", "ilalim ng"],
-    ["index fingers", "mga hintuturo"]
+    ["index fingers", "mga hintuturo"],
+    ["pull the tabs toward yourself", "hilahin ang mga tab pabalik sa iyo"],
+    ["will pop up", "ay kusa nang aangat"],
   ];
 
   phrases.forEach(([eng, tag]) => {
@@ -61,20 +78,27 @@ export function heuristicTranslate(text: string): string {
     result = result.replace(regex, tag);
   });
 
-  // 2. Replace single words
+  // 2. Replace single words based on dictionary
   Object.entries(DICTIONARY).forEach(([eng, tag]) => {
+    // Only replace if it's a whole word to avoid partial matches
     const regex = new RegExp(`\\b${eng}\\b`, 'gi');
     result = result.replace(regex, tag);
   });
 
-  // 3. Capitalize first letter and fix common grammar artifacts
-  result = result.charAt(0).toUpperCase() + result.slice(1);
+  // 3. Post-processing: Clean up common grammar issues in Taglish
+  result = result
+    .replace(/\bang ang\b/g, "ang")
+    .replace(/\bang sa\b/g, "sa")
+    .replace(/\bgamit ang ang\b/g, "gamit ang");
+
+  // Capitalize first letter of sentences
+  result = result.replace(/(^\w|\.\s+\w)/gm, (m) => m.toUpperCase());
   
   return result;
 }
 
 /**
- * For backward compatibility or bulk translation
+ * For backward compatibility
  */
 export async function translateFast(text: string): Promise<string> {
   return heuristicTranslate(text);

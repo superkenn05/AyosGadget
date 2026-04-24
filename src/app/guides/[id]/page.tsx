@@ -46,7 +46,7 @@ export default function GuideDetailPage() {
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
-  // 1. Initial Fetch
+  // 1. Initial Fetch of iFixit Data
   useEffect(() => {
     async function fetchGuideData() {
       if (!id) return;
@@ -65,7 +65,7 @@ export default function GuideDetailPage() {
     fetchGuideData();
   }, [id]);
 
-  // 2. Meta AI Translation (Title & Intro)
+  // 2. Meta AI Translation (Title & Intro only to avoid timeout)
   useEffect(() => {
     if (!originalGuide || language !== 'fil') {
       if (language !== 'fil') setTranslatedMeta(null);
@@ -103,7 +103,7 @@ export default function GuideDetailPage() {
     translateHeader();
   }, [language, originalGuide, id]);
 
-  // 3. Fast Heuristic Translation for Steps (No AI)
+  // 3. Fast Heuristic "Mababaw na Tagalog" Translation for Steps (Instant, No AI)
   useEffect(() => {
     if (!originalGuide || language !== 'fil') {
       setTranslatedSteps({});
@@ -112,6 +112,7 @@ export default function GuideDetailPage() {
 
     const newTranslatedSteps: Record<number, string> = {};
     originalGuide.steps?.forEach((step: any, index: number) => {
+      // Use the heuristic engine for instant, "mababaw" Taglish instructions
       newTranslatedSteps[index] = heuristicTranslate(step.description);
     });
     setTranslatedSteps(newTranslatedSteps);
