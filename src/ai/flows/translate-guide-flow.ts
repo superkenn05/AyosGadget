@@ -64,15 +64,13 @@ Instruction:
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideInput> {
-  // Use smaller batches for better reliability and avoiding timeouts
-  const BATCH_SIZE = 2; // Reduced batch size for more aggressive and accurate translation
+  const BATCH_SIZE = 2; 
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
   let finalTitle = input.title;
   let finalDescription = input.description;
 
-  // 1. Translate Title and the Intro Description first
   try {
     const headerResult = await translatePrompt({
       title: input.title,
@@ -87,7 +85,6 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     console.error("Header translation failed", e);
   }
 
-  // 2. Batch translate all steps
   for (let i = 0; i < totalSteps; i += BATCH_SIZE) {
     const batch = input.steps.slice(i, i + BATCH_SIZE);
     try {
@@ -98,8 +95,6 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       if (result.output && result.output.steps && result.output.steps.length > 0) {
         translatedSteps.push(...result.output.steps);
       } else {
-        // If AI fails to return steps, we MUST not just fallback to English quietly
-        // but for safety in this loop we push original as a last resort
         translatedSteps.push(...batch);
       }
     } catch (error) {
@@ -108,7 +103,6 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     }
   }
 
-  // Ensure we have the same number of steps as input
   const finalSteps = input.steps.map((originalStep, index) => {
     const translatedStep = translatedSteps[index];
     return {

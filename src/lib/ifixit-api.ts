@@ -73,7 +73,7 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
  * Ensures foundational steps like case removal and preparation are included.
  */
 export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
-  if (visited.has(id) || visited.size > 20) return null; // Limit recursion depth
+  if (visited.has(id) || visited.size > 20) return null; 
   visited.add(id);
 
   try {
@@ -89,7 +89,6 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
         const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), new Set(visited));
         if (prereqData && prereqData.steps) {
           allSteps = [...allSteps, ...prereqData.steps];
-          // Combine intro descriptions for "Before you begin" clarity
           if (prereqData.description && !consolidatedDescription.includes(prereqData.description.slice(0, 40))) {
             consolidatedDescription = prereqData.description + "\n\n" + consolidatedDescription;
           }
@@ -120,7 +119,6 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
 
     allSteps = [...allSteps, ...mappedSteps];
 
-    // 3. Map everything to the internal structure
     return {
       id: guide.guideid.toString(),
       title: guide.title || 'Untitled',

@@ -45,7 +45,6 @@ export default function GuideDetailPage() {
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setOriginalGuide(fetchedGuide);
-          // If English, we can show it immediately
           if (language === 'en') {
             setGuide(fetchedGuide);
           }
@@ -70,8 +69,7 @@ export default function GuideDetailPage() {
         return;
       }
 
-      // STRICT RULE: If language is 'fil', CLEAR the guide so English is never shown
-      // during the translation process.
+      // STRICT RULE: If language is 'fil', CLEAR the guide immediately
       setGuide(null);
 
       // Check cache first
@@ -112,9 +110,6 @@ export default function GuideDetailPage() {
         setGuide(finalGuide);
       } catch (error) {
         console.error("Translation failed:", error);
-        // If it absolutely fails, we still don't show English if the user forbids it,
-        // but for now, we'll try to at least show the original if AI is down.
-        // However, the user said "wag lumabas kung hindi tagalog", so maybe we should keep it null.
         setGuide(null); 
       } finally {
         setIsTranslating(false);
@@ -166,7 +161,7 @@ export default function GuideDetailPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background pb-32" key={language}>
+    <div className="min-h-screen bg-background pb-32" key={`${id}-${language}`}>
       <div className="container mx-auto px-4 pt-24 md:pt-32">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-8 space-y-12">
