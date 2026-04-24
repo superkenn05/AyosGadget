@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { getGuideWithAllSteps } from '@/lib/ifixit-api';
-import { translateGuide } from '@/ai/flows/translate-guide-flow';
+import { translateFast } from '@/lib/translator';
 import Image from 'next/image';
 
 export default function GuideDetailPage() {
@@ -65,7 +65,7 @@ export default function GuideDetailPage() {
     fetchGuideData();
   }, [id, language]);
 
-  // 2. Handle Translation with Fast Parallel Logic
+  // 2. Handle Translation with Parallel API Logic (No AI Flow)
   useEffect(() => {
     async function handleTranslation() {
       if (!originalGuide) return;
@@ -89,24 +89,28 @@ export default function GuideDetailPage() {
       setIsTranslating(true);
       
       try {
-        const translated = await translateGuide({
-          title: originalGuide.title,
-          description: originalGuide.description,
-          steps: originalGuide.steps.map((s: any) => ({ 
-            title: s.title || '', 
-            description: s.description 
-          })),
-        });
+        // Parallel translate Title and Description
+        const [translatedTitle, translatedDesc] = await Promise.all([
+          translateFast(originalGuide.title),
+          translateFast(originalGuide.description)
+        ]);
+
+        // Parallel translate all steps
+        const translatedSteps = await Promise.all(
+          originalGuide.steps.map(async (step: any, i: number) => {
+            const [sTitle, sDesc] = await Promise.all([
+              step.title ? translateFast(step.title) : Promise.resolve(`Hakbang ${i + 1}`),
+              translateFast(step.description)
+            ]);
+            return { ...step, title: sTitle, description: sDesc };
+          })
+        );
 
         const finalGuide = {
           ...originalGuide,
-          title: translated?.title || originalGuide.title,
-          description: translated?.description || originalGuide.description,
-          steps: originalGuide.steps.map((s: any, i: number) => ({
-            ...s,
-            title: translated?.steps?.[i]?.title || s.title || `Hakbang ${i + 1}`,
-            description: translated?.steps?.[i]?.description || s.description,
-          }))
+          title: translatedTitle,
+          description: translatedDesc,
+          steps: translatedSteps
         };
 
         if (!translationCache.current[id]) translationCache.current[id] = {};
@@ -116,9 +120,7 @@ export default function GuideDetailPage() {
         setTranslatedVersion(language);
       } catch (error) {
         console.error("Translation Engine Failure:", error);
-        if (language === 'en') {
-          setGuide(originalGuide);
-        }
+        setGuide(originalGuide);
       } finally {
         setIsTranslating(false);
       }
@@ -161,14 +163,13 @@ export default function GuideDetailPage() {
       </div>
       <div className="text-center space-y-4">
         <p className="text-[12px] font-black uppercase tracking-[0.4em] text-primary animate-pulse">
-          {language === 'fil' ? 'NEURAL TRANSLATION PROTOCOL...' : t('common_syncing')}
+          {language === 'fil' ? 'NEURAL TRANSLATION ENGINE...' : t('common_syncing')}
         </p>
         {language === 'fil' && (
           <div className="space-y-1">
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
-              Hinihimay ang bawat hakbang...
+              Isinasalin ang mga hakbang...
             </p>
-            <p className="text-[8px] font-black text-primary/40 uppercase tracking-[0.2em]">Raon/Greenhills Technician Mode: ON</p>
           </div>
         )}
       </div>
@@ -232,7 +233,7 @@ export default function GuideDetailPage() {
                         </div>
                         <div className="flex-grow">
                           <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight mb-6">
-                            {language === 'en' ? `Step ${index + 1}` : `Hakbang ${index + 1}`}
+                            {step.title || (language === 'en' ? `Step ${index + 1}` : `Hakbang ${index + 1}`)}
                           </h3>
                           <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
                             {step.description}
