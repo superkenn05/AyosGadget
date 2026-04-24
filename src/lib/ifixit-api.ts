@@ -1,5 +1,5 @@
 /**
- * @fileOverview Client for interacting with the iFixit API v2.0 with recursive prerequisite support.
+ * @fileOverview Client for interacting with the iFixit API v2.0 with deep recursive prerequisite support.
  * Ensures all 20+ steps are retrieved by traversing all levels of prerequisite manuals.
  */
 
@@ -68,11 +68,11 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
 }
 
 /**
- * Robust fetching that ensures all 20+ steps are retrieved by recursively traversing prerequisites.
- * MacBook guides often hide the first ~15 steps in "Lower Case" or "Battery" prerequisites.
+ * Robust fetching that ensures ALL 20+ steps are retrieved by recursively traversing prerequisites.
+ * This is crucial for MacBook guides where "Battery" only has 5 steps but requires "Lower Case" (10+ steps).
  */
 export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
-  if (visited.has(id) || visited.size > 5) return null; // Avoid deep recursion/infinite loops
+  if (visited.has(id) || visited.size > 8) return null; // Increased depth for complex assemblies
   visited.add(id);
 
   try {
@@ -81,8 +81,9 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
 
     let combinedSteps: any[] = [];
     
-    // 1. Fetch steps from prerequisites FIRST recursively to build the sequence
+    // 1. Fetch steps from prerequisites FIRST recursively to build the foundation
     if (guide.prerequisites && Array.isArray(guide.prerequisites)) {
+      // Sort prerequisites if needed, usually they follow in order
       for (const prereq of guide.prerequisites) {
         if (prereq.guideid) {
           const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), visited);
@@ -96,14 +97,21 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
     const internal = mapIFixitToInternal(guide);
     if (!internal) return null;
 
-    // 2. Append current guide steps to the end of the prerequisite steps
+    // 2. Append current guide steps to the end of the prerequisite chain
     if (internal.steps && internal.steps.length > 0) {
       combinedSteps = [...combinedSteps, ...internal.steps];
     }
 
+    // 3. Final cleanup: Deduplicate steps just in case of shared prerequisites
+    const finalSteps = combinedSteps.reduce((acc: any[], current: any) => {
+      const x = acc.find(item => item.description === current.description && item.title === current.title);
+      if (!x) return acc.concat([current]);
+      return acc;
+    }, []);
+
     return {
       ...internal,
-      steps: combinedSteps
+      steps: finalSteps
     };
   } catch (error) {
     console.error(`Failed to fetch complete instructions for ${id}:`, error);
