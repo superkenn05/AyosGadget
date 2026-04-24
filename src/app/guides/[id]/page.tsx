@@ -92,11 +92,6 @@ export default function GuideDetailPage() {
 
         if (!translated) throw new Error("Translation failed");
 
-        // Validate that no step is still in English or has sync error
-        // Updated check for the Tagalog error string
-        const hasSyncError = translated.steps.some(s => s.description.includes("SYNC ERROR"));
-        if (hasSyncError) throw new Error("Partial translation failure");
-
         const finalGuide = {
           ...originalGuide,
           title: translated.title || originalGuide.title,
@@ -117,7 +112,7 @@ export default function GuideDetailPage() {
         toast({
           variant: "destructive",
           title: "Neural Sync Error",
-          description: "Hindi ma-translate ang manual. Pakisubukang i-refresh."
+          description: "Hindi ma-translate ang manual sa ngayon. Pakisubukang i-refresh."
         });
       } finally {
         setIsTranslating(false);

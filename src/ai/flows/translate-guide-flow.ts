@@ -71,6 +71,9 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
   let finalTitle = input.title;
   let finalDescription = input.description;
 
+  // Fallback string to ensure NO English is shown if AI fails
+  const FALLBACK_DESC = "[SYNC ERROR: Sinusubukang i-sync ulit ang bawat hakbang...]";
+
   try {
     const headerResult = await translatePrompt({
       title: input.title,
@@ -79,10 +82,11 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     
     if (headerResult.output) {
       finalTitle = headerResult.output.title || finalTitle;
-      finalDescription = headerResult.output.description || finalDescription;
+      finalDescription = headerResult.output.description || "[SYNC ERROR: Sinusubukang i-translate ang intro...]";
     }
   } catch (e) {
     console.error("Header translation failed", e);
+    finalDescription = "[SYNC ERROR: Sinusubukang i-translate ang intro...]";
   }
 
   for (let i = 0; i < totalSteps; i += BATCH_SIZE) {
@@ -94,17 +98,16 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
 
       if (result.output && result.output.steps && result.output.steps.length > 0) {
         const mappedBatch = result.output.steps.map((s, idx) => ({
-          title: s.title || batch[idx].title,
-          description: s.description || batch[idx].description,
+          title: s.title || `Hakbang ${i + idx + 1}`,
+          description: s.description || FALLBACK_DESC,
         }));
         translatedSteps.push(...mappedBatch);
       } else {
-        // Translated fallback to Tagalog
-        translatedSteps.push(...batch.map(b => ({ ...b, description: "[SYNC ERROR: Sinusubukang i-sync ulit...]" })));
+        translatedSteps.push(...batch.map(b => ({ ...b, description: FALLBACK_DESC })));
       }
     } catch (error) {
       console.error("Batch translation failed", error);
-      translatedSteps.push(...batch.map(b => ({ ...b, description: "[SYNC ERROR: Sinusubukang i-sync ulit...]" })));
+      translatedSteps.push(...batch.map(b => ({ ...b, description: FALLBACK_DESC })));
     }
   }
 
