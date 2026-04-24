@@ -1,6 +1,5 @@
 /**
- * @fileOverview Client for interacting with the iFixit API v2.0 with deep recursive prerequisite support.
- * Ensures all 20+ steps are retrieved by traversing all levels of prerequisite manuals.
+ * @fileOverview iFixit API Client with recursive prerequisite resolution to ensure 20+ steps manuals are complete.
  */
 
 import { CategoryName } from './repair-data';
@@ -68,53 +67,40 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
 }
 
 /**
- * Robust fetching that ensures ALL 20+ steps are retrieved by recursively traversing prerequisites.
- * This is crucial for MacBook guides where "Battery" only has 5 steps but requires "Lower Case" (10+ steps).
+ * Deep recursive fetch to get ALL steps (1-20+) by resolving all prerequisites first.
  */
 export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
-  if (visited.has(id) || visited.size > 8) return null; // Increased depth for complex assemblies
+  if (visited.has(id) || visited.size > 10) return null;
   visited.add(id);
 
   try {
     const guide = await getIFixitGuide(id);
     if (!guide) return null;
 
-    let combinedSteps: any[] = [];
+    let allSteps: any[] = [];
     
-    // 1. Fetch steps from prerequisites FIRST recursively to build the foundation
+    // Resolve prerequisites first (these are the foundational steps 1-15 usually)
     if (guide.prerequisites && Array.isArray(guide.prerequisites)) {
-      // Sort prerequisites if needed, usually they follow in order
       for (const prereq of guide.prerequisites) {
-        if (prereq.guideid) {
-          const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), visited);
-          if (prereqData && prereqData.steps) {
-            combinedSteps = [...combinedSteps, ...prereqData.steps];
-          }
+        const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), visited);
+        if (prereqData && prereqData.steps) {
+          allSteps = [...allSteps, ...prereqData.steps];
         }
       }
     }
 
+    // Add current guide's steps
     const internal = mapIFixitToInternal(guide);
-    if (!internal) return null;
-
-    // 2. Append current guide steps to the end of the prerequisite chain
-    if (internal.steps && internal.steps.length > 0) {
-      combinedSteps = [...combinedSteps, ...internal.steps];
+    if (internal && internal.steps) {
+      allSteps = [...allSteps, ...internal.steps];
     }
-
-    // 3. Final cleanup: Deduplicate steps just in case of shared prerequisites
-    const finalSteps = combinedSteps.reduce((acc: any[], current: any) => {
-      const x = acc.find(item => item.description === current.description && item.title === current.title);
-      if (!x) return acc.concat([current]);
-      return acc;
-    }, []);
 
     return {
       ...internal,
-      steps: finalSteps
+      steps: allSteps
     };
   } catch (error) {
-    console.error(`Failed to fetch complete instructions for ${id}:`, error);
+    console.error('Recursion fetch failed:', error);
     return null;
   }
 }
@@ -123,8 +109,6 @@ export async function getIFixitWiki(categoryName: string): Promise<IFixitWiki | 
   try {
     let mappedName = categoryName;
     if (categoryName === 'Smartphones') mappedName = 'Phone';
-    if (categoryName === 'Desktop PCs') mappedName = 'Desktop';
-    
     const res = await fetch(`https://www.ifixit.com/api/2.0/wikis/CATEGORY/${encodeURIComponent(mappedName)}`);
     if (!res.ok) return null;
     const data = await res.json();
@@ -145,63 +129,43 @@ export function mapIFixitToInternal(ifixit: any) {
   const rawId = ifixit.guideid ?? ifixit.id;
   if (!rawId) return null;
   
-  const guideId = rawId.toString();
   const rawSteps = ifixit.steps || [];
-  
   const mappedSteps = rawSteps.map((s: any) => {
     const stepLines = (s.lines || []).map((l: any) => {
-      let text = l.text_rendered || l.text_raw || l.text || '';
-      const bulletType = l.bullet || 'none';
-      
+      let text = l.text_rendered || l.text_raw || '';
       const bulletIcons: Record<string, string> = {
         'black': '• ',
         'blue': '🔵 ',
         'orange': '🟠 ',
-        'yellow': '🟡 ',
-        'red': '🔴 ',
-        'green': '🟢 ',
-        'violet': '🟣 ',
-        'white': '⚪ ',
         'caution': '⚠️ [WARNING]: ',
-        'warning': '⚠️ [WARNING]: '
       };
-
-      const prefix = bulletIcons[bulletType] || (bulletType !== 'none' ? '• ' : '');
-      return prefix + stripHtml(text).trim();
+      return (bulletIcons[l.bullet] || '') + stripHtml(text).trim();
     }).filter(Boolean);
-
-    const images = (s.media?.data || []).map((m: any) => m.original || m.medium || m.thumbnail).filter(Boolean);
-    const primaryImage = images[0] || '';
 
     return {
       title: s.title || '',
       description: stepLines.join('\n\n'),
-      imageUrl: primaryImage,
-      images: images
+      imageUrl: (s.media?.data || [])[0]?.original || '',
+      images: (s.media?.data || []).map((m: any) => m.original).filter(Boolean)
     };
   });
 
   return {
-    id: guideId,
-    title: ifixit.title || 'Untitled Guide',
-    device: ifixit.subject || ifixit.type || 'Hardware Device',
-    category: mapCategory(ifixit.type || ifixit.subject || ifixit.category || 'Appliances'),
+    id: rawId.toString(),
+    title: ifixit.title || 'Untitled',
+    device: ifixit.subject || 'Hardware',
+    category: mapCategory(ifixit.type || ifixit.category || ''),
     difficulty: mapDifficulty(ifixit.difficulty || 'Easy'),
     timeEstimate: ifixit.time_required || '30-60 mins',
-    description: stripHtml(ifixit.summary || ifixit.text || ''),
-    thumbnail: ifixit.image?.original || ifixit.thumbnail || '',
-    type: ifixit.type || 'replacement',
+    description: stripHtml(ifixit.summary || ''),
+    thumbnail: ifixit.image?.original || '',
     tools: (ifixit.tools || []).map((t: any) => ({ name: t.name })),
-    parts: (ifixit.parts || []).map((p: any) => ({ name: p.name })),
-    prerequisites: (ifixit.prerequisites || []).map((pr: any) => ({ id: pr.guideid, title: pr.title })),
     steps: mappedSteps,
     rating: 4.8,
-    reviewsCount: 156,
   };
 }
 
 function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
-  if (!diff) return 'easy';
   const d = diff.toLowerCase();
   if (d.includes('easy')) return 'easy';
   if (d.includes('moderate') || d.includes('medium')) return 'medium';
@@ -209,27 +173,14 @@ function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
 }
 
 function mapCategory(type: string): CategoryName {
-  if (!type) return 'Appliances';
   const t = type.toLowerCase();
   if (t.includes('phone')) return 'Smartphones';
-  if (t.includes('laptop') || t.includes('macbook') || t.includes('mac')) return 'Laptops';
-  if (t.includes('tablet') || t.includes('ipad')) return 'Tablets';
-  if (t.includes('console') || t.includes('switch') || t.includes('playstation') || t.includes('xbox') || t.includes('gaming')) return 'Consoles';
-  if (t.includes('audio') || t.includes('headphone') || t.includes('speaker') || t.includes('earbud')) return 'Audio';
-  if (t.includes('camera') || t.includes('lens') || t.includes('photography')) return 'Cameras';
-  if (t.includes('desktop') || t.includes('pc') || t.includes('monitor') || t.includes('workstation')) return 'Desktop PCs';
-  if (t.includes('car') || t.includes('truck') || t.includes('vehicle')) return 'Car and Truck';
+  if (t.includes('laptop')) return 'Laptops';
+  if (t.includes('mac')) return 'Mac';
   return 'Appliances';
 }
 
 function stripHtml(html: string) {
   if (!html) return '';
-  return html
-    .replace(/<[^>]*>?/gm, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .trim();
+  return html.replace(/<[^>]*>?/gm, '').trim();
 }

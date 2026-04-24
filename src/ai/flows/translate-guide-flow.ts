@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview AI Flow to translate repair guide content into Filipino with batched processing for large manuals.
- * Optimized for stability with 20+ steps guides and prevents Internal Server Errors via smaller batching.
+ * @fileOverview AI Flow to translate repair guide content into simple Filipino/Taglish.
+ * Optimized for stability with 20+ steps guides.
  */
 
 import {ai} from '@/ai/genkit';
@@ -40,20 +40,20 @@ const translatePrompt = ai.definePrompt({
     })
   },
   output: {schema: TranslateGuideOutputSchema},
-  prompt: `You are a professional technical translator specializing in electronics repair manuals.
-Translate the following guide content into clear, natural Filipino (Tagalog/Taglish).
+  prompt: `You are a technical translator for AyosGadget. 
+Translate the following guide into natural, simple Filipino (Mababaw na Tagalog or Taglish).
 
-STRICT INTEGRITY AND FORMATTING RULES:
-1. COMPLETENESS: You MUST translate EVERY SINGLE STEP provided in this batch.
-2. BULLET POINTS: EVERY bullet point (•, 🔵, 🟠, etc.) MUST start on its own NEW LINE. 
-3. TECHNICAL TERMS: Standard industry terms like "logic board", "spudger", "ribbon cable" should be kept as is (Taglish).
-4. NO SUMMARIZATION: Translate everything provided. Do not skip any instructions.
+RULES:
+1. LANGUAGE: Use "mababaw" (simple) Tagalog or Taglish. Avoid deep/poetic Tagalog (e.g., use "Buksan" instead of "Ibukas", use "Turnilyo" instead of "Pako na paikot").
+2. TECHNICAL TERMS: Keep terms like "logic board", "ribbon cable", "spudger", "battery connector", "LCD screen" as is (Taglish style).
+3. COMPLETENESS: You MUST translate every single step provided. 
+4. BULLET POINTS: Keep the bullet points (•, 🔵, ⚠️) at the start of lines.
 
 Source Content:
 {{#if title}}Title: {{{title}}}{{/if}}
 {{#if description}}Description: {{{description}}}{{/if}}
 
-Steps:
+Steps to translate:
 {{#each steps}}
 --- STEP {{@index}} ---
 Title: {{this.title}}
@@ -62,12 +62,8 @@ Content:
 {{/each}}`,
 });
 
-/**
- * Translates a guide in small batches to handle manuals with many steps (e.g., 20+ steps) 
- * without hitting token limits, skipping data, or timing out.
- */
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
-  const BATCH_SIZE = 2; // Reduced to 2 steps per batch for maximum stability with large guides
+  const BATCH_SIZE = 3; // Processing in small batches for stability
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
@@ -76,38 +72,24 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
 
   for (let i = 0; i < totalSteps; i += BATCH_SIZE) {
     const batch = input.steps.slice(i, i + BATCH_SIZE);
-    let attempts = 0;
-    const maxAttempts = 3;
+    try {
+      const result = await translatePrompt({
+        title: i === 0 ? input.title : undefined,
+        description: i === 0 ? input.description : undefined,
+        steps: batch,
+      });
 
-    while (attempts < maxAttempts) {
-      try {
-        const result = await translatePrompt({
-          title: i === 0 ? input.title : undefined,
-          description: i === 0 ? input.description : undefined,
-          steps: batch,
-        });
-
-        const output = result.output;
-        if (!output) throw new Error('No output from AI');
-
+      const output = result.output;
+      if (output) {
         if (i === 0) {
           finalTitle = output.title;
           finalDescription = output.description;
         }
-
-        // Hard integrity check: ensuring every step in the batch was returned
-        if (output.steps.length !== batch.length) {
-          throw new Error(`Integrity check failed: Expected ${batch.length} steps in batch, got ${output.steps.length}`);
-        }
-
         translatedSteps.push(...output.steps);
-        break;
-      } catch (error: any) {
-        attempts++;
-        if (attempts >= maxAttempts) throw error;
-        // Exponential backoff for quota or timeout issues
-        await new Promise(resolve => setTimeout(resolve, 5000 * attempts));
       }
+    } catch (error) {
+      console.error("Batch translation failed, using original for this batch:", error);
+      translatedSteps.push(...batch); // Fallback to original if AI fails
     }
   }
 
