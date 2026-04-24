@@ -84,7 +84,7 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       finalDescription = headerResult.output.description || finalDescription;
     }
   } catch (e) {
-    console.error("Header translation failed:", e);
+    // Fallback if AI fails
   }
 
   // 2. Batch translate all steps
@@ -98,11 +98,9 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       if (result.output && result.output.steps && result.output.steps.length > 0) {
         translatedSteps.push(...result.output.steps);
       } else {
-        // AI returned empty or failed, we must at least maintain structure
         translatedSteps.push(...batch);
       }
     } catch (error) {
-      console.error(`Batch translation failed at step ${i}:`, error);
       translatedSteps.push(...batch);
     }
   }

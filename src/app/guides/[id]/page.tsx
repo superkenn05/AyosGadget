@@ -183,7 +183,12 @@ export default function GuideDetailPage() {
               <div className="space-y-4">
                 <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">BEFORE YOU BEGIN</h2>
                 <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium glass p-8 rounded-3xl border-primary/5">
-                  {guide.description}
+                  {isTranslating ? (
+                    <div className="flex items-center gap-4 py-8">
+                       <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                       <span className="text-sm font-bold opacity-50">Localizing protocols...</span>
+                    </div>
+                  ) : guide.description}
                 </div>
               </div>
             </header>
@@ -208,7 +213,12 @@ export default function GuideDetailPage() {
                             {language === 'en' ? `Step ${index + 1}` : `Hakbang ${index + 1}`}
                           </h3>
                           <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
-                            {step.description}
+                            {isTranslating ? (
+                              <div className="flex flex-col gap-2">
+                                <div className="h-4 bg-muted animate-pulse rounded w-full" />
+                                <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+                              </div>
+                            ) : step.description}
                           </div>
                         </div>
                       </div>
