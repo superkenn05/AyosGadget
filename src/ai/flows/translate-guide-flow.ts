@@ -46,8 +46,8 @@ Your task is to translate the provided technical repair instructions into natura
 CRITICAL RULES:
 1. NO ENGLISH SENTENCES ALLOWED: Every single instruction, action, and description MUST be translated into Taglish. Do not leave English sentences as is.
 2. AGGRESSIVE TRANSLATION: If you see "Remove the modules", you MUST output "Baklasin ang mga modules". If you see "Pull the tabs", output "Hugutin ang mga tabs".
-3. NATURAL TECHNICIAN STYLE: Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo".
-4. TECHNICAL TERMS (KEEP IN ENGLISH): Only keep these specific words in English: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "expansion bay", "index finger", "ribbed tabs", "power button", "volume button", "RAM", "hard drive".
+3. NATURAL TECHNICIAN STYLE: Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo", "Bunutin ang connector".
+4. TECHNICAL TERMS (KEEP IN ENGLISH): Only keep these specific words in English: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "expansion bay", "index finger", "ribbed tabs", "power button", "volume button", "RAM", "hard drive", "tabs".
 5. BULLET POINTS: Preserve the formatting of bullet points (•) and numbered lists.
 
 Source Content to Translate:
@@ -65,7 +65,7 @@ Instruction:
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideInput> {
   // Use smaller batches for better reliability and avoiding timeouts
-  const BATCH_SIZE = 2;
+  const BATCH_SIZE = 3;
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
@@ -84,7 +84,7 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       finalDescription = headerResult.output.description || finalDescription;
     }
   } catch (e) {
-    // Fallback if AI fails
+    console.error("Header translation failed", e);
   }
 
   // 2. Batch translate all steps
@@ -101,6 +101,7 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
         translatedSteps.push(...batch);
       }
     } catch (error) {
+      console.error("Batch translation failed", error);
       translatedSteps.push(...batch);
     }
   }

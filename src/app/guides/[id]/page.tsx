@@ -45,7 +45,10 @@ export default function GuideDetailPage() {
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setOriginalGuide(fetchedGuide);
-          setGuide(fetchedGuide);
+          // Only set guide immediately if English, otherwise wait for translation
+          if (language === 'en') {
+            setGuide(fetchedGuide);
+          }
         }
       } catch (error) {
         console.error("Fetch failed:", error);
@@ -54,7 +57,7 @@ export default function GuideDetailPage() {
       }
     }
     fetchGuideData();
-  }, [id]);
+  }, [id, language]);
 
   // 2. Handle Translation when Language changes
   useEffect(() => {
@@ -66,6 +69,9 @@ export default function GuideDetailPage() {
         setIsTranslating(false);
         return;
       }
+
+      // If Filipino, clear the current guide to prevent English leakage while translating
+      setGuide(null);
 
       // Check cache first
       if (translationCache.current[id]?.[language]) {
@@ -105,6 +111,7 @@ export default function GuideDetailPage() {
         setGuide(finalGuide);
       } catch (error) {
         console.error("Translation failed:", error);
+        // Fallback to original if AI fails after multiple attempts, but this is a last resort
         setGuide(originalGuide);
       } finally {
         setIsTranslating(false);
@@ -135,10 +142,16 @@ export default function GuideDetailPage() {
     }
   };
 
-  if (loading) return (
+  // Show loading skeleton if fetching initial data or if translating in Filipino mode
+  if (loading || (language === 'fil' && isTranslating && !guide)) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-      <Loader2 className="animate-spin text-primary w-12 h-12 mb-4" />
-      <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">{t('common_syncing')}</p>
+      <div className="relative">
+        <Loader2 className="animate-spin text-primary w-16 h-16 mb-6" />
+        <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-primary animate-pulse" />
+      </div>
+      <p className="text-[12px] font-black uppercase tracking-[0.4em] text-primary animate-pulse">
+        {language === 'fil' ? 'NEURAL TRANSLATION PROTOCOL...' : t('common_syncing')}
+      </p>
     </div>
   );
 
@@ -183,12 +196,7 @@ export default function GuideDetailPage() {
               <div className="space-y-4">
                 <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">BEFORE YOU BEGIN</h2>
                 <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium glass p-8 rounded-3xl border-primary/5">
-                  {isTranslating ? (
-                    <div className="flex items-center gap-4 py-8">
-                       <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                       <span className="text-sm font-bold opacity-50">Localizing protocols...</span>
-                    </div>
-                  ) : guide.description}
+                  {guide.description}
                 </div>
               </div>
             </header>
@@ -213,12 +221,7 @@ export default function GuideDetailPage() {
                             {language === 'en' ? `Step ${index + 1}` : `Hakbang ${index + 1}`}
                           </h3>
                           <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
-                            {isTranslating ? (
-                              <div className="flex flex-col gap-2">
-                                <div className="h-4 bg-muted animate-pulse rounded w-full" />
-                                <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
-                              </div>
-                            ) : step.description}
+                            {step.description}
                           </div>
                         </div>
                       </div>
