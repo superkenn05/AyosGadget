@@ -1,9 +1,7 @@
 'use server';
 /**
  * @fileOverview AI Flow to translate repair guide content into natural, easy-to-understand Taglish.
- * Optimized for technical terms used in the Philippines with Zero-Leakage English policy.
  * Persona: Professional Hardware Technician from Raon / Greenhills.
- * Logic: Uses parallel processing for faster translation of multiple steps.
  */
 
 import {ai} from '@/ai/genkit';
@@ -66,43 +64,34 @@ Instruction: {{{this.description}}}
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
   const SYNC_ERROR_MSG = "[SYNC ERROR: Sinusubukang i-sync ulit ang bawat hakbang...]";
   
-  // 1. Parallelize Header and Steps for "Fast" translation
-  // Translate Header
-  const headerPromise = translatePrompt({
-    title: input.title,
-    description: input.description,
-  }).catch(e => {
-    console.error("Header translation failed", e);
-    return { output: { title: input.title, description: input.description } };
-  });
+  try {
+    const result = await translatePrompt(input);
+    return result.output!;
+  } catch (error) {
+    console.error("Translation Flow failed", error);
+    // Fallback: Parallel processing for steps to try and recover
+    const headerPromise = translatePrompt({
+      title: input.title,
+      description: input.description,
+    }).catch(() => ({ output: { title: input.title, description: input.description } }));
 
-  // Translate each step individually in parallel to avoid single-point failure blocking the rest
-  // and to achieve maximum speed.
-  const stepPromises = input.steps.map(async (step, index) => {
-    try {
-      const result = await translatePrompt({
-        steps: [{ title: step.title || `Hakbang ${index + 1}`, description: step.description }]
-      });
-      
-      const translatedStep = result.output?.steps?.[0];
-      return {
-        title: translatedStep?.title || step.title || `Hakbang ${index + 1}`,
-        description: translatedStep?.description || SYNC_ERROR_MSG
-      };
-    } catch (error) {
-      console.error(`Step ${index} translation failed`, error);
-      return {
-        title: `Hakbang ${index + 1}`,
-        description: SYNC_ERROR_MSG
-      };
-    }
-  });
+    const stepPromises = input.steps.map(async (step, index) => {
+      try {
+        const res = await translatePrompt({
+          steps: [{ title: step.title || `Hakbang ${index + 1}`, description: step.description }]
+        });
+        return res.output?.steps?.[0] || { title: step.title, description: SYNC_ERROR_MSG };
+      } catch {
+        return { title: step.title, description: SYNC_ERROR_MSG };
+      }
+    });
 
-  const [headerResult, ...translatedSteps] = await Promise.all([headerPromise, ...stepPromises]);
+    const [headerResult, ...translatedSteps] = await Promise.all([headerPromise, ...stepPromises]);
 
-  return {
-    title: headerResult.output?.title || input.title,
-    description: headerResult.output?.description || input.description,
-    steps: translatedSteps,
-  };
+    return {
+      title: headerResult.output?.title || input.title,
+      description: headerResult.output?.description || input.description,
+      steps: translatedSteps,
+    };
+  }
 }

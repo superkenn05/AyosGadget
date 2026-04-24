@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { getGuideWithAllSteps } from '@/lib/ifixit-api';
-import { translateFast } from '@/lib/translator';
+import { translateGuide } from '@/ai/flows/translate-guide-flow';
 import Image from 'next/image';
 
 export default function GuideDetailPage() {
@@ -65,7 +65,7 @@ export default function GuideDetailPage() {
     fetchGuideData();
   }, [id, language]);
 
-  // 2. Handle Translation with Parallel API Logic (No AI Flow)
+  // 2. Handle Translation with AI Flow
   useEffect(() => {
     async function handleTranslation() {
       if (!originalGuide) return;
@@ -89,28 +89,24 @@ export default function GuideDetailPage() {
       setIsTranslating(true);
       
       try {
-        // Parallel translate Title and Description
-        const [translatedTitle, translatedDesc] = await Promise.all([
-          translateFast(originalGuide.title),
-          translateFast(originalGuide.description)
-        ]);
-
-        // Parallel translate all steps
-        const translatedSteps = await Promise.all(
-          originalGuide.steps.map(async (step: any, i: number) => {
-            const [sTitle, sDesc] = await Promise.all([
-              step.title ? translateFast(step.title) : Promise.resolve(`Hakbang ${i + 1}`),
-              translateFast(step.description)
-            ]);
-            return { ...step, title: sTitle, description: sDesc };
-          })
-        );
+        const result = await translateGuide({
+          title: originalGuide.title,
+          description: originalGuide.description,
+          steps: originalGuide.steps.map((s: any) => ({
+            title: s.title,
+            description: s.description
+          }))
+        });
 
         const finalGuide = {
           ...originalGuide,
-          title: translatedTitle,
-          description: translatedDesc,
-          steps: translatedSteps
+          title: result.title || originalGuide.title,
+          description: result.description || originalGuide.description,
+          steps: (result.steps || []).map((translatedStep, i) => ({
+            ...originalGuide.steps[i],
+            title: translatedStep.title || originalGuide.steps[i].title,
+            description: translatedStep.description || originalGuide.steps[i].description
+          }))
         };
 
         if (!translationCache.current[id]) translationCache.current[id] = {};
@@ -152,7 +148,6 @@ export default function GuideDetailPage() {
 
   if (!isMounted) return null;
 
-  // Show Skeleton if loading or if we need a translation that isn't ready
   const showSkeleton = loading || isTranslating || (language === 'fil' && translatedVersion !== 'fil');
 
   if (showSkeleton) return (
@@ -168,7 +163,7 @@ export default function GuideDetailPage() {
         {language === 'fil' && (
           <div className="space-y-1">
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
-              Isinasalin ang mga hakbang...
+              Isinasalin ang mga hakbang sa Taglish...
             </p>
           </div>
         )}
