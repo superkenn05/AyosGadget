@@ -72,7 +72,7 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
  * MacBook guides often hide the first ~15 steps in "Lower Case" or "Battery" prerequisites.
  */
 export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
-  if (visited.has(id)) return null;
+  if (visited.has(id) || visited.size > 5) return null; // Avoid deep recursion/infinite loops
   visited.add(id);
 
   try {
@@ -113,7 +113,6 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
 
 export async function getIFixitWiki(categoryName: string): Promise<IFixitWiki | null> {
   try {
-    // Normalize common categories for better API matching
     let mappedName = categoryName;
     if (categoryName === 'Smartphones') mappedName = 'Phone';
     if (categoryName === 'Desktop PCs') mappedName = 'Desktop';
