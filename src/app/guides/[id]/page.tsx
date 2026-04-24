@@ -101,7 +101,7 @@ export default function GuideDetailPage() {
           };
           setTranslatedMeta(nextMeta);
           currentCache.meta = nextMeta;
-          translationCache.current[cacheKey] = currentCache;
+          translationCache.current[cacheKey] = { ...currentCache };
         } catch (e) {
           console.error("Meta translation error", e);
         }
@@ -110,8 +110,8 @@ export default function GuideDetailPage() {
         const steps = originalGuide.steps || [];
         for (let i = 0; i < steps.length; i++) {
           try {
-            // Short delay to avoid rate limiting
-            await new Promise(r => setTimeout(r, 400));
+            // Short delay to avoid rate limiting and allow UI updates
+            await new Promise(r => setTimeout(r, 600));
             
             const stepRes = await translateGuide({
               steps: [{ title: steps[i].title, description: steps[i].description }]

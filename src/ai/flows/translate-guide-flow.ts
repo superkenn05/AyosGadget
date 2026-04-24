@@ -68,11 +68,11 @@ Source Content to Translate:
 {{#if description}}Description: {{{description}}}{{/if}}
 
 {{#if steps}}
-Steps to Translate (Translate the Instruction/Description of each step):
+Steps to Translate (Translate the Instruction/Description of each step into natural Taglish):
 {{#each steps}}
 --- STEP {{@index}} ---
 {{#if this.title}}Step Title: {{this.title}}{{/if}}
-Instruction to Translate: {{{this.description}}}
+Instruction/Description to Translate: {{{this.description}}}
 {{/each}}
 {{/if}}`,
 });
