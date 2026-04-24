@@ -59,8 +59,8 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     console.error("Translation failed:", error);
     return {
       title: input.title,
-      description: input.description,
-      steps: input.steps,
+      description: "[SYNC ERROR: Sinusubukang i-sync ulit ang bawat hakbang...]",
+      steps: input.steps?.map(s => ({ ...s, description: "[SYNC ERROR: Sinusubukang i-sync ulit ang bawat hakbang...]" })),
     };
   }
 }
