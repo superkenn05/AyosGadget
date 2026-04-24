@@ -64,7 +64,7 @@ Instruction:
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideInput> {
-  const BATCH_SIZE = 2; 
+  const BATCH_SIZE = 5; 
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
@@ -95,6 +95,7 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       if (result.output && result.output.steps && result.output.steps.length > 0) {
         translatedSteps.push(...result.output.steps);
       } else {
+        // If translation fails, we still need to push SOMETHING to keep the indices aligned
         translatedSteps.push(...batch);
       }
     } catch (error) {

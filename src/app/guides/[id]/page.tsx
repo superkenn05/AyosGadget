@@ -56,7 +56,7 @@ export default function GuideDetailPage() {
       }
     }
     fetchGuideData();
-  }, [id]);
+  }, [id, language]); // Added language here to ensure correct initial state
 
   // 2. Handle Translation when Language or Original Guide changes
   useEffect(() => {
@@ -69,11 +69,11 @@ export default function GuideDetailPage() {
         return;
       }
 
-      // STRICT RULE: If language is 'fil', CLEAR the guide immediately
-      setGuide(null);
-
-      // Check cache first
-      if (translationCache.current[id]?.[language]) {
+      // CRITICAL: When switching to 'fil', if we don't have it cached, clear 'guide'
+      // to ensure the user sees the loading state instead of English content.
+      if (!translationCache.current[id]?.[language]) {
+        setGuide(null);
+      } else {
         setGuide(translationCache.current[id][language]);
         setIsTranslating(false);
         return;
@@ -110,6 +110,9 @@ export default function GuideDetailPage() {
         setGuide(finalGuide);
       } catch (error) {
         console.error("Translation failed:", error);
+        // On failure, we might have to show English as fallback, 
+        // but the prompt says "wag lumabas kung hindi ito tagalog"
+        // so we'll just keep it null or show error.
         setGuide(null); 
       } finally {
         setIsTranslating(false);
