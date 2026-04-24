@@ -45,6 +45,7 @@ export default function GuideDetailPage() {
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setOriginalGuide(fetchedGuide);
+          // Set guide initially, then translation effect will kick in if needed
           setGuide(fetchedGuide);
         }
       } catch (error) {
@@ -105,6 +106,7 @@ export default function GuideDetailPage() {
         setGuide(finalGuide);
       } catch (error) {
         console.error("Translation failed:", error);
+        // On failure, stay on original but stop loading
         setGuide(originalGuide);
       } finally {
         setIsTranslating(false);
@@ -150,7 +152,7 @@ export default function GuideDetailPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="min-h-screen bg-background pb-32" key={language}>
       <div className="container mx-auto px-4 pt-24 md:pt-32">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-8 space-y-12">
@@ -195,7 +197,7 @@ export default function GuideDetailPage() {
                 <Badge variant="outline" className="opacity-40 font-black text-[10px]">{guide.steps?.length} {t('guides_step_title')}</Badge>
               </div>
 
-              <div className="space-y-12" key={language}>
+              <div className="space-y-12">
                 {guide.steps?.map((step: any, index: number) => (
                   <div key={`${id}-${index}-${language}`} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
                     <div className="p-8 md:p-14">
