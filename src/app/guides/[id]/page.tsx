@@ -135,7 +135,7 @@ export default function GuideDetailPage() {
     if (!originalGuide || !bookmarkRef) return;
 
     if (isBookmarked) {
-      deleteDoc(bookmarkRef);
+      deleteDoc(bookmarkRef).catch(() => {});
       toast({ title: "Removed from vault" });
     } else {
       setDoc(bookmarkRef, {
@@ -144,7 +144,7 @@ export default function GuideDetailPage() {
         thumbnail: originalGuide.thumbnail || '',
         category: originalGuide.category,
         savedAt: serverTimestamp(),
-      });
+      }).catch(() => {});
       toast({ title: "Saved to vault" });
     }
   };
