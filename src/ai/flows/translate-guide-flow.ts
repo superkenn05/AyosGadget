@@ -68,11 +68,11 @@ Source Content to Translate:
 {{#if description}}Description: {{{description}}}{{/if}}
 
 {{#if steps}}
-Steps to Translate (Translate the Instruction/Description of each step into natural Taglish):
+Steps to Translate:
 {{#each steps}}
 --- STEP {{@index}} ---
 {{#if this.title}}Step Title: {{this.title}}{{/if}}
-Instruction/Description to Translate: {{{this.description}}}
+Instruction: {{{this.description}}}
 {{/each}}
 {{/if}}`,
 });
@@ -83,8 +83,7 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     if (!result.output) throw new Error("Empty output from AI");
     return result.output;
   } catch (error) {
-    console.error("Translation failed:", error);
-    // Return original as fallback but UI will handle showing skeleton/retry
+    console.warn("Translation failed, returning original text.");
     return {
       title: input.title,
       description: input.description,
