@@ -56,7 +56,7 @@ export default function GuideDetailPage() {
       }
     }
     fetchGuideData();
-  }, [id, language]); // Added language here to ensure correct initial state
+  }, [id, language]);
 
   // 2. Handle Translation when Language or Original Guide changes
   useEffect(() => {
@@ -69,8 +69,8 @@ export default function GuideDetailPage() {
         return;
       }
 
-      // CRITICAL: When switching to 'fil', if we don't have it cached, clear 'guide'
-      // to ensure the user sees the loading state instead of English content.
+      // If switching to Filipino, immediately set guide to null to force skeleton
+      // until the translated version is ready.
       if (!translationCache.current[id]?.[language]) {
         setGuide(null);
       } else {
@@ -110,10 +110,8 @@ export default function GuideDetailPage() {
         setGuide(finalGuide);
       } catch (error) {
         console.error("Translation failed:", error);
-        // On failure, we might have to show English as fallback, 
-        // but the prompt says "wag lumabas kung hindi ito tagalog"
-        // so we'll just keep it null or show error.
-        setGuide(null); 
+        // Fallback to original if AI fails, but ideally we'd show an error
+        setGuide(originalGuide); 
       } finally {
         setIsTranslating(false);
       }
@@ -143,16 +141,23 @@ export default function GuideDetailPage() {
     }
   };
 
-  // Show loading skeleton if fetching initial data OR if translating in Filipino mode
+  // Show loading skeleton if fetching initial data OR if translating in Filipino mode and data isn't ready
   if (loading || (language === 'fil' && !guide)) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background">
       <div className="relative">
         <Loader2 className="animate-spin text-primary w-16 h-16 mb-6" />
         <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-primary animate-pulse" />
       </div>
-      <p className="text-[12px] font-black uppercase tracking-[0.4em] text-primary animate-pulse">
-        {language === 'fil' ? 'NEURAL TRANSLATION PROTOCOL...' : t('common_syncing')}
-      </p>
+      <div className="text-center space-y-2">
+        <p className="text-[12px] font-black uppercase tracking-[0.4em] text-primary animate-pulse">
+          {language === 'fil' ? 'NEURAL TRANSLATION PROTOCOL...' : t('common_syncing')}
+        </p>
+        {language === 'fil' && (
+          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest opacity-50">
+            Hinihimay ang bawat hakbang...
+          </p>
+        )}
+      </div>
     </div>
   );
 
@@ -179,7 +184,7 @@ export default function GuideDetailPage() {
                 {isTranslating && (
                   <div className="flex items-center gap-2 text-primary animate-pulse ml-4">
                     <Sparkles className="w-3 h-3" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Neural Link Syncing...</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Neural Syncing...</span>
                   </div>
                 )}
               </div>
