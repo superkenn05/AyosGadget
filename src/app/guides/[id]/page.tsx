@@ -101,7 +101,7 @@ export default function GuideDetailPage() {
           if (stepRes.steps?.[0]) {
             setTranslatedSteps(prev => {
               const next = { ...prev, [i]: stepRes.steps![0] };
-              // Cache updated results
+              // Update cache
               translationCache.current[cacheKey] = {
                 meta: translatedMeta,
                 steps: next
@@ -111,6 +111,8 @@ export default function GuideDetailPage() {
           }
         } catch (e) {
           console.error(`Step ${i} translation error`, e);
+          // Set fallback to English to avoid infinite skeleton if error occurs
+          setTranslatedSteps(prev => ({ ...prev, [i]: { description: steps[i].description } }));
         }
       }
     }
