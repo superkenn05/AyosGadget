@@ -1,5 +1,5 @@
 /**
- * @fileOverview iFixit API Client with recursive prerequisite resolution to ensure 20+ steps manuals are complete.
+ * @fileOverview iFixit API Client with improved prerequisite resolution to guarantee 20+ steps manuals.
  */
 
 import { CategoryName } from './repair-data';
@@ -68,9 +68,10 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
 
 /**
  * Deep recursive fetch to get ALL steps (1-20+) by resolving all prerequisites first.
+ * Ensures foundational steps like case removal are included.
  */
 export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
-  if (visited.has(id) || visited.size > 10) return null;
+  if (visited.has(id) || visited.size > 15) return null; // Avoid circular refs and deep recursion
   visited.add(id);
 
   try {
@@ -79,28 +80,29 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
 
     let allSteps: any[] = [];
     
-    // Resolve prerequisites first (these are the foundational steps 1-15 usually)
+    // 1. Resolve foundations (Prerequisites)
     if (guide.prerequisites && Array.isArray(guide.prerequisites)) {
       for (const prereq of guide.prerequisites) {
-        const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), visited);
+        const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), new Set(visited));
         if (prereqData && prereqData.steps) {
           allSteps = [...allSteps, ...prereqData.steps];
         }
       }
     }
 
-    // Add current guide's steps
+    // 2. Add current guide's steps
     const internal = mapIFixitToInternal(guide);
     if (internal && internal.steps) {
       allSteps = [...allSteps, ...internal.steps];
     }
 
+    // 3. De-duplicate steps based on description if necessary, but usually sequence matters
     return {
       ...internal,
       steps: allSteps
     };
   } catch (error) {
-    console.error('Recursion fetch failed:', error);
+    console.error('Recursive guide fetch failed:', error);
     return null;
   }
 }

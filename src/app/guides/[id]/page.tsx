@@ -2,12 +2,12 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Star, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, AlertTriangle, Wrench, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, AlertTriangle, Wrench, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc } from '@/firebase';
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo, useRef } from 'react';
@@ -27,7 +27,7 @@ export default function GuideDetailPage() {
   const [originalGuide, setOriginalGuide] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isTranslating, setIsTranslating] = useState(false);
-  const translationCache = useRef<Record<string, any>>({});
+  const translationCache = useRef<Record<string, Record<string, any>>>({});
 
   const bookmarkRef = useMemo(() => {
     if (!user || !id) return null;
@@ -58,13 +58,13 @@ export default function GuideDetailPage() {
 
   useEffect(() => {
     async function handleTranslation() {
-      if (!originalGuide || language !== 'fil') {
-        if (language === 'en' && originalGuide) setGuide(originalGuide);
+      if (!originalGuide || language === 'en') {
+        setGuide(originalGuide);
         return;
       }
 
-      if (translationCache.current[id]) {
-        setGuide(translationCache.current[id]);
+      if (translationCache.current[id]?.[language]) {
+        setGuide(translationCache.current[id][language]);
         return;
       }
 
@@ -90,11 +90,12 @@ export default function GuideDetailPage() {
           }))
         };
 
-        translationCache.current[id] = finalGuide;
+        if (!translationCache.current[id]) translationCache.current[id] = {};
+        translationCache.current[id][language] = finalGuide;
         setGuide(finalGuide);
       } catch (error) {
         console.error("Translation failed:", error);
-        toast({ title: "Neural Sync Busy", description: "Showing original Taglish context." });
+        toast({ title: "Neural Link Busy", description: "Showing original Taglish context." });
       } finally {
         setIsTranslating(false);
       }
@@ -149,7 +150,7 @@ export default function GuideDetailPage() {
                 )}
               </div>
 
-              <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-none">
+              <h1 className="text-3xl md:text-5xl font-black tracking-tighter uppercase leading-none">
                 {guide.title}
               </h1>
 
@@ -159,7 +160,7 @@ export default function GuideDetailPage() {
                 </div>
               )}
 
-              <p className="text-muted-foreground text-lg leading-relaxed glass p-8 rounded-3xl border-primary/5">
+              <p className="text-muted-foreground text-sm md:text-lg leading-relaxed glass p-6 md:p-8 rounded-3xl border-primary/5">
                 {guide.description}
               </p>
             </header>
@@ -168,19 +169,19 @@ export default function GuideDetailPage() {
               <div className="flex items-center gap-4">
                 <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tighter">{t('guides_steps')}</h2>
                 <div className="h-px flex-grow bg-primary/10" />
-                <Badge variant="outline" className="opacity-40">{guide.steps?.length} Hakbang</Badge>
+                <Badge variant="outline" className="opacity-40">{guide.steps?.length} {t('guides_step_title')}</Badge>
               </div>
 
               <div className="space-y-12">
                 {guide.steps?.map((step: any, index: number) => (
                   <div key={index} className="glass rounded-3xl overflow-hidden border-primary/5 hover:border-primary/20 transition-all">
-                    <div className="p-8 md:p-12">
-                      <div className="flex items-start gap-6 md:gap-10 mb-8">
-                        <div className="w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-xl shadow-lg">
+                    <div className="p-6 md:p-12">
+                      <div className="flex items-start gap-4 md:gap-10 mb-8">
+                        <div className="w-10 h-10 md:w-16 md:h-16 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-lg md:text-xl shadow-lg">
                           {index + 1}
                         </div>
                         <div className="flex-grow">
-                          <h3 className="text-xl md:text-2xl font-black uppercase mb-4">{step.title || `Hakbang ${index + 1}`}</h3>
+                          <h3 className="text-lg md:text-2xl font-black uppercase mb-4">{step.title || `${t('guides_step_title')} ${index + 1}`}</h3>
                           <div className="text-muted-foreground text-sm md:text-lg whitespace-pre-wrap leading-relaxed">
                             {step.description}
                           </div>
@@ -216,12 +217,16 @@ export default function GuideDetailPage() {
                 {t('guides_tools')}
               </h3>
               <div className="space-y-4">
-                {guide.tools?.map((tool: any, i: number) => (
-                  <div key={i} className="flex items-center gap-3 text-[10px] font-black uppercase text-foreground/70">
-                    <CheckCircle2 className="w-4 h-4 text-primary" />
-                    {tool.name}
-                  </div>
-                ))}
+                {guide.tools?.length > 0 ? (
+                  guide.tools.map((tool: any, i: number) => (
+                    <div key={i} className="flex items-center gap-3 text-[10px] font-black uppercase text-foreground/70">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      {tool.name}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-[8px] font-black uppercase opacity-40">Standard hardware kit required</p>
+                )}
               </div>
             </div>
           </aside>

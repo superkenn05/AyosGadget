@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview AI Flow to translate repair guide content into simple Filipino/Taglish.
- * Optimized for stability with 20+ steps guides.
+ * Optimized for natural, non-formal technical language.
  */
 
 import {ai} from '@/ai/genkit';
@@ -40,30 +40,30 @@ const translatePrompt = ai.definePrompt({
     })
   },
   output: {schema: TranslateGuideOutputSchema},
-  prompt: `You are a technical translator for AyosGadget. 
-Translate the following guide into natural, simple Filipino (Mababaw na Tagalog or Taglish).
+  prompt: `You are a friendly technical expert for AyosGadget. 
+Translate the following repair guide content into simple, natural Filipino (Taglish or Mababaw na Tagalog).
 
-RULES:
-1. LANGUAGE: Use "mababaw" (simple) Tagalog or Taglish. Avoid deep/poetic Tagalog (e.g., use "Buksan" instead of "Ibukas", use "Turnilyo" instead of "Pako na paikot").
-2. TECHNICAL TERMS: Keep terms like "logic board", "ribbon cable", "spudger", "battery connector", "LCD screen" as is (Taglish style).
-3. COMPLETENESS: You MUST translate every single step provided. 
-4. BULLET POINTS: Keep the bullet points (•, 🔵, ⚠️) at the start of lines.
+IMPORTANT RULES:
+1. NATURAL TONE: Use natural, conversational Taglish. Don't use deep or formal Tagalog (e.g., use "Buksan" instead of "Ibukas", use "Turnilyo" instead of "Pako").
+2. TECH TERMS: KEEP common tech terms in English: "logic board", "battery connector", "ribbon cable", "spudger", "LCD screen", "flex cable", "bracket".
+3. SAFETY FIRST: Make safety warnings clear but simple.
+4. CONSISTENCY: Translate every step. Keep bullet points (•, 🔵, ⚠️) exactly as they are.
 
 Source Content:
 {{#if title}}Title: {{{title}}}{{/if}}
 {{#if description}}Description: {{{description}}}{{/if}}
 
-Steps to translate:
+Steps:
 {{#each steps}}
 --- STEP {{@index}} ---
-Title: {{this.title}}
+{{#if this.title}}Title: {{this.title}}{{/if}}
 Content:
 {{{this.description}}}
 {{/each}}`,
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
-  const BATCH_SIZE = 3; // Processing in small batches for stability
+  const BATCH_SIZE = 5; // Balanced for speed and reliability
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
@@ -82,14 +82,16 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       const output = result.output;
       if (output) {
         if (i === 0) {
-          finalTitle = output.title;
-          finalDescription = output.description;
+          finalTitle = output.title || finalTitle;
+          finalDescription = output.description || finalDescription;
         }
         translatedSteps.push(...output.steps);
+      } else {
+        translatedSteps.push(...batch);
       }
     } catch (error) {
-      console.error("Batch translation failed, using original for this batch:", error);
-      translatedSteps.push(...batch); // Fallback to original if AI fails
+      console.error("Batch translation failed, using original:", error);
+      translatedSteps.push(...batch);
     }
   }
 
