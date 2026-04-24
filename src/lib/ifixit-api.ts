@@ -81,17 +81,17 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
     if (!guide) return null;
 
     let allSteps: any[] = [];
-    // Consolidate summary and introduction
+    // Consolidate summary and introduction for the "Before you begin" section
     let consolidatedDescription = stripHtml(guide.introduction_rendered || guide.introduction_raw || guide.summary || '');
     
-    // 1. Resolve Foundations (Prerequisites) First
+    // 1. Resolve Foundations (Prerequisites) First to get Steps 1-15+
     if (guide.prerequisites && Array.isArray(guide.prerequisites)) {
       for (const prereq of guide.prerequisites) {
         const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), new Set(visited));
         if (prereqData && prereqData.steps) {
           allSteps = [...allSteps, ...prereqData.steps];
-          // Prepend prerequisite summaries to provide context if significant
-          if (prereqData.description && !consolidatedDescription.includes(prereqData.description)) {
+          // Prepend prerequisite summaries to provide vital context in the Taglish translation
+          if (prereqData.description && !consolidatedDescription.includes(prereqData.description.slice(0, 50))) {
             consolidatedDescription = prereqData.description + "\n\n" + consolidatedDescription;
           }
         }
@@ -104,7 +104,7 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
       allSteps = [...allSteps, ...internal.steps];
     }
 
-    // 3. Return consolidated data
+    // 3. Return consolidated data with cleaned description for AI translation
     return {
       ...internal,
       description: consolidatedDescription.trim(),
@@ -194,5 +194,10 @@ function mapCategory(type: string): CategoryName {
 
 function stripHtml(html: string) {
   if (!html) return '';
-  return html.replace(/<[^>]*>?/gm, '').trim();
+  // Remove HTML tags and fix spacing
+  return html
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }

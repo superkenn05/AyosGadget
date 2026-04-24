@@ -13,7 +13,6 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { getGuideWithAllSteps } from '@/lib/ifixit-api';
 import { translateGuide } from '@/ai/flows/translate-guide-flow';
-import { cn } from '@/lib/utils';
 
 export default function GuideDetailPage() {
   const params = useParams();
@@ -37,6 +36,7 @@ export default function GuideDetailPage() {
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
+  // 1. Initial Data Fetch
   useEffect(() => {
     async function fetchGuideData() {
       if (!id) return;
@@ -56,6 +56,7 @@ export default function GuideDetailPage() {
     fetchGuideData();
   }, [id]);
 
+  // 2. Handle Translation when Language changes
   useEffect(() => {
     async function handleTranslation() {
       if (!originalGuide) return;
@@ -102,7 +103,6 @@ export default function GuideDetailPage() {
         setGuide(finalGuide);
       } catch (error) {
         console.error("Translation failed:", error);
-        // Fallback to original on error
         setGuide(originalGuide);
       } finally {
         setIsTranslating(false);
@@ -133,9 +133,19 @@ export default function GuideDetailPage() {
     }
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="animate-spin text-primary w-12 h-12" /></div>;
+  if (loading) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+      <Loader2 className="animate-spin text-primary w-12 h-12 mb-4" />
+      <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">{t('common_syncing')}</p>
+    </div>
+  );
 
-  if (!guide) return <div className="min-h-screen flex items-center justify-center bg-background"><AlertTriangle className="text-rose-500 mr-2" /> Protocol Offline</div>;
+  if (!guide) return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <AlertTriangle className="text-rose-500 mr-2" /> 
+      <span className="font-black uppercase tracking-tighter">Protocol Offline</span>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -168,8 +178,11 @@ export default function GuideDetailPage() {
                 </div>
               )}
 
-              <div className="text-muted-foreground text-sm md:text-lg leading-relaxed glass p-8 rounded-3xl border-primary/5 whitespace-pre-wrap">
-                {guide.description}
+              <div className="space-y-4">
+                <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">{t('guides_help_title')}</h2>
+                <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium glass p-8 rounded-3xl border-primary/5">
+                  {guide.description}
+                </div>
               </div>
             </header>
 
@@ -182,7 +195,7 @@ export default function GuideDetailPage() {
 
               <div className="space-y-12">
                 {guide.steps?.map((step: any, index: number) => (
-                  <div key={index} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
+                  <div key={`${index}-${language}`} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
                     <div className="p-8 md:p-14">
                       <div className="flex items-start gap-6 md:gap-12 mb-10">
                         <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-xl md:text-3xl shadow-xl neon-glow">
