@@ -93,7 +93,8 @@ export default function GuideDetailPage() {
         if (!translated) throw new Error("Translation failed");
 
         // Validate that no step is still in English or has sync error
-        const hasSyncError = translated.steps.some(s => s.description.includes("[SYNC ERROR]"));
+        // Updated check for the Tagalog error string
+        const hasSyncError = translated.steps.some(s => s.description.includes("SYNC ERROR"));
         if (hasSyncError) throw new Error("Partial translation failure");
 
         const finalGuide = {
@@ -113,8 +114,6 @@ export default function GuideDetailPage() {
         setGuide(finalGuide);
       } catch (error) {
         console.error("Translation Engine Failure:", error);
-        // Do NOT set guide to originalGuide if in Filipino mode. 
-        // We'd rather keep showing the loader or show an error.
         toast({
           variant: "destructive",
           title: "Neural Sync Error",

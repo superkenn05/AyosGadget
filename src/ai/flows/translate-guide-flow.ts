@@ -99,12 +99,12 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
         }));
         translatedSteps.push(...mappedBatch);
       } else {
-        // If AI fails to return structured data, we return empty to trigger fallback in UI
-        translatedSteps.push(...batch.map(b => ({ ...b, description: "[SYNC ERROR: Retrying...]" })));
+        // Translated fallback to Tagalog
+        translatedSteps.push(...batch.map(b => ({ ...b, description: "[SYNC ERROR: Sinusubukang i-sync ulit...]" })));
       }
     } catch (error) {
       console.error("Batch translation failed", error);
-      translatedSteps.push(...batch.map(b => ({ ...b, description: "[SYNC ERROR: Retrying...]" })));
+      translatedSteps.push(...batch.map(b => ({ ...b, description: "[SYNC ERROR: Sinusubukang i-sync ulit...]" })));
     }
   }
 
