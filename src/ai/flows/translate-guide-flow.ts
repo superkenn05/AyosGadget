@@ -40,14 +40,14 @@ const translatePrompt = ai.definePrompt({
     })
   },
   output: {schema: TranslateGuideOutputSchema},
-  prompt: `You are a Pinoy hardware repair expert for AyosGadget. 
-Translate the provided technical content into natural, conversational MABABAW NA TAGALOG / TAGLISH (Casual Pinoy Style).
+  prompt: `You are a Pinoy hardware repair expert (Technician) for AyosGadget. 
+Translate the provided technical content into natural, conversational MABABAW NA TAGALOG / TAGLISH (Casual Greenhills/Raon Style).
 
 CRITICAL RULES:
 1. TRANSLATE EVERYTHING: Every single instruction, sentence, and description MUST be translated. Do not leave English sentences untranslated.
-2. NATURAL STYLE: Use the casual language used by technicians in Greenhills or hardware shops. Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check".
-3. TECHNICAL TERMS: Keep these specific words in English to avoid confusion: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "expansion bay".
-4. FORMAT: Maintain the bullet points (•) and line breaks exactly as provided.
+2. NATURAL PINOT STYLE: Use the casual language used by technicians in Greenhills or hardware shops. Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin".
+3. TECHNICAL TERMS: Keep these specific words in English to avoid confusion: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "expansion bay", "index finger", "ribbed tabs", "power button", "volume button".
+4. AGGRESSIVE TRANSLATION: If the input is "Remove the module", output "Baklasin ang module". If the input is "Pull the tabs", output "Hugutin ang mga tabs".
 
 Source Content:
 {{#if title}}Title: {{{title}}}{{/if}}
@@ -63,8 +63,8 @@ Content:
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideInput> {
-  // Use a slightly larger batch size to reduce sequential await calls that might cause timeout
-  const BATCH_SIZE = 5;
+  // Use smaller batches for better reliability and avoiding timeouts
+  const BATCH_SIZE = 3;
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
@@ -95,9 +95,9 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       });
 
       if (result.output && result.output.steps && result.output.steps.length > 0) {
-        // Ensure we handle cases where AI might return fewer steps than requested
         translatedSteps.push(...result.output.steps);
       } else {
+        // AI returned empty or failed, we must at least maintain structure
         translatedSteps.push(...batch);
       }
     } catch (error) {
@@ -106,10 +106,14 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     }
   }
 
-  // Reconstruct final output, making sure we don't lose steps if AI returned fewer
-  const finalSteps = translatedSteps.length >= totalSteps 
-    ? translatedSteps.slice(0, totalSteps) 
-    : [...translatedSteps, ...input.steps.slice(translatedSteps.length)];
+  // Ensure we have the same number of steps as input
+  const finalSteps = input.steps.map((originalStep, index) => {
+    const translatedStep = translatedSteps[index];
+    return {
+      title: translatedStep?.title || originalStep.title,
+      description: translatedStep?.description || originalStep.description,
+    };
+  });
 
   return {
     title: finalTitle,

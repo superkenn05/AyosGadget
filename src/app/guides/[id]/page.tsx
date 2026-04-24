@@ -36,7 +36,7 @@ export default function GuideDetailPage() {
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
-  // 1. Initial Data Fetch - Fetch ALL steps recursively from iFixit
+  // 1. Initial Data Fetch
   useEffect(() => {
     async function fetchGuideData() {
       if (!id) return;
@@ -56,7 +56,7 @@ export default function GuideDetailPage() {
     fetchGuideData();
   }, [id]);
 
-  // 2. Handle Translation when Language changes to Filipino
+  // 2. Handle Translation when Language changes
   useEffect(() => {
     async function handleTranslation() {
       if (!originalGuide) return;
@@ -165,7 +165,7 @@ export default function GuideDetailPage() {
                 {isTranslating && (
                   <div className="flex items-center gap-2 text-primary animate-pulse ml-4">
                     <Sparkles className="w-3 h-3" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Neural Link Translating...</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Neural Link Syncing...</span>
                   </div>
                 )}
               </div>
@@ -204,7 +204,9 @@ export default function GuideDetailPage() {
                           {index + 1}
                         </div>
                         <div className="flex-grow">
-                          <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight mb-6">{step.title || `${t('guides_step_title')} ${index + 1}`}</h3>
+                          <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight mb-6">
+                            {language === 'en' ? `Step ${index + 1}` : `Hakbang ${index + 1}`}
+                          </h3>
                           <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
                             {step.description}
                           </div>
