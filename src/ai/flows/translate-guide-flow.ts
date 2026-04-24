@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview AI Flow to translate repair guide content into natural, easy-to-understand Taglish.
- * Optimized for technical terms used in the Philippines.
+ * Optimized for technical terms used in the Philippines with Zero-Leakage English policy.
  */
 
 import {ai} from '@/ai/genkit';
@@ -41,14 +41,14 @@ const translatePrompt = ai.definePrompt({
   },
   output: {schema: TranslateGuideOutputSchema},
   prompt: `You are a Filipino hardware repair master (Technician) for AyosGadget. 
-Your task is to translate the provided technical repair instructions into natural, conversational MABABAW NA TAGALOG / TAGLISH (Casual Greenhills/Raon Style).
+Your task is to translate technical repair instructions into natural, conversational MABABAW NA TAGALOG / TAGLISH (Casual Greenhills/Raon Style).
 
-CRITICAL RULES:
-1. NO ENGLISH SENTENCES ALLOWED: Every single instruction, action, and description MUST be translated into Taglish. You are strictly forbidden from leaving English sentences as is.
-2. AGGRESSIVE TRANSLATION: If you see "Remove the modules", you MUST output "Baklasin ang mga modules". If you see "Pull the tabs", output "Hugutin ang mga tabs".
+STRICT TRANSLATION RULES:
+1. NO ENGLISH SENTENCES: Every single instruction, action, and description MUST be translated into Taglish. You are strictly forbidden from leaving English sentences as is.
+2. AGGRESSIVE TRANSLATION: "Remove the modules" -> "Baklasin ang mga modules". "Pull the tabs" -> "Hugutin ang mga tabs". "Insert your fingers" -> "Ipasok ang mga daliri".
 3. PERSONA: Talk like a real technician from Raon or Greenhills. Use technician lingo: "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo", "Bunutin ang connector".
 4. TECHNICAL TERMS (KEEP IN ENGLISH): Only keep these specific words in English: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "expansion bay", "index finger", "ribbed tabs", "power button", "volume button", "RAM", "hard drive", "tabs", "trackpad".
-5. BULLET POINTS: You MUST preserve the formatting of bullet points (•) and numbered lists exactly as they appear in the source.
+5. FORMATTING: You MUST preserve the formatting of bullet points (•) and numbered lists exactly.
 
 Source Content to Translate:
 {{#if title}}Title: {{{title}}}{{/if}}
@@ -64,14 +64,13 @@ Instruction:
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideInput> {
-  const BATCH_SIZE = 4; 
+  const BATCH_SIZE = 3; 
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
   let finalTitle = input.title;
   let finalDescription = input.description;
 
-  // Fallback string to ensure NO English is shown if AI fails
   const FALLBACK_DESC = "[SYNC ERROR: Sinusubukang i-sync ulit ang bawat hakbang...]";
 
   try {
@@ -85,7 +84,6 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       finalDescription = headerResult.output.description || "[SYNC ERROR: Sinusubukang i-translate ang intro...]";
     }
   } catch (e) {
-    console.error("Header translation failed", e);
     finalDescription = "[SYNC ERROR: Sinusubukang i-translate ang intro...]";
   }
 
@@ -106,7 +104,6 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
         translatedSteps.push(...batch.map(b => ({ ...b, description: FALLBACK_DESC })));
       }
     } catch (error) {
-      console.error("Batch translation failed", error);
       translatedSteps.push(...batch.map(b => ({ ...b, description: FALLBACK_DESC })));
     }
   }
