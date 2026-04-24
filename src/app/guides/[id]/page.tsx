@@ -66,13 +66,15 @@ export default function GuideDetailPage() {
 
   // 2. Progressive Translation Effect
   useEffect(() => {
-    if (!originalGuide || language !== 'fil' || isTranslating.current) {
+    if (!originalGuide || language !== 'fil') {
       if (language !== 'fil') {
         setTranslatedMeta(null);
         setTranslatedSteps({});
       }
       return;
     }
+
+    if (isTranslating.current) return;
 
     const cacheKey = `${id}-fil`;
     if (translationCache.current[cacheKey]) {
@@ -84,52 +86,52 @@ export default function GuideDetailPage() {
 
     async function startProgressiveTranslation() {
       isTranslating.current = true;
-      // Step A: Translate Title & Description
+      const currentCache = { meta: null as any, steps: {} as any };
+      
       try {
-        const metaRes = await translateGuide({
-          title: originalGuide.title,
-          description: originalGuide.description
-        });
-        const nextMeta = { 
-          title: metaRes.title || originalGuide.title, 
-          description: metaRes.description || originalGuide.description 
-        };
-        setTranslatedMeta(nextMeta);
-        
-        translationCache.current[cacheKey] = {
-          meta: nextMeta,
-          steps: {}
-        };
-      } catch (e) {
-        console.error("Meta translation error", e);
-        setTranslatedMeta({ title: originalGuide.title, description: originalGuide.description });
-      }
-
-      // Step B: Translate each step one-by-one (Progressive)
-      const steps = originalGuide.steps || [];
-      for (let i = 0; i < steps.length; i++) {
+        // Step A: Translate Title & Description (Meta)
         try {
-          const stepRes = await translateGuide({
-            steps: [{ title: steps[i].title, description: steps[i].description }]
+          const metaRes = await translateGuide({
+            title: originalGuide.title,
+            description: originalGuide.description
           });
-          
-          if (stepRes.steps?.[0]) {
-            setTranslatedSteps(prev => {
-              const next = { ...prev, [i]: stepRes.steps![0] };
-              translationCache.current[cacheKey] = {
-                meta: translationCache.current[cacheKey]?.meta,
-                steps: next
-              };
-              return next;
-            });
-          }
+          const nextMeta = { 
+            title: metaRes.title || originalGuide.title, 
+            description: metaRes.description || originalGuide.description 
+          };
+          setTranslatedMeta(nextMeta);
+          currentCache.meta = nextMeta;
+          translationCache.current[cacheKey] = currentCache;
         } catch (e) {
-          console.error(`Step ${i} translation error`, e);
-          // Fallback to original description if failed
-          setTranslatedSteps(prev => ({ ...prev, [i]: { description: steps[i].description } }));
+          console.error("Meta translation error", e);
         }
+
+        // Step B: Translate each step one-by-one (Progressive)
+        const steps = originalGuide.steps || [];
+        for (let i = 0; i < steps.length; i++) {
+          try {
+            // Short delay to avoid rate limiting
+            await new Promise(r => setTimeout(r, 400));
+            
+            const stepRes = await translateGuide({
+              steps: [{ title: steps[i].title, description: steps[i].description }]
+            });
+            
+            if (stepRes.steps?.[0]) {
+              setTranslatedSteps(prev => {
+                const updated = { ...prev, [i]: stepRes.steps![0] };
+                currentCache.steps = updated;
+                translationCache.current[cacheKey] = { ...currentCache };
+                return updated;
+              });
+            }
+          } catch (e) {
+            console.error(`Step ${i} translation error`, e);
+          }
+        }
+      } finally {
+        isTranslating.current = false;
       }
-      isTranslating.current = false;
     }
 
     startProgressiveTranslation();
