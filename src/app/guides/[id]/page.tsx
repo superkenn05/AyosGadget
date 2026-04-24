@@ -42,7 +42,6 @@ export default function GuideDetailPage() {
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
-  // 1. Initial Data Fetch
   useEffect(() => {
     async function fetchGuideData() {
       if (!id) return;
@@ -65,7 +64,6 @@ export default function GuideDetailPage() {
     fetchGuideData();
   }, [id, language]);
 
-  // 2. Handle Translation with AI Flow (Zero-Leakage Logic)
   useEffect(() => {
     async function handleTranslation() {
       if (!originalGuide) return;
@@ -77,7 +75,6 @@ export default function GuideDetailPage() {
         return;
       }
 
-      // Check Cache
       if (translationCache.current[id]?.[language]) {
         setGuide(translationCache.current[id][language]);
         setTranslatedVersion(language);
@@ -85,7 +82,6 @@ export default function GuideDetailPage() {
         return;
       }
 
-      // Start Translation Process
       setIsTranslating(true);
       
       try {
@@ -116,7 +112,6 @@ export default function GuideDetailPage() {
         setTranslatedVersion(language);
       } catch (error) {
         console.error("Translation Engine Failure:", error);
-        // Fallback to original but stay in Tagalog mode to avoid crash
         setGuide(originalGuide);
         setTranslatedVersion(language);
       } finally {
@@ -150,7 +145,6 @@ export default function GuideDetailPage() {
 
   if (!isMounted) return null;
 
-  // Strict check to avoid English leakage during initial Filipino load
   const showSkeleton = loading || isTranslating || (language === 'fil' && translatedVersion !== 'fil');
 
   if (showSkeleton) return (

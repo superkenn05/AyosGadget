@@ -8,9 +8,6 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-// Increase timeout for long repair guides
-export const maxDuration = 60;
-
 const TranslateGuideInputSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
@@ -60,14 +57,12 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
   const SYNC_ERROR_MSG = "[SYNC ERROR: Sinusubukang i-sync ulit ang bawat hakbang...]";
   
   try {
-    // Attempt batch translation first for speed
     const result = await translatePrompt(input);
     if (result.output) return result.output;
     throw new Error("Empty output from batch translation");
   } catch (error) {
     console.warn("Batch translation timed out or failed, falling back to parallel processing...", error);
     
-    // Fallback: Translate header and steps independently using Promise.all for speed
     const headerPromise = translatePrompt({
       title: input.title,
       description: input.description,
