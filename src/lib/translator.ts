@@ -1,41 +1,81 @@
 /**
- * @fileOverview Standard translation utility using a public API (LibreTranslate).
- * Replaces the Genkit AI flow for faster, non-LLM based translation.
+ * @fileOverview Heuristic pattern-based translator for repair guides.
+ * Converts technical English to "Pinoy Technician Taglish" without using AI.
  */
 
-export async function translateFast(text: string): Promise<string> {
-  if (!text || text.trim().length === 0) return "";
+const DICTIONARY: Record<string, string> = {
+  "remove": "baklasin",
+  "unscrew": "luwagan ang tornilyo",
+  "disconnect": "i-disconnect",
+  "pull": "hilahin",
+  "push": "itulak",
+  "lift": "i-angat",
+  "slide": "i-slide",
+  "pry": "tuklapin",
+  "open": "buksan",
+  "close": "isara",
+  "insert": "isaksak",
+  "search": "hanapin",
+  "located": "makikita",
+  "toward": "papunta sa",
+  "pop up": "aangat",
+  "using": "gamit ang",
+  "the": "ang",
+  "front": "harap",
+  "back": "likod",
+  "upper": "itaas",
+  "lower": "ibaba",
+  "near": "malapit sa",
+  "inside": "sa loob ng",
+  "search for": "hanapin",
+  "with": "gamit ang",
+  "and": "at",
+  "both": "parehong",
+  "front of": "harap ng",
+  "corners of": "sulok ng",
+  "underside of": "ilalim ng",
+  "your": "iyong",
+  "index fingers": "hintuturo",
+};
+
+/**
+ * Performs a fast, dictionary-based translation of English repair instructions to Taglish.
+ * Persona: Raon/Greenhills Technician.
+ */
+export function heuristicTranslate(text: string): string {
+  if (!text) return "";
   
-  // Split by sentences to improve translation quality in some APIs
-  const sentences = text.split(/(?<=[.!?])\s+/);
+  let result = text.toLowerCase();
 
-  const requests = sentences.map(async (sentence) => {
-    if (!sentence.trim()) return "";
+  // 1. Replace multi-word phrases first
+  const phrases = [
+    ["search for", "hanapin"],
+    ["front of", "harap ng"],
+    ["corners of", "sulok ng"],
+    ["underside of", "ilalim ng"],
+    ["index fingers", "mga hintuturo"]
+  ];
 
-    try {
-      // Note: LibreTranslate public instances can be unstable or have rate limits.
-      // In a production app, a dedicated key or a more robust provider is recommended.
-      const res = await fetch("https://libretranslate.de/translate", {
-        method: "POST",
-        body: JSON.stringify({
-          q: sentence.trim(),
-          source: "en",
-          target: "tl",
-          format: "text"
-        }),
-        headers: { "Content-Type": "application/json" }
-      });
-
-      if (!res.ok) return sentence;
-      
-      const data = await res.json();
-      return data.translatedText || sentence;
-    } catch (error) {
-      console.warn("Translation partial failure, falling back to original sentence.");
-      return sentence;
-    }
+  phrases.forEach(([eng, tag]) => {
+    const regex = new RegExp(`\\b${eng}\\b`, 'gi');
+    result = result.replace(regex, tag);
   });
 
-  const results = await Promise.all(requests);
-  return results.filter(Boolean).join(" ");
+  // 2. Replace single words
+  Object.entries(DICTIONARY).forEach(([eng, tag]) => {
+    const regex = new RegExp(`\\b${eng}\\b`, 'gi');
+    result = result.replace(regex, tag);
+  });
+
+  // 3. Capitalize first letter and fix common grammar artifacts
+  result = result.charAt(0).toUpperCase() + result.slice(1);
+  
+  return result;
+}
+
+/**
+ * For backward compatibility or bulk translation
+ */
+export async function translateFast(text: string): Promise<string> {
+  return heuristicTranslate(text);
 }

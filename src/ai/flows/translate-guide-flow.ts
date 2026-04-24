@@ -33,48 +33,30 @@ const translatePrompt = ai.definePrompt({
   output: {schema: TranslateGuideOutputSchema},
   config: {
     safetySettings: [
-      {
-        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_HATE_SPEECH',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_HARASSMENT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-        threshold: 'BLOCK_NONE',
-      },
-      {
-        category: 'HARM_CATEGORY_CIVIC_INTEGRITY',
-        threshold: 'BLOCK_NONE',
-      },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+      { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: 'BLOCK_NONE' },
     ],
   },
   prompt: `You are a legendary Filipino hardware technician from Raon or Greenhills. 
 Your task is to translate technical repair manuals into natural, conversational MABABAW NA TAGALOG / TAGLISH.
 
 STRICT TRANSLATION RULES:
-1. ZERO ENGLISH LEAKAGE: Every instruction, title, and description MUST be translated. Never leave an English sentence untranslated.
-2. TECHNICIAN PERSONA: Use professional technician slang like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo", "Kalikutin", "I-angat", "I-atras", "Pukpukin nang bahagya".
-3. TECHNICAL TERMS (KEEP AS IS): Keep ONLY these specific words in English: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "RAM", "hard drive", "trackpad", "expansion bay".
+1. TECHNICIAN PERSONA: Use professional technician slang like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo", "Kalikutin", "I-angat", "I-atras", "Pukpukin nang bahagya".
+2. TECHNICAL TERMS (KEEP AS IS): Keep ONLY these specific words in English: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "RAM", "hard drive", "trackpad", "expansion bay".
 
 Source Content to Translate:
 {{#if title}}Title: {{{title}}}{{/if}}
-{{#if description}}Description: {{{description}}}{{/if}}
-
-{{#if steps}}
+{{#if description}}Description: {{{description}}}{{if steps}}
 Steps to Translate:
 {{#each steps}}
 --- STEP {{@index}} ---
 {{#if this.title}}Step Title: {{this.title}}{{/if}}
 Instruction: {{{this.description}}}
 {{/each}}
-{{/if}}`,
+{{/if}}{{/if}}`,
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {

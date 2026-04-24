@@ -13,6 +13,7 @@ import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { getGuideWithAllSteps } from '@/lib/ifixit-api';
 import { translateGuide } from '@/ai/flows/translate-guide-flow';
+import { heuristicTranslate } from '@/lib/translator';
 import Image from 'next/image';
 
 export default function GuideDetailPage() {
@@ -27,8 +28,9 @@ export default function GuideDetailPage() {
   const [originalGuide, setOriginalGuide] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
-  // Meta translation state (Title and Intro Description only)
+  // Translation state
   const [translatedMeta, setTranslatedMeta] = useState<{ title?: string; description?: string } | null>(null);
+  const [translatedSteps, setTranslatedSteps] = useState<Record<number, string>>({});
   const translationCache = useRef<Record<string, any>>({});
   const isTranslatingMeta = useRef(false);
 
@@ -44,7 +46,7 @@ export default function GuideDetailPage() {
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
-  // 1. Initial Fetch (English)
+  // 1. Initial Fetch
   useEffect(() => {
     async function fetchGuideData() {
       if (!id) return;
@@ -63,12 +65,10 @@ export default function GuideDetailPage() {
     fetchGuideData();
   }, [id]);
 
-  // 2. Meta-only Translation Effect (Title & Intro)
+  // 2. Meta AI Translation (Title & Intro)
   useEffect(() => {
     if (!originalGuide || language !== 'fil') {
-      if (language !== 'fil') {
-        setTranslatedMeta(null);
-      }
+      if (language !== 'fil') setTranslatedMeta(null);
       return;
     }
 
@@ -102,6 +102,20 @@ export default function GuideDetailPage() {
 
     translateHeader();
   }, [language, originalGuide, id]);
+
+  // 3. Fast Heuristic Translation for Steps (No AI)
+  useEffect(() => {
+    if (!originalGuide || language !== 'fil') {
+      setTranslatedSteps({});
+      return;
+    }
+
+    const newTranslatedSteps: Record<number, string> = {};
+    originalGuide.steps?.forEach((step: any, index: number) => {
+      newTranslatedSteps[index] = heuristicTranslate(step.description);
+    });
+    setTranslatedSteps(newTranslatedSteps);
+  }, [language, originalGuide]);
 
   const handleBookmark = () => {
     if (!user) {
@@ -160,7 +174,7 @@ export default function GuideDetailPage() {
                 <Badge variant="outline" className="font-black uppercase tracking-widest text-[8px]">{originalGuide.difficulty}</Badge>
                 {language === 'fil' && (
                   <Badge className="bg-amber-500/10 text-amber-500 border-none font-black uppercase tracking-widest text-[8px] animate-pulse">
-                    <Sparkles className="w-2 h-2 mr-1" /> Neural Sync Active
+                    <Sparkles className="w-2 h-2 mr-1" /> Heuristic Sync Active
                   </Badge>
                 )}
               </div>
@@ -201,31 +215,35 @@ export default function GuideDetailPage() {
               </div>
 
               <div className="space-y-12">
-                {originalGuide.steps?.map((step: any, index: number) => (
-                  <div key={index} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
-                    <div className="p-8 md:p-14">
-                      <div className="flex items-start gap-6 md:gap-12 mb-10">
-                        <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-xl md:text-3xl shadow-xl neon-glow">
-                          {index + 1}
-                        </div>
-                        <div className="flex-grow">
-                          <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight mb-6">
-                            {step.title || (language === 'en' ? `Step ${index + 1}` : `Hakbang ${index + 1}`)}
-                          </h3>
-                          <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
-                            {step.description}
+                {originalGuide.steps?.map((step: any, index: number) => {
+                  const displayStepDesc = language === 'fil' ? (translatedSteps[index] || step.description) : step.description;
+                  
+                  return (
+                    <div key={index} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
+                      <div className="p-8 md:p-14">
+                        <div className="flex items-start gap-6 md:gap-12 mb-10">
+                          <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-xl md:text-3xl shadow-xl neon-glow">
+                            {index + 1}
+                          </div>
+                          <div className="flex-grow">
+                            <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight mb-6">
+                              {step.title || (language === 'en' ? `Step ${index + 1}` : `Hakbang ${index + 1}`)}
+                            </h3>
+                            <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
+                              {displayStepDesc}
+                            </div>
                           </div>
                         </div>
+                        
+                        {step.imageUrl && (
+                          <div className="relative aspect-video rounded-[2rem] overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 bg-black/5">
+                            <Image src={step.imageUrl} alt={`Step ${index + 1}`} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                          </div>
+                        )}
                       </div>
-                      
-                      {step.imageUrl && (
-                        <div className="relative aspect-video rounded-[2rem] overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 bg-black/5">
-                          <Image src={step.imageUrl} alt={`Step ${index + 1}`} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
-                        </div>
-                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           </div>
