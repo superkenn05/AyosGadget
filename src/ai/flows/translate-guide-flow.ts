@@ -41,22 +41,23 @@ const translatePrompt = ai.definePrompt({
   },
   output: {schema: TranslateGuideOutputSchema},
   prompt: `You are a friendly Pinoy tech expert for AyosGadget. 
-Translate the following repair guide content into MABABAW NA TAGALOG / TAGLISH (Filipino-English mix) as used in hardware shops in the Philippines.
+Translate the provided technical data into MABABAW NA TAGALOG / TAGLISH.
 
-MANDATORY RULES:
-1. USE NATURAL TAGLISH: Do not use deep, formal Tagalog (Avoid: "Ibukas", "Alisin", "Pambalot").
-   - Use: "Buksan", "Tanggalin", "Hugutin", "Baklasin".
-   - Use: "Dahan-dahan" or "Ingat lang".
-   - Translate preparation steps like "Allow battery to drain" to "Hayaan muna ma-drain ang battery hanggang 25% pababa".
-2. KEEP TECH TERMS IN ENGLISH: Do NOT translate: "battery", "lithium-ion battery", "connector", "logic board", "LCD", "screw", "bracket", "ribbon cable", "flex", "spudger", "adhesive", "thermal paste", "isopropyl alcohol", "cotton swab".
-3. TONE: Friendly, instructional, and very easy to follow for beginners.
-4. EXAMPLE: 
-   - English: "Allow your phone's battery to drain below 25%." 
-   - Taglish: "Hayaan mo munang ma-drain ang battery ng phone mo hanggang 25% pababa para safe baklasin."
+CRITICAL INSTRUCTION: 
+- TRANSLATE EVERYTHING: The title, the description (introduction), and every single step.
+- USE NATURAL TAGLISH: Do not use deep, formal Tagalog. Use the language spoken in Greenhills or hardware shops.
+- TECHNICAL TERMS: Keep "battery", "connector", "logic board", "LCD", "screw", "flex", "adhesive", "isopropyl alcohol" in English.
+
+EXAMPLES:
+- English: "Allow your phone's battery to drain below 25%."
+- Taglish: "Hayaan mo munang ma-drain ang battery ng phone mo hanggang 25% pababa para safe baklasin."
+
+- English: "Turn off your smartphone completely."
+- Taglish: "I-off mo muna nang tuluyan ang smartphone mo."
 
 Source Content:
 {{#if title}}Title: {{{title}}}{{/if}}
-{{#if description}}Description: {{{description}}}{{/if}}
+{{#if description}}Description/Intro: {{{description}}}{{/if}}
 
 Steps:
 {{#each steps}}
@@ -68,19 +69,20 @@ Content:
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
-  const BATCH_SIZE = 3;
+  // Increase batch size for better context, but keep it manageable for server timeouts
+  const BATCH_SIZE = 5;
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
   let finalTitle = input.title;
   let finalDescription = input.description;
 
-  // Initial translation for Title and Description
+  // 1. Translate Title and Description (The "Before you begin" part)
   try {
     const headerResult = await translatePrompt({
       title: input.title,
       description: input.description,
-      steps: input.steps.slice(0, 1), // Include one step to help context
+      steps: input.steps.slice(0, 1), // Pass one step for context
     });
     if (headerResult.output) {
       finalTitle = headerResult.output.title || finalTitle;
@@ -90,7 +92,7 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     console.error("Header translation failed:", e);
   }
 
-  // Batch translate all steps
+  // 2. Batch translate all steps
   for (let i = 0; i < totalSteps; i += BATCH_SIZE) {
     const batch = input.steps.slice(i, i + BATCH_SIZE);
     try {

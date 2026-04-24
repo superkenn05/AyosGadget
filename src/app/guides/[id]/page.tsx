@@ -66,8 +66,10 @@ export default function GuideDetailPage() {
         return;
       }
 
+      // Check cache first
       if (translationCache.current[id]?.[language]) {
         setGuide(translationCache.current[id][language]);
+        setIsTranslating(false);
         return;
       }
 
@@ -93,11 +95,14 @@ export default function GuideDetailPage() {
           }))
         };
 
+        // Update cache
         if (!translationCache.current[id]) translationCache.current[id] = {};
         translationCache.current[id][language] = finalGuide;
+        
         setGuide(finalGuide);
       } catch (error) {
         console.error("Translation failed:", error);
+        // Fallback to original on error
         setGuide(originalGuide);
       } finally {
         setIsTranslating(false);
@@ -163,9 +168,9 @@ export default function GuideDetailPage() {
                 </div>
               )}
 
-              <p className="text-muted-foreground text-sm md:text-lg leading-relaxed glass p-8 rounded-3xl border-primary/5 whitespace-pre-wrap">
+              <div className="text-muted-foreground text-sm md:text-lg leading-relaxed glass p-8 rounded-3xl border-primary/5 whitespace-pre-wrap">
                 {guide.description}
-              </p>
+              </div>
             </header>
 
             <section className="space-y-10">

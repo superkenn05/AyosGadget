@@ -8,6 +8,8 @@ export interface IFixitGuide {
   guideid: number;
   title: string;
   summary: string;
+  introduction_rendered: string;
+  introduction_raw: string;
   difficulty: string;
   time_required: string;
   image: { original: string };
@@ -79,7 +81,8 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
     if (!guide) return null;
 
     let allSteps: any[] = [];
-    let consolidatedDescription = stripHtml(guide.summary || '');
+    // Consolidate summary and introduction
+    let consolidatedDescription = stripHtml(guide.introduction_rendered || guide.introduction_raw || guide.summary || '');
     
     // 1. Resolve Foundations (Prerequisites) First
     if (guide.prerequisites && Array.isArray(guide.prerequisites)) {
@@ -87,7 +90,7 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
         const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), new Set(visited));
         if (prereqData && prereqData.steps) {
           allSteps = [...allSteps, ...prereqData.steps];
-          // Prepend prerequisite summaries to provide context
+          // Prepend prerequisite summaries to provide context if significant
           if (prereqData.description && !consolidatedDescription.includes(prereqData.description)) {
             consolidatedDescription = prereqData.description + "\n\n" + consolidatedDescription;
           }
@@ -165,7 +168,7 @@ export function mapIFixitToInternal(ifixit: any) {
     category: mapCategory(ifixit.type || ifixit.category || ''),
     difficulty: mapDifficulty(ifixit.difficulty || 'Easy'),
     timeEstimate: ifixit.time_required || '30-60 mins',
-    description: stripHtml(ifixit.summary || ''),
+    description: stripHtml(ifixit.introduction_rendered || ifixit.introduction_raw || ifixit.summary || ''),
     thumbnail: ifixit.image?.original || '',
     tools: (ifixit.tools || []).map((t: any) => ({ name: t.name })),
     parts: (ifixit.parts || []).map((p: any) => ({ name: p.name })),
