@@ -31,6 +31,26 @@ const translatePrompt = ai.definePrompt({
   name: 'translateGuidePrompt',
   input: {schema: TranslateGuideInputSchema},
   output: {schema: TranslateGuideOutputSchema},
+  config: {
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_NONE',
+      },
+      {
+        category: 'HARM_CATEGORY_HATE_SPEECH',
+        threshold: 'BLOCK_NONE',
+      },
+      {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_NONE',
+      },
+      {
+        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+        threshold: 'BLOCK_NONE',
+      },
+    ],
+  },
   prompt: `You are a legendary Filipino hardware technician from Raon or Greenhills. 
 Your task is to translate technical repair manuals into natural, conversational MABABAW NA TAGALOG / TAGLISH.
 
@@ -54,13 +74,15 @@ Instruction: {{{this.description}}}
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
   try {
     const result = await translatePrompt(input);
-    return result.output!;
+    if (!result.output) throw new Error("Empty output from AI");
+    return result.output;
   } catch (error) {
     console.error("Translation failed:", error);
+    // Fallback to original content to avoid showing "SYNC ERROR" in the UI
     return {
       title: input.title,
-      description: "[SYNC ERROR: Sinusubukang i-sync ulit ang bawat hakbang...]",
-      steps: input.steps?.map(s => ({ ...s, description: "[SYNC ERROR: Sinusubukang i-sync ulit ang bawat hakbang...]" })),
+      description: input.description,
+      steps: input.steps,
     };
   }
 }
