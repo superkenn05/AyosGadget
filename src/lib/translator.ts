@@ -1,30 +1,29 @@
 /**
  * @fileOverview Heuristic pattern-based translator for repair guides.
- * Converts technical English to "Pinoy Technician Taglish" without using AI.
- * Persona: Professional Hardware Technician from Raon / Greenhills.
+ * Converts technical English to "Purong Tagalog" without using AI.
  */
 
 const DICTIONARY: Record<string, string> = {
-  // Action Verbs (Mababaw na Salita)
-  "remove": "baklasin",
-  "unscrew": "luwagan ang tornilyo",
-  "disconnect": "hugutin ang connector",
+  // Action Verbs (Purong Tagalog)
+  "remove": "tanggalin",
+  "unscrew": "alisin ang tornilyo",
+  "disconnect": "hugutin ang koneksyon",
   "pull": "hilahin",
   "push": "itulak",
-  "lift": "i-angat",
-  "slide": "i-usog",
+  "lift": "iangat",
+  "slide": "iusog",
   "pry": "tuklapin",
   "open": "buksan",
   "close": "isara",
   "insert": "isuksok",
   "search": "hanapin",
-  "located": "makikita",
-  "toward": "papunta sa",
+  "located": "matatagpuan",
+  "toward": "patungo sa",
   "pop up": "aangat",
   "using": "gamit ang",
   "the": "ang",
-  "front": "harap",
-  "back": "likod",
+  "front": "harapan",
+  "back": "hulihan",
   "upper": "itaas",
   "lower": "ibaba",
   "near": "malapit sa",
@@ -36,40 +35,46 @@ const DICTIONARY: Record<string, string> = {
   "underside of": "ilalim ng",
   "your": "iyong",
   "index fingers": "mga hintuturo",
-  "levers": "mga lever",
+  "levers": "mga panungkit",
   "tabs": "mga tab",
-  "ribbed": "may guhit",
-  "keyboard": "keyboard",
-  "expansion bay": "expansion bay",
-  "module": "module",
-  "computer": "computer",
-  "battery": "battery",
+  "ribbed": "may mga guhit",
+  "keyboard": "tipaan",
+  "expansion bay": "bahagi ng pagpapalawak",
+  "module": "modyul",
+  "computer": "kompyuter",
+  "battery": "baterya",
   "screw": "tornilyo",
   "screws": "mga tornilyo",
-  "case": "case",
+  "case": "kaha",
   "top": "itaas",
   "bottom": "ibaba",
+  "connector": "konektor",
+  "display": "tabing",
+  "screen": "tabing",
+  "tool": "kagamitan",
+  "part": "piyesa",
+  "replace": "palitan",
+  "install": "ikabit",
 };
 
 /**
- * Performs a fast, dictionary-based translation of English repair instructions to Taglish.
- * Persona: Raon/Greenhills Technician.
+ * Performs a fast, dictionary-based translation of English repair instructions to Pure Tagalog.
  */
 export function heuristicTranslate(text: string): string {
   if (!text) return "";
   
   let result = text.toLowerCase();
 
-  // 1. Replace multi-word phrases first (Specific common repair sequences)
+  // 1. Replace multi-word phrases first
   const phrases = [
     ["search for", "hanapin ang"],
-    ["front of the computer", "harap ng computer"],
-    ["front of", "harap ng"],
-    ["corners of", "sulok ng"],
+    ["front of the computer", "harapan ng kompyuter"],
+    ["front of", "harapan ng"],
+    ["corners of", "mga sulok ng"],
     ["underside of the", "ilalim ng"],
     ["underside of", "ilalim ng"],
     ["index fingers", "mga hintuturo"],
-    ["pull the tabs toward yourself", "hilahin ang mga tab pabalik sa iyo"],
+    ["pull the tabs toward yourself", "hilahin ang mga tab patungo sa iyo"],
     ["will pop up", "ay kusa nang aangat"],
   ];
 
@@ -80,12 +85,11 @@ export function heuristicTranslate(text: string): string {
 
   // 2. Replace single words based on dictionary
   Object.entries(DICTIONARY).forEach(([eng, tag]) => {
-    // Only replace if it's a whole word to avoid partial matches
     const regex = new RegExp(`\\b${eng}\\b`, 'gi');
     result = result.replace(regex, tag);
   });
 
-  // 3. Post-processing: Clean up common grammar issues in Taglish
+  // 3. Post-processing
   result = result
     .replace(/\bang ang\b/g, "ang")
     .replace(/\bang sa\b/g, "sa")

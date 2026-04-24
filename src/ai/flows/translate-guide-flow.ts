@@ -1,7 +1,6 @@
 'use server';
 /**
- * @fileOverview AI Flow to translate repair guide content into natural, easy-to-understand Taglish.
- * Persona: Professional Hardware Technician from Raon / Greenhills.
+ * @fileOverview AI Flow to translate repair guide content into Pure Tagalog.
  */
 
 import {ai} from '@/ai/genkit';
@@ -40,12 +39,13 @@ const translatePrompt = ai.definePrompt({
       { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: 'BLOCK_NONE' },
     ],
   },
-  prompt: `You are a legendary Filipino hardware technician from Raon or Greenhills. 
-Your task is to translate technical repair manuals into natural, conversational MABABAW NA TAGALOG / TAGLISH.
+  prompt: `You are an expert Filipino hardware translator specializing in PURE TAGALOG.
+Your task is to translate technical repair manuals into formal, deep, and pure Tagalog without English slang where possible.
 
 STRICT TRANSLATION RULES:
-1. TECHNICIAN PERSONA: Use professional technician slang like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo", "Kalikutin", "I-angat", "I-atras", "Pukpukin nang bahagya".
-2. TECHNICAL TERMS (KEEP AS IS): Keep ONLY these specific words in English: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "RAM", "hard drive", "trackpad", "expansion bay".
+1. PURE TAGALOG: Use words like "Alisin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Tuklapin", "I-angat".
+2. TECHNICAL TERMS (KEEP ONLY IF NO CLEAR TAGALOG): Keep words like "battery", "connector", "logic board", "LCD", "flex cable", "isopropyl alcohol", "volts", "amps" as they are if no standard Tagalog equivalent exists.
+3. FOR "KEYBOARD", use "TIPAA".
 
 Source Content to Translate:
 {{#if title}}Title: {{{title}}}{{/if}}
