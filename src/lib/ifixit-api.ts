@@ -73,7 +73,7 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
  * Ensures foundational steps like case removal and preparation are included.
  */
 export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
-  if (visited.has(id) || visited.size > 30) return null;
+  if (visited.has(id) || visited.size > 20) return null; // Limit recursion depth
   visited.add(id);
 
   try {
@@ -89,7 +89,8 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
         const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), new Set(visited));
         if (prereqData && prereqData.steps) {
           allSteps = [...allSteps, ...prereqData.steps];
-          if (prereqData.description && !consolidatedDescription.includes(prereqData.description.slice(0, 30))) {
+          // Combine intro descriptions for "Before you begin" clarity
+          if (prereqData.description && !consolidatedDescription.includes(prereqData.description.slice(0, 40))) {
             consolidatedDescription = prereqData.description + "\n\n" + consolidatedDescription;
           }
         }
@@ -97,16 +98,42 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
     }
 
     // 2. Add current guide's steps
-    const internal = mapIFixitToInternal(guide);
-    if (internal && internal.steps) {
-      allSteps = [...allSteps, ...internal.steps];
-    }
+    const mappedSteps = (guide.steps || []).map((s: any) => {
+      const stepLines = (s.lines || []).map((l: any) => {
+        let text = l.text_rendered || l.text_raw || '';
+        const bulletIcons: Record<string, string> = {
+          'black': '• ',
+          'blue': '🔵 ',
+          'orange': '🟠 ',
+          'caution': '⚠️ [BABALA]: ',
+        };
+        return (bulletIcons[l.bullet] || '• ') + stripHtml(text).trim();
+      }).filter(Boolean);
 
-    // 3. Return consolidated data
+      return {
+        title: s.title || '',
+        description: stepLines.join('\n\n'),
+        imageUrl: (s.media?.data || [])[0]?.original || '',
+        images: (s.media?.data || []).map((m: any) => m.original).filter(Boolean)
+      };
+    });
+
+    allSteps = [...allSteps, ...mappedSteps];
+
+    // 3. Map everything to the internal structure
     return {
-      ...internal,
+      id: guide.guideid.toString(),
+      title: guide.title || 'Untitled',
+      device: guide.subject || 'Hardware',
+      category: mapCategory(guide.type || guide.category || ''),
+      difficulty: mapDifficulty(guide.difficulty || 'Easy'),
+      timeEstimate: guide.time_required || '30-60 mins',
       description: consolidatedDescription.trim(),
-      steps: allSteps.length > 0 ? allSteps : (internal?.steps || [])
+      thumbnail: guide.image?.original || '',
+      tools: (guide.tools || []).map((t: any) => ({ name: t.name })),
+      parts: (guide.parts || []).map((p: any) => ({ name: p.name })),
+      steps: allSteps,
+      rating: 4.8,
     };
   } catch (error) {
     console.error('Recursive guide fetch failed:', error);

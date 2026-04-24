@@ -36,7 +36,7 @@ export default function GuideDetailPage() {
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
-  // 1. Initial Data Fetch
+  // 1. Initial Data Fetch - Fetch ALL steps recursively from iFixit
   useEffect(() => {
     async function fetchGuideData() {
       if (!id) return;
@@ -45,7 +45,6 @@ export default function GuideDetailPage() {
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setOriginalGuide(fetchedGuide);
-          // Set guide initially, then translation effect will kick in if needed
           setGuide(fetchedGuide);
         }
       } catch (error) {
@@ -57,7 +56,7 @@ export default function GuideDetailPage() {
     fetchGuideData();
   }, [id]);
 
-  // 2. Handle Translation when Language changes
+  // 2. Handle Translation when Language changes to Filipino
   useEffect(() => {
     async function handleTranslation() {
       if (!originalGuide) return;
@@ -68,7 +67,7 @@ export default function GuideDetailPage() {
         return;
       }
 
-      // Check cache first to avoid re-translating same data
+      // Check cache first
       if (translationCache.current[id]?.[language]) {
         setGuide(translationCache.current[id][language]);
         setIsTranslating(false);
@@ -99,14 +98,13 @@ export default function GuideDetailPage() {
           }))
         };
 
-        // Update cache
+        // Cache the result
         if (!translationCache.current[id]) translationCache.current[id] = {};
         translationCache.current[id][language] = finalGuide;
         
         setGuide(finalGuide);
       } catch (error) {
         console.error("Translation failed:", error);
-        // On failure, stay on original but stop loading
         setGuide(originalGuide);
       } finally {
         setIsTranslating(false);
@@ -167,7 +165,7 @@ export default function GuideDetailPage() {
                 {isTranslating && (
                   <div className="flex items-center gap-2 text-primary animate-pulse ml-4">
                     <Sparkles className="w-3 h-3" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Neural Link Syncing...</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">Neural Link Translating...</span>
                   </div>
                 )}
               </div>

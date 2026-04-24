@@ -40,27 +40,20 @@ const translatePrompt = ai.definePrompt({
     })
   },
   output: {schema: TranslateGuideOutputSchema},
-  prompt: `You are a friendly Pinoy hardware repair expert for AyosGadget. 
-Translate the provided technical content into MABABAW NA TAGALOG / TAGLISH (Casual conversational Filipino).
+  prompt: `You are a Pinoy hardware repair expert for AyosGadget. 
+Translate the provided technical content into natural, conversational MABABAW NA TAGALOG / TAGLISH (Casual Pinoy Style).
 
-CRITICAL INSTRUCTIONS:
-1. TRANSLATE EVERYTHING: Every single sentence, instruction, and description MUST be in Taglish. DO NOT leave any English sentences untranslated.
-2. NATURAL STYLE: Use the casual language used by technicians in Greenhills or hardware shops. Be very "mabait" and clear.
-3. TECHNICAL TERMS: KEEP technical terms in English to avoid confusion: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "mAh", "module", "lever", "keyboard", "motherboard", "heatsink".
-4. FORMAT: Maintain the bullet points (•) and line breaks.
-
-EXAMPLES:
-- English: "Allow your phone's battery to drain below 25%, as a charged lithium-ion battery is a potential safety hazard."
-- Taglish: "Hayaan mo munang ma-drain ang battery ng phone mo hanggang 25% pababa para safe itong baklasin at hindi mag-leak o sumabog."
-
-- English: "Remove both expansion bay modules using the levers on the front of the computer."
-- Taglish: "Baklasin mo yung dalawang expansion bay modules gamit yung mga lever sa harap ng computer."
+CRITICAL RULES:
+1. TRANSLATE EVERYTHING: Every single instruction, sentence, and description MUST be translated. Do not leave English sentences untranslated.
+2. NATURAL STYLE: Use the casual language used by technicians in Greenhills or hardware shops. Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check".
+3. TECHNICAL TERMS: Keep these specific words in English to avoid confusion: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "expansion bay".
+4. FORMAT: Maintain the bullet points (•) and line breaks exactly as provided.
 
 Source Content:
 {{#if title}}Title: {{{title}}}{{/if}}
 {{#if description}}Description/Intro: {{{description}}}{{/if}}
 
-Steps to translate:
+Steps:
 {{#each steps}}
 --- STEP {{@index}} ---
 {{#if this.title}}Step Title: {{this.title}}{{/if}}
@@ -70,14 +63,15 @@ Content:
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideInput> {
-  const BATCH_SIZE = 4;
+  // Use a slightly larger batch size to reduce sequential await calls that might cause timeout
+  const BATCH_SIZE = 5;
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
   let finalTitle = input.title;
   let finalDescription = input.description;
 
-  // 1. Translate Title and the Intro Description
+  // 1. Translate Title and the Intro Description first
   try {
     const headerResult = await translatePrompt({
       title: input.title,
@@ -101,9 +95,9 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       });
 
       if (result.output && result.output.steps && result.output.steps.length > 0) {
+        // Ensure we handle cases where AI might return fewer steps than requested
         translatedSteps.push(...result.output.steps);
       } else {
-        // Fallback to original if AI fails to return steps
         translatedSteps.push(...batch);
       }
     } catch (error) {
@@ -112,9 +106,14 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     }
   }
 
+  // Reconstruct final output, making sure we don't lose steps if AI returned fewer
+  const finalSteps = translatedSteps.length >= totalSteps 
+    ? translatedSteps.slice(0, totalSteps) 
+    : [...translatedSteps, ...input.steps.slice(translatedSteps.length)];
+
   return {
     title: finalTitle,
     description: finalDescription,
-    steps: translatedSteps.length >= totalSteps ? translatedSteps.slice(0, totalSteps) : [...translatedSteps, ...input.steps.slice(translatedSteps.length)],
+    steps: finalSteps,
   };
 }
