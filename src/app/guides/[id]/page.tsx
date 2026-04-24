@@ -26,6 +26,7 @@ export default function GuideDetailPage() {
   const [originalGuide, setOriginalGuide] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [translatedVersion, setTranslatedVersion] = useState<string | null>(null);
   const translationCache = useRef<Record<string, Record<string, any>>>({});
 
   const bookmarkRef = useMemo(() => {
@@ -47,6 +48,7 @@ export default function GuideDetailPage() {
           setOriginalGuide(fetchedGuide);
           if (language === 'en') {
             setGuide(fetchedGuide);
+            setTranslatedVersion('en');
           }
         }
       } catch (error) {
@@ -65,6 +67,7 @@ export default function GuideDetailPage() {
 
       if (language === 'en') {
         setGuide(originalGuide);
+        setTranslatedVersion('en');
         setIsTranslating(false);
         return;
       }
@@ -72,12 +75,14 @@ export default function GuideDetailPage() {
       // Check Cache
       if (translationCache.current[id]?.[language]) {
         setGuide(translationCache.current[id][language]);
+        setTranslatedVersion(language);
         setIsTranslating(false);
         return;
       }
 
-      // Start Translation - Clear guide to force skeleton
+      // Force UI back to skeleton for Filipino to ensure zero English leakage
       setGuide(null);
+      setTranslatedVersion(null);
       setIsTranslating(true);
       
       try {
@@ -98,8 +103,8 @@ export default function GuideDetailPage() {
           description: translated.description || originalGuide.description,
           steps: originalGuide.steps.map((s: any, i: number) => ({
             ...s,
-            title: translated.steps[i]?.title || s.title,
-            description: translated.steps[i]?.description || s.description,
+            title: translated.steps?.[i]?.title || s.title,
+            description: translated.steps?.[i]?.description || s.description,
           }))
         };
 
@@ -107,6 +112,7 @@ export default function GuideDetailPage() {
         translationCache.current[id][language] = finalGuide;
         
         setGuide(finalGuide);
+        setTranslatedVersion(language);
       } catch (error) {
         console.error("Translation Engine Failure:", error);
         toast({
@@ -143,8 +149,10 @@ export default function GuideDetailPage() {
     }
   };
 
-  // Show loading skeleton if fetching initial data OR if translating in Filipino mode and data isn't ready
-  if (loading || (language === 'fil' && !guide)) return (
+  // CRITICAL: Stay in skeleton if Filipino is selected but translation isn't 100% verified as 'fil'
+  const showSkeleton = loading || isTranslating || (language === 'fil' && translatedVersion !== 'fil');
+
+  if (showSkeleton) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background">
       <div className="relative">
         <Loader2 className="animate-spin text-primary w-16 h-16 mb-6" />
@@ -186,12 +194,6 @@ export default function GuideDetailPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <Badge className="bg-primary/10 text-primary border-none font-black uppercase tracking-widest text-[8px]">{guide.category}</Badge>
                 <Badge variant="outline" className="font-black uppercase tracking-widest text-[8px]">{guide.difficulty}</Badge>
-                {isTranslating && (
-                  <div className="flex items-center gap-2 text-primary animate-pulse ml-4">
-                    <Sparkles className="w-3 h-3" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Neural Syncing...</span>
-                  </div>
-                )}
               </div>
 
               <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-none">

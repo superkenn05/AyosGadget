@@ -40,19 +40,18 @@ const translatePrompt = ai.definePrompt({
     })
   },
   output: {schema: TranslateGuideOutputSchema},
-  prompt: `You are a Filipino hardware repair master (Technician) for AyosGadget. 
-Your task is to translate technical repair instructions into natural, conversational MABABAW NA TAGALOG / TAGLISH (Casual Greenhills/Raon Style).
+  prompt: `You are a professional Filipino hardware technician from Greenhills or Raon.
+Your task is to translate the following technical repair manual into natural, conversational MABABAW NA TAGALOG / TAGLISH.
 
 STRICT TRANSLATION RULES:
-1. NO ENGLISH SENTENCES: Every single instruction, action, and description MUST be translated into Taglish. You are strictly forbidden from leaving English sentences as is.
-2. AGGRESSIVE TRANSLATION: "Remove the modules" -> "Baklasin ang mga modules". "Pull the tabs" -> "Hugutin ang mga tabs". "Insert your fingers" -> "Ipasok ang mga daliri".
-3. PERSONA: Talk like a real technician from Raon or Greenhills. Use technician lingo: "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo", "Bunutin ang connector".
-4. TECHNICAL TERMS (KEEP IN ENGLISH): Only keep these specific words in English: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "expansion bay", "index finger", "ribbed tabs", "power button", "volume button", "RAM", "hard drive", "tabs", "trackpad".
-5. FORMATTING: You MUST preserve the formatting of bullet points (•) and numbered lists exactly.
+1. NO ENGLISH SENTENCES: Every single instruction, description, and title MUST be translated. You are strictly forbidden from leaving English sentences as they are.
+2. TECHNICIAN PERSONA: Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo".
+3. TECHNICAL TERMS (KEEP AS IS): Only keep these words in English if necessary: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "RAM", "hard drive", "trackpad", "expansion bay".
+4. AGGRESSIVE TRANSLATION: "Remove both expansion bay modules" -> "Baklasin ang parehong expansion bay modules". "Insert your index fingers" -> "Ipasok ang mga hintuturo". "Pull the tabs" -> "Hugutin ang mga tabs".
 
 Source Content to Translate:
 {{#if title}}Title: {{{title}}}{{/if}}
-{{#if description}}Description/Intro: {{{description}}}{{/if}}
+{{#if description}}Description: {{{description}}}{{/if}}
 
 Steps:
 {{#each steps}}
@@ -63,17 +62,18 @@ Instruction:
 {{/each}}`,
 });
 
-export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideInput> {
-  const BATCH_SIZE = 3; 
+export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
+  const BATCH_SIZE = 4; 
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
   let finalTitle = input.title;
   let finalDescription = input.description;
 
-  const FALLBACK_DESC = "[SYNC ERROR: Sinusubukang i-sync ulit ang bawat hakbang...]";
+  const SYNC_ERROR_MSG = "[SYNC ERROR: Sinusubukang i-sync ulit ang bawat hakbang...]";
 
   try {
+    // 1. Translate Header
     const headerResult = await translatePrompt({
       title: input.title,
       description: input.description,
@@ -81,12 +81,13 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     
     if (headerResult.output) {
       finalTitle = headerResult.output.title || finalTitle;
-      finalDescription = headerResult.output.description || "[SYNC ERROR: Sinusubukang i-translate ang intro...]";
+      finalDescription = headerResult.output.description || finalDescription;
     }
   } catch (e) {
-    finalDescription = "[SYNC ERROR: Sinusubukang i-translate ang intro...]";
+    console.error("Header translation failed", e);
   }
 
+  // 2. Translate Steps in Batches
   for (let i = 0; i < totalSteps; i += BATCH_SIZE) {
     const batch = input.steps.slice(i, i + BATCH_SIZE);
     try {
@@ -94,17 +95,17 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
         steps: batch,
       });
 
-      if (result.output && result.output.steps && result.output.steps.length > 0) {
-        const mappedBatch = result.output.steps.map((s, idx) => ({
+      if (result.output && result.output.steps) {
+        translatedSteps.push(...result.output.steps.map((s, idx) => ({
           title: s.title || `Hakbang ${i + idx + 1}`,
-          description: s.description || FALLBACK_DESC,
-        }));
-        translatedSteps.push(...mappedBatch);
+          description: s.description || SYNC_ERROR_MSG,
+        })));
       } else {
-        translatedSteps.push(...batch.map(b => ({ ...b, description: FALLBACK_DESC })));
+        translatedSteps.push(...batch.map(() => ({ description: SYNC_ERROR_MSG })));
       }
     } catch (error) {
-      translatedSteps.push(...batch.map(b => ({ ...b, description: FALLBACK_DESC })));
+      console.error(`Batch ${i} translation failed`, error);
+      translatedSteps.push(...batch.map(() => ({ description: SYNC_ERROR_MSG })));
     }
   }
 
