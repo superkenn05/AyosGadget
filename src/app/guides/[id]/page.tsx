@@ -85,14 +85,16 @@ export default function GuideDetailPage() {
           })),
         });
 
+        if (!translated) throw new Error("Translation returned null");
+
         const finalGuide = {
           ...originalGuide,
-          title: translated.title,
-          description: translated.description,
+          title: translated.title || originalGuide.title,
+          description: translated.description || originalGuide.description,
           steps: originalGuide.steps.map((s: any, i: number) => ({
             ...s,
-            title: translated.steps[i]?.title || s.title,
-            description: translated.steps[i]?.description || s.description,
+            title: translated.steps?.[i]?.title || s.title,
+            description: translated.steps?.[i]?.description || s.description,
           }))
         };
 
@@ -179,7 +181,7 @@ export default function GuideDetailPage() {
               )}
 
               <div className="space-y-4">
-                <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">{t('guides_help_title')}</h2>
+                <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">BEFORE YOU BEGIN</h2>
                 <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium glass p-8 rounded-3xl border-primary/5">
                   {guide.description}
                 </div>
@@ -195,7 +197,7 @@ export default function GuideDetailPage() {
 
               <div className="space-y-12">
                 {guide.steps?.map((step: any, index: number) => (
-                  <div key={`${index}-${language}`} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
+                  <div key={`${id}-${index}-${language}`} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
                     <div className="p-8 md:p-14">
                       <div className="flex items-start gap-6 md:gap-12 mb-10">
                         <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-xl md:text-3xl shadow-xl neon-glow">

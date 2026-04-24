@@ -18,12 +18,12 @@ const TranslateGuideInputSchema = z.object({
 export type TranslateGuideInput = z.infer<typeof TranslateGuideInputSchema>;
 
 const TranslateGuideOutputSchema = z.object({
-  title: z.string(),
-  description: z.string(),
+  title: z.string().optional(),
+  description: z.string().optional(),
   steps: z.array(z.object({
     title: z.string().optional(),
     description: z.string(),
-  })),
+  })).optional(),
 });
 export type TranslateGuideOutput = z.infer<typeof TranslateGuideOutputSchema>;
 
@@ -41,26 +41,29 @@ const translatePrompt = ai.definePrompt({
   },
   output: {schema: TranslateGuideOutputSchema},
   prompt: `You are a friendly Pinoy hardware repair expert for AyosGadget. 
-Translate the provided content into MABABAW NA TAGALOG / TAGLISH.
+Translate the provided technical content into MABABAW NA TAGALOG / TAGLISH (Casual conversational Filipino).
 
 CRITICAL INSTRUCTIONS:
-1. TRANSLATE EVERYTHING: The title, the intro description (Before you begin), and all steps.
-2. NATURAL STYLE: Use the casual language used by technicians in Greenhills or hardware shops.
-3. KEEP ENGLISH TERMS: Do not translate technical terms like "battery", "connector", "logic board", "LCD", "screw", "flex", "adhesive", "isopropyl alcohol", "volts", "amps", "mAh".
-4. TONE: Friendly, helpful, and very clear.
+1. TRANSLATE EVERYTHING: Every sentence, instruction, and description MUST be in Taglish. Do not leave English sentences untranslated.
+2. NATURAL STYLE: Use the casual language used by technicians in Greenhills or hardware shops. Be very "mabait" and clear.
+3. TECHNICAL TERMS: KEEP technical terms in English: "battery", "connector", "logic board", "LCD", "screw", "flex", "adhesive", "isopropyl alcohol", "volts", "amps", "mAh", "module", "expansion bay", "lever", "keyboard".
+4. FORMAT: Maintain the bullet points (•) and line breaks.
 
 EXAMPLES:
 - English: "Allow your phone's battery to drain below 25%, as a charged lithium-ion battery is a potential safety hazard."
-- Taglish: "Hayaan mo munang ma-drain ang battery ng phone mo hanggang 25% pababa para safe itong baklasin at hindi mag-leak."
+- Taglish: "Hayaan mo munang ma-drain ang battery ng phone mo hanggang 25% pababa para safe itong baklasin at hindi mag-leak o sumabog."
 
-- English: "Hold the power button and either volume button, then slide to power off your phone."
-- Taglish: "Pindutin at i-hold ang power button pati ang volume button, tapos i-slide mo para ma-off ang phone."
+- English: "Remove both expansion bay modules using the levers on the front of the computer."
+- Taglish: "Baklasin mo yung dalawang expansion bay modules gamit yung mga lever sa harap ng computer."
+
+- English: "Pull the tabs toward yourself and the keyboard will pop up."
+- Taglish: "Hilahin mo yung mga tab papunta sa iyo at kusa nang lulutang o aangat yung keyboard."
 
 Source Content:
 {{#if title}}Title: {{{title}}}{{/if}}
-{{#if description}}Description/Intro (Before you begin): {{{description}}}{{/if}}
+{{#if description}}Description/Intro: {{{description}}}{{/if}}
 
-Steps:
+Steps to translate:
 {{#each steps}}
 --- STEP {{@index}} ---
 {{#if this.title}}Step Title: {{this.title}}{{/if}}
@@ -69,32 +72,30 @@ Content:
 {{/each}}`,
 });
 
-export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
-  const BATCH_SIZE = 4;
+export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideInput> {
+  const BATCH_SIZE = 3; // Smaller batch for higher accuracy
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
   let finalTitle = input.title;
   let finalDescription = input.description;
 
-  // 1. Translate Title and the "Before you begin" Description first
+  // 1. Translate Title and the Intro Description
   try {
     const headerResult = await translatePrompt({
       title: input.title,
       description: input.description,
-      steps: input.steps.slice(0, 1), // Pass one step for context
     });
     
     if (headerResult.output) {
       finalTitle = headerResult.output.title || finalTitle;
       finalDescription = headerResult.output.description || finalDescription;
-      // We don't push the step from here to avoid duplication if we batch separately
     }
   } catch (e) {
     console.error("Header translation failed:", e);
   }
 
-  // 2. Batch translate all steps to ensure full coverage (1-20+ steps)
+  // 2. Batch translate all steps
   for (let i = 0; i < totalSteps; i += BATCH_SIZE) {
     const batch = input.steps.slice(i, i + BATCH_SIZE);
     try {
@@ -102,7 +103,7 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
         steps: batch,
       });
 
-      if (result.output && result.output.steps) {
+      if (result.output && result.output.steps && result.output.steps.length > 0) {
         translatedSteps.push(...result.output.steps);
       } else {
         translatedSteps.push(...batch);

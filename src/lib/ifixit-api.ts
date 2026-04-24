@@ -73,7 +73,7 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
  * Ensures foundational steps like case removal and preparation are included.
  */
 export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
-  if (visited.has(id) || visited.size > 20) return null;
+  if (visited.has(id) || visited.size > 30) return null;
   visited.add(id);
 
   try {
@@ -81,7 +81,6 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
     if (!guide) return null;
 
     let allSteps: any[] = [];
-    // Consolidate summary and introduction for the "Before you begin" section
     let consolidatedDescription = stripHtml(guide.introduction_rendered || guide.introduction_raw || guide.summary || '');
     
     // 1. Resolve Foundations (Prerequisites) First to get Steps 1-15+
@@ -90,8 +89,7 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
         const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), new Set(visited));
         if (prereqData && prereqData.steps) {
           allSteps = [...allSteps, ...prereqData.steps];
-          // Prepend prerequisite summaries to provide vital context in the Taglish translation
-          if (prereqData.description && !consolidatedDescription.includes(prereqData.description.slice(0, 50))) {
+          if (prereqData.description && !consolidatedDescription.includes(prereqData.description.slice(0, 30))) {
             consolidatedDescription = prereqData.description + "\n\n" + consolidatedDescription;
           }
         }
@@ -104,7 +102,7 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
       allSteps = [...allSteps, ...internal.steps];
     }
 
-    // 3. Return consolidated data with cleaned description for AI translation
+    // 3. Return consolidated data
     return {
       ...internal,
       description: consolidatedDescription.trim(),
@@ -150,7 +148,7 @@ export function mapIFixitToInternal(ifixit: any) {
         'orange': '🟠 ',
         'caution': '⚠️ [BABALA]: ',
       };
-      return (bulletIcons[l.bullet] || '') + stripHtml(text).trim();
+      return (bulletIcons[l.bullet] || '• ') + stripHtml(text).trim();
     }).filter(Boolean);
 
     return {
@@ -194,7 +192,6 @@ function mapCategory(type: string): CategoryName {
 
 function stripHtml(html: string) {
   if (!html) return '';
-  // Remove HTML tags and fix spacing
   return html
     .replace(/<[^>]*>?/gm, '')
     .replace(/&nbsp;/g, ' ')
