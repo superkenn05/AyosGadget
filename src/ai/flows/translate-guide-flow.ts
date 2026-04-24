@@ -62,7 +62,7 @@ Instruction:
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
-  const BATCH_SIZE = 3; // Reduced batch size for higher reliability
+  const BATCH_SIZE = 3; 
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
@@ -72,7 +72,6 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
   const SYNC_ERROR_MSG = "[SYNC ERROR: Sinusubukang i-sync ulit ang bawat hakbang...]";
 
   try {
-    // 1. Translate Header
     const headerResult = await translatePrompt({
       title: input.title,
       description: input.description,
@@ -86,7 +85,6 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
     console.error("Header translation failed", e);
   }
 
-  // 2. Translate Steps in Batches
   for (let i = 0; i < totalSteps; i += BATCH_SIZE) {
     const batch = input.steps.slice(i, i + BATCH_SIZE);
     try {
@@ -95,7 +93,6 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       });
 
       if (result.output && result.output.steps) {
-        // Ensure we handle potentially missing steps in output
         for (let j = 0; j < batch.length; j++) {
           const s = result.output.steps[j];
           translatedSteps.push({

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Loader2, Sparkles, AlertTriangle, Wrench, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/navigation';
+import Link from 'next/link';
 import { useUser, useFirestore, useDoc } from '@/firebase';
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { useParams } from 'next/navigation';
@@ -95,16 +95,14 @@ export default function GuideDetailPage() {
           })),
         });
 
-        if (!translated || !translated.steps) throw new Error("Translation process failed");
-
         const finalGuide = {
           ...originalGuide,
-          title: translated.title || originalGuide.title,
-          description: translated.description || originalGuide.description,
+          title: translated?.title || originalGuide.title,
+          description: translated?.description || originalGuide.description,
           steps: originalGuide.steps.map((s: any, i: number) => ({
             ...s,
-            title: translated.steps?.[i]?.title || s.title,
-            description: translated.steps?.[i]?.description || s.description,
+            title: translated?.steps?.[i]?.title || s.title,
+            description: translated?.steps?.[i]?.description || s.description,
           }))
         };
 
