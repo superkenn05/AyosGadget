@@ -86,9 +86,17 @@ export default function GuideDetailPage() {
           title: originalGuide.title,
           description: originalGuide.description
         });
-        setTranslatedMeta({ title: metaRes.title, description: metaRes.description });
+        const nextMeta = { title: metaRes.title, description: metaRes.description };
+        setTranslatedMeta(nextMeta);
+        
+        // Update cache partially
+        translationCache.current[cacheKey] = {
+          meta: nextMeta,
+          steps: {}
+        };
       } catch (e) {
         console.error("Meta translation error", e);
+        setTranslatedMeta({ title: originalGuide.title, description: originalGuide.description });
       }
 
       // Step B: Translate each step one-by-one
@@ -101,9 +109,9 @@ export default function GuideDetailPage() {
           if (stepRes.steps?.[0]) {
             setTranslatedSteps(prev => {
               const next = { ...prev, [i]: stepRes.steps![0] };
-              // Update cache
+              // Update cache fully
               translationCache.current[cacheKey] = {
-                meta: translatedMeta,
+                meta: translationCache.current[cacheKey]?.meta,
                 steps: next
               };
               return next;
@@ -111,7 +119,6 @@ export default function GuideDetailPage() {
           }
         } catch (e) {
           console.error(`Step ${i} translation error`, e);
-          // Set fallback to English to avoid infinite skeleton if error occurs
           setTranslatedSteps(prev => ({ ...prev, [i]: { description: steps[i].description } }));
         }
       }
@@ -219,7 +226,7 @@ export default function GuideDetailPage() {
 
               <div className="space-y-12">
                 {originalGuide.steps?.map((step: any, index: number) => {
-                  const isStepTranslated = language !== 'fil' || translatedSteps[index];
+                  const isStepTranslated = language !== 'fil' || !!translatedSteps[index];
                   const currentStep = language === 'fil' ? translatedSteps[index] : step;
 
                   return (
