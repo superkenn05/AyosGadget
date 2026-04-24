@@ -58,16 +58,22 @@ export default function GuideDetailPage() {
 
   useEffect(() => {
     async function handleTranslation() {
-      if (!originalGuide || language === 'en') {
+      if (!originalGuide) return;
+
+      // If language is English, show original and exit
+      if (language === 'en') {
         setGuide(originalGuide);
+        setIsTranslating(false);
         return;
       }
 
+      // Check cache first
       if (translationCache.current[id]?.[language]) {
         setGuide(translationCache.current[id][language]);
         return;
       }
 
+      // Start translation
       setIsTranslating(true);
       try {
         const translated = await translateGuide({
@@ -95,7 +101,8 @@ export default function GuideDetailPage() {
         setGuide(finalGuide);
       } catch (error) {
         console.error("Translation failed:", error);
-        toast({ title: "Neural Link Busy", description: "Showing original Taglish context." });
+        toast({ title: "Neural Link Busy", description: "Showing technical context." });
+        setGuide(originalGuide);
       } finally {
         setIsTranslating(false);
       }

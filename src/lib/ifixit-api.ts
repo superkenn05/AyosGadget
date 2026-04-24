@@ -71,7 +71,7 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
  * Ensures foundational steps like case removal are included.
  */
 export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
-  if (visited.has(id) || visited.size > 15) return null; // Avoid circular refs and deep recursion
+  if (visited.has(id) || visited.size > 15) return null;
   visited.add(id);
 
   try {
@@ -96,10 +96,10 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
       allSteps = [...allSteps, ...internal.steps];
     }
 
-    // 3. De-duplicate steps based on description if necessary, but usually sequence matters
+    // 3. Flatten steps and ensure no empty sequences
     return {
       ...internal,
-      steps: allSteps
+      steps: allSteps.length > 0 ? allSteps : (internal?.steps || [])
     };
   } catch (error) {
     console.error('Recursive guide fetch failed:', error);
@@ -139,7 +139,7 @@ export function mapIFixitToInternal(ifixit: any) {
         'black': '• ',
         'blue': '🔵 ',
         'orange': '🟠 ',
-        'caution': '⚠️ [WARNING]: ',
+        'caution': '⚠️ [BABALA]: ',
       };
       return (bulletIcons[l.bullet] || '') + stripHtml(text).trim();
     }).filter(Boolean);

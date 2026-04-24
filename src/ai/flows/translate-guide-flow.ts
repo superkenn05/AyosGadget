@@ -1,7 +1,7 @@
 'use server';
 /**
- * @fileOverview AI Flow to translate repair guide content into simple Filipino/Taglish.
- * Optimized for natural, non-formal technical language.
+ * @fileOverview AI Flow to translate repair guide content into natural Taglish.
+ * Optimized for natural, non-formal technical language used by Pinoy technicians.
  */
 
 import {ai} from '@/ai/genkit';
@@ -41,13 +41,16 @@ const translatePrompt = ai.definePrompt({
   },
   output: {schema: TranslateGuideOutputSchema},
   prompt: `You are a friendly technical expert for AyosGadget. 
-Translate the following repair guide content into simple, natural Filipino (Taglish or Mababaw na Tagalog).
+Translate the following repair guide content into simple, natural Taglish (Filipino-English mix) as used in common Pinoy hardware shops.
 
 IMPORTANT RULES:
-1. NATURAL TONE: Use natural, conversational Taglish. Don't use deep or formal Tagalog (e.g., use "Buksan" instead of "Ibukas", use "Turnilyo" instead of "Pako").
-2. TECH TERMS: KEEP common tech terms in English: "logic board", "battery connector", "ribbon cable", "spudger", "LCD screen", "flex cable", "bracket".
-3. SAFETY FIRST: Make safety warnings clear but simple.
-4. CONSISTENCY: Translate every step. Keep bullet points (•, 🔵, ⚠️) exactly as they are.
+1. MABABAW NA TAGALOG: Use conversational Taglish. Don't use formal or "deep" Tagalog.
+   - Use "Buksan" instead of "Ibukas".
+   - Use "Tanggalin" instead of "Alisin".
+   - Use "Hugutin" instead of "Bunutin".
+2. KEEP TECH TERMS IN ENGLISH: Do NOT translate: "logic board", "battery connector", "ribbon cable", "spudger", "LCD screen", "flex cable", "bracket", "connector", "screws", "adhesive".
+3. TONE: Friendly, clear, and instructional.
+4. CONSISTENCY: Keep bullet points (•, 🔵, ⚠️) exactly as they are.
 
 Source Content:
 {{#if title}}Title: {{{title}}}{{/if}}
@@ -63,7 +66,7 @@ Content:
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {
-  const BATCH_SIZE = 5; // Balanced for speed and reliability
+  const BATCH_SIZE = 4; // Optimized for stability
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
@@ -93,6 +96,12 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
       console.error("Batch translation failed, using original:", error);
       translatedSteps.push(...batch);
     }
+  }
+
+  // Ensure output length matches input length
+  if (translatedSteps.length < totalSteps) {
+    const remaining = input.steps.slice(translatedSteps.length);
+    translatedSteps.push(...remaining);
   }
 
   return {
