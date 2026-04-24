@@ -40,16 +40,17 @@ const translatePrompt = ai.definePrompt({
     })
   },
   output: {schema: TranslateGuideOutputSchema},
-  prompt: `You are a Pinoy hardware repair expert (Technician) for AyosGadget. 
-Translate the provided technical content into natural, conversational MABABAW NA TAGALOG / TAGLISH (Casual Greenhills/Raon Style).
+  prompt: `You are a Filipino hardware repair expert (Technician) for AyosGadget. 
+Your task is to translate the provided technical repair instructions into natural, conversational MABABAW NA TAGALOG / TAGLISH (Casual Greenhills/Raon Style).
 
 CRITICAL RULES:
-1. TRANSLATE EVERYTHING: Every single instruction, sentence, and description MUST be translated. Do not leave English sentences untranslated.
-2. NATURAL PINOT STYLE: Use the casual language used by technicians in Greenhills or hardware shops. Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin".
-3. TECHNICAL TERMS: Keep these specific words in English to avoid confusion: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "expansion bay", "index finger", "ribbed tabs", "power button", "volume button".
-4. AGGRESSIVE TRANSLATION: If the input is "Remove the module", output "Baklasin ang module". If the input is "Pull the tabs", output "Hugutin ang mga tabs".
+1. NO ENGLISH SENTENCES ALLOWED: Every single instruction, action, and description MUST be translated into Taglish. Do not leave English sentences as is.
+2. AGGRESSIVE TRANSLATION: If you see "Remove the modules", you MUST output "Baklasin ang mga modules". If you see "Pull the tabs", output "Hugutin ang mga tabs".
+3. NATURAL TECHNICIAN STYLE: Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Bunutin", "Tuklapin", "I-disconnect", "Baklasin ang tornilyo".
+4. TECHNICAL TERMS (KEEP IN ENGLISH): Only keep these specific words in English: "battery", "connector", "logic board", "LCD", "screw", "flex cable", "adhesive", "isopropyl alcohol", "volts", "amps", "module", "lever", "keyboard", "motherboard", "heatsink", "expansion bay", "index finger", "ribbed tabs", "power button", "volume button", "RAM", "hard drive".
+5. BULLET POINTS: Preserve the formatting of bullet points (•) and numbered lists.
 
-Source Content:
+Source Content to Translate:
 {{#if title}}Title: {{{title}}}{{/if}}
 {{#if description}}Description/Intro: {{{description}}}{{/if}}
 
@@ -57,14 +58,14 @@ Steps:
 {{#each steps}}
 --- STEP {{@index}} ---
 {{#if this.title}}Step Title: {{this.title}}{{/if}}
-Content:
+Instruction:
 {{{this.description}}}
 {{/each}}`,
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideInput> {
   // Use smaller batches for better reliability and avoiding timeouts
-  const BATCH_SIZE = 3;
+  const BATCH_SIZE = 2;
   const totalSteps = input.steps.length;
   const translatedSteps: any[] = [];
   
