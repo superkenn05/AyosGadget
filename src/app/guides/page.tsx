@@ -1,3 +1,4 @@
+
 'use client';
 
 import RepairCard from '@/components/repair/RepairCard';
@@ -8,13 +9,13 @@ import { Search, Loader2, Sparkles, ChevronRight, ChevronLeft, Layers, Wrench, L
 import { useState, useEffect, Suspense, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
-import { searchIFixitGuides, getTrendingGuides, mapIFixitToInternal, getIFixitWiki, IFixitWiki } from '@/lib/ifixit-api';
+import { searchIFixitGuides, getTrendingGuides, getIFixitWiki } from '@/lib/ifixit-api';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 
 function GuidesContent() {
-  const { t } = useLanguage();
+  const { t, isMounted } = useLanguage();
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -24,7 +25,7 @@ function GuidesContent() {
   const [searchQuery, setSearchQuery] = useState(searchParam || '');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryParam);
   const [globalGuides, setGlobalGuides] = useState<any[]>([]);
-  const [categoryWiki, setCategoryWiki] = useState<IFixitWiki | null>(null);
+  const [categoryWiki, setCategoryWiki] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(0);
 
@@ -61,11 +62,11 @@ function GuidesContent() {
           setCategoryWiki(wiki);
           
           const results = await searchIFixitGuides(selectedCategory);
-          setGlobalGuides(deduplicateGuides(results.map(mapIFixitToInternal)));
+          setGlobalGuides(deduplicateGuides(results));
         } else if (!searchQuery) {
           setCategoryWiki(null);
           const trending = await getTrendingGuides(0, 12);
-          setGlobalGuides(deduplicateGuides(trending.map(mapIFixitToInternal)));
+          setGlobalGuides(deduplicateGuides(trending));
         }
       } catch (error) {
         console.error("Error loading category data:", error);
@@ -82,14 +83,13 @@ function GuidesContent() {
     try {
       let more: any[] = [];
       if (selectedCategory || searchQuery) {
-        const query = searchQuery || selectedCategory || '';
-        more = await searchIFixitGuides(query); 
+        const queryStr = searchQuery || selectedCategory || '';
+        more = await searchIFixitGuides(queryStr); 
       } else {
         more = await getTrendingGuides(nextPage * 12, 12);
       }
       
-      const mappedMore = more.map(mapIFixitToInternal);
-      setGlobalGuides(prev => deduplicateGuides([...prev, ...mappedMore]));
+      setGlobalGuides(prev => deduplicateGuides([...prev, ...more]));
       setPage(nextPage);
     } catch (error) {
       console.error("Error loading more guides:", error);
@@ -110,9 +110,11 @@ function GuidesContent() {
     router.back();
   };
 
+  if (!isMounted) return null;
+
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Search and Header Section */}
+      {/* Header */}
       <section className="pt-24 pb-8 px-6">
         <div className="container mx-auto max-w-4xl space-y-8">
           <div className="flex items-center justify-between">
@@ -233,47 +235,11 @@ function GuidesContent() {
                     <div className="h-px flex-grow bg-slate-100 dark:bg-white/5" />
                   </div>
 
-                  {sections.replacement.length > 0 && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between pl-4 border-l-4 border-primary">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Replacement Guides</h3>
-                        <span className="text-[8px] font-black text-primary uppercase opacity-40">{sections.replacement.length} manual(s)</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {sections.replacement.map((guide) => (
-                          <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {sections.teardowns.length > 0 && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between pl-4 border-l-4 border-amber-500">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Teardowns</h3>
-                        <span className="text-[8px] font-black text-amber-500 uppercase opacity-40">{sections.teardowns.length} manual(s)</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {sections.teardowns.map((guide) => (
-                          <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {sections.techniques.length > 0 && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between pl-4 border-l-4 border-emerald-500">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Techniques</h3>
-                        <span className="text-[8px] font-black text-emerald-500 uppercase opacity-40">{sections.techniques.length} manual(s)</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {sections.techniques.map((guide) => (
-                          <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {globalGuides.map((guide) => (
+                      <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
+                    ))}
+                  </div>
                 </div>
               )}
             </>
@@ -296,12 +262,9 @@ function GuidesContent() {
                     onClick={() => handleCategoryClick(cat.name)}
                     className="group relative bg-white dark:bg-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] flex items-center gap-4 md:gap-6 shadow-md border border-transparent hover:border-primary/20 transition-all active:scale-95 text-left overflow-hidden h-24 md:h-28"
                   >
-                    {/* Ghost Background Icon */}
                     <div className="absolute -right-4 -bottom-4 opacity-[0.03] dark:opacity-[0.06] group-hover:opacity-[0.1] transition-opacity">
                       <CategoryIcon name={cat.icon} className="w-20 h-20 md:w-24 md:h-24" />
                     </div>
-
-                    {/* Main Content */}
                     <div className="relative z-10 w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all shrink-0">
                       <CategoryIcon name={cat.icon} className="w-6 h-6 md:w-8 md:h-8" />
                     </div>

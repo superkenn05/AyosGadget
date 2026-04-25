@@ -1,3 +1,4 @@
+
 'use client';
 
 import CategoryIcon from '@/components/repair/CategoryIcon';
@@ -8,10 +9,10 @@ import { Activity, Cpu, Zap, ArrowRight, Globe, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useState, useEffect } from 'react';
-import { getTrendingGuides, mapIFixitToInternal } from '@/lib/ifixit-api';
+import { getTrendingGuides } from '@/lib/ifixit-api';
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, isMounted } = useLanguage();
   const [trendingGuides, setTrendingGuides] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -20,7 +21,7 @@ export default function Home() {
       setIsLoading(true);
       try {
         const trending = await getTrendingGuides(0, 6);
-        setTrendingGuides(trending.map(mapIFixitToInternal));
+        setTrendingGuides(trending);
       } catch (error) {
         console.error("Failed to load trending guides", error);
       } finally {
@@ -30,9 +31,11 @@ export default function Home() {
     fetchTrending();
   }, []);
 
+  if (!isMounted) return null;
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section - Refined for Professional UI/UX */}
+      {/* Hero Section */}
       <section className="relative pt-24 pb-12 px-6">
         <div className="container mx-auto max-w-4xl">
           <div className="glass p-6 md:p-10 rounded-[2.5rem] border-primary/5 relative overflow-hidden group shadow-xl bg-card/30 backdrop-blur-xl">
@@ -71,7 +74,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Category Modules Section (MGA GAMIT) - 4 Columns (2 Lines) */}
+      {/* Category Modules */}
       <section className="container mx-auto px-6 mb-16">
         <div className="flex items-center justify-between mb-10 px-2 max-w-4xl mx-auto">
           <h2 className="text-[10px] font-black uppercase tracking-[0.6em] text-primary">{t('home_modules')}</h2>
@@ -94,7 +97,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Auxiliary Directory Section */}
+      {/* Auxiliary Directory */}
       <section className="container mx-auto px-6 mb-20">
         <div className="flex items-center gap-6 mb-10 px-2 max-w-4xl mx-auto">
           <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
@@ -120,7 +123,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trending Protocols Section */}
+      {/* Trending Protocols */}
       <section className="container mx-auto px-6 pb-28">
         <div className="flex items-center justify-between mb-10 px-2 max-w-4xl mx-auto lg:max-w-none">
           <div className="flex items-center gap-3">

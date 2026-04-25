@@ -1,5 +1,8 @@
+
+'use server';
+
 /**
- * @fileOverview iFixit API Client with improved prerequisite resolution to guarantee 20+ steps manuals.
+ * @fileOverview iFixit API Client - Server Side Implementation to avoid CORS.
  */
 
 import { CategoryName } from './repair-data';
@@ -33,12 +36,79 @@ export interface IFixitWiki {
   children: { title: string; image: { thumbnail: string }; type: string }[];
 }
 
+function stripHtml(html: string) {
+  if (!html) return '';
+  return html
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
+  const d = diff.toLowerCase();
+  if (d.includes('easy')) return 'easy';
+  if (d.includes('moderate') || d.includes('medium')) return 'medium';
+  return 'hard';
+}
+
+function mapCategory(type: string): CategoryName {
+  const t = type.toLowerCase();
+  if (t.includes('phone')) return 'Smartphones';
+  if (t.includes('laptop')) return 'Laptops';
+  if (t.includes('mac')) return 'Mac';
+  return 'Appliances';
+}
+
+async function mapIFixitToInternal(ifixit: any) {
+  const rawId = ifixit.guideid ?? ifixit.id;
+  if (!rawId) return null;
+  
+  const rawSteps = ifixit.steps || [];
+  const mappedSteps = rawSteps.map((s: any) => {
+    const stepLines = (s.lines || []).map((l: any) => {
+      let text = l.text_rendered || l.text_raw || '';
+      const bulletIcons: Record<string, string> = {
+        'black': '• ',
+        'blue': '🔵 ',
+        'orange': '🟠 ',
+        'caution': '⚠️ [BABALA]: ',
+      };
+      return (bulletIcons[l.bullet] || '• ') + stripHtml(text).trim();
+    }).filter(Boolean);
+
+    return {
+      title: s.title || '',
+      description: stepLines.join('\n\n'),
+      imageUrl: (s.media?.data || [])[0]?.original || '',
+      images: (s.media?.data || []).map((m: any) => m.original).filter(Boolean)
+    };
+  });
+
+  return {
+    id: rawId.toString(),
+    title: ifixit.title || 'Untitled',
+    device: ifixit.subject || 'Hardware',
+    category: mapCategory(ifixit.type || ifixit.category || ''),
+    difficulty: mapDifficulty(ifixit.difficulty || 'Easy'),
+    timeEstimate: ifixit.time_required || '30-60 mins',
+    description: stripHtml(ifixit.introduction_rendered || ifixit.introduction_raw || ifixit.summary || ''),
+    thumbnail: ifixit.image?.original || '',
+    tools: (ifixit.tools || []).map((t: any) => ({ name: t.name })),
+    parts: (ifixit.parts || []).map((p: any) => ({ name: p.name })),
+    steps: mappedSteps,
+    rating: 4.8,
+  };
+}
+
 export async function searchIFixitGuides(query: string) {
   try {
     const res = await fetch(`https://www.ifixit.com/api/2.0/search/${encodeURIComponent(query)}?type=guide&limit=40`);
     if (!res.ok) return [];
     const data = await res.json();
-    return data.results || [];
+    const results = data.results || [];
+    const mapped = await Promise.all(results.map((r: any) => mapIFixitToInternal(r)));
+    return mapped.filter(Boolean);
   } catch (error) {
     console.error('iFixit search error:', error);
     return [];
@@ -50,7 +120,8 @@ export async function getTrendingGuides(offset: number = 0, limit: number = 12) 
     const res = await fetch(`https://www.ifixit.com/api/2.0/guides?offset=${offset}&limit=${limit}`);
     if (!res.ok) return [];
     const data = await res.json();
-    return data || [];
+    const mapped = await Promise.all((data || []).map((r: any) => mapIFixitToInternal(r)));
+    return mapped.filter(Boolean);
   } catch (error) {
     console.error('iFixit trending error:', error);
     return [];
@@ -68,10 +139,6 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
   }
 }
 
-/**
- * Deep recursive fetch to get ALL steps (1-20+) by resolving all prerequisites first.
- * Ensures foundational steps like case removal and preparation are included.
- */
 export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
   if (visited.has(id) || visited.size > 20) return null; 
   visited.add(id);
@@ -83,7 +150,6 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
     let allSteps: any[] = [];
     let consolidatedDescription = stripHtml(guide.introduction_rendered || guide.introduction_raw || guide.summary || '');
     
-    // 1. Resolve Foundations (Prerequisites) First to get Steps 1-15+
     if (guide.prerequisites && Array.isArray(guide.prerequisites)) {
       for (const prereq of guide.prerequisites) {
         const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), new Set(visited));
@@ -96,7 +162,6 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
       }
     }
 
-    // 2. Add current guide's steps
     const mappedSteps = (guide.steps || []).map((s: any) => {
       const stepLines = (s.lines || []).map((l: any) => {
         let text = l.text_rendered || l.text_raw || '';
@@ -157,69 +222,4 @@ export async function getIFixitWiki(categoryName: string): Promise<IFixitWiki | 
     console.error('iFixit wiki error:', error);
     return null;
   }
-}
-
-export function mapIFixitToInternal(ifixit: any) {
-  const rawId = ifixit.guideid ?? ifixit.id;
-  if (!rawId) return null;
-  
-  const rawSteps = ifixit.steps || [];
-  const mappedSteps = rawSteps.map((s: any) => {
-    const stepLines = (s.lines || []).map((l: any) => {
-      let text = l.text_rendered || l.text_raw || '';
-      const bulletIcons: Record<string, string> = {
-        'black': '• ',
-        'blue': '🔵 ',
-        'orange': '🟠 ',
-        'caution': '⚠️ [BABALA]: ',
-      };
-      return (bulletIcons[l.bullet] || '• ') + stripHtml(text).trim();
-    }).filter(Boolean);
-
-    return {
-      title: s.title || '',
-      description: stepLines.join('\n\n'),
-      imageUrl: (s.media?.data || [])[0]?.original || '',
-      images: (s.media?.data || []).map((m: any) => m.original).filter(Boolean)
-    };
-  });
-
-  return {
-    id: rawId.toString(),
-    title: ifixit.title || 'Untitled',
-    device: ifixit.subject || 'Hardware',
-    category: mapCategory(ifixit.type || ifixit.category || ''),
-    difficulty: mapDifficulty(ifixit.difficulty || 'Easy'),
-    timeEstimate: ifixit.time_required || '30-60 mins',
-    description: stripHtml(ifixit.introduction_rendered || ifixit.introduction_raw || ifixit.summary || ''),
-    thumbnail: ifixit.image?.original || '',
-    tools: (ifixit.tools || []).map((t: any) => ({ name: t.name })),
-    parts: (ifixit.parts || []).map((p: any) => ({ name: p.name })),
-    steps: mappedSteps,
-    rating: 4.8,
-  };
-}
-
-function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
-  const d = diff.toLowerCase();
-  if (d.includes('easy')) return 'easy';
-  if (d.includes('moderate') || d.includes('medium')) return 'medium';
-  return 'hard';
-}
-
-function mapCategory(type: string): CategoryName {
-  const t = type.toLowerCase();
-  if (t.includes('phone')) return 'Smartphones';
-  if (t.includes('laptop')) return 'Laptops';
-  if (t.includes('mac')) return 'Mac';
-  return 'Appliances';
-}
-
-function stripHtml(html: string) {
-  if (!html) return '';
-  return html
-    .replace(/<[^>]*>?/gm, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
 }

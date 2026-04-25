@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -22,9 +23,8 @@ export default function GuideDetailPage() {
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
-  const { t, language } = useLanguage();
+  const { t, language, isMounted } = useLanguage();
   
-  const [isMounted, setIsMounted] = useState(false);
   const [originalGuide, setOriginalGuide] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
@@ -34,10 +34,6 @@ export default function GuideDetailPage() {
   const translationCache = useRef<Record<string, any>>({});
   const isTranslatingMeta = useRef(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
   const bookmarkRef = useMemo(() => {
     if (!user || !id || !db) return null;
     return doc(db, 'users', user.uid, 'bookmarks', id);
@@ -46,7 +42,7 @@ export default function GuideDetailPage() {
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
-  // 1. Initial Fetch of iFixit Data
+  // 1. Initial Fetch
   useEffect(() => {
     async function fetchGuideData() {
       if (!id) return;
@@ -65,7 +61,7 @@ export default function GuideDetailPage() {
     fetchGuideData();
   }, [id]);
 
-  // 2. Meta AI Translation (Title & Intro only to avoid timeout)
+  // 2. Meta AI Translation (Header only)
   useEffect(() => {
     if (!originalGuide || language !== 'fil') {
       if (language !== 'fil') setTranslatedMeta(null);
@@ -103,7 +99,7 @@ export default function GuideDetailPage() {
     translateHeader();
   }, [language, originalGuide, id]);
 
-  // 3. Fast Heuristic "Mababaw na Tagalog" Translation for Steps (Instant, No AI)
+  // 3. Instant Heuristic Translation for Steps
   useEffect(() => {
     if (!originalGuide || language !== 'fil') {
       setTranslatedSteps({});
@@ -112,7 +108,6 @@ export default function GuideDetailPage() {
 
     const newTranslatedSteps: Record<number, string> = {};
     originalGuide.steps?.forEach((step: any, index: number) => {
-      // Use the heuristic engine for instant, "mababaw" Taglish instructions
       newTranslatedSteps[index] = heuristicTranslate(step.description);
     });
     setTranslatedSteps(newTranslatedSteps);

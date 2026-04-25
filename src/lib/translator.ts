@@ -1,12 +1,12 @@
+
 /**
  * @fileOverview Heuristic pattern-based translator for repair guides.
- * Converts technical English to "Purong Tagalog" without using AI.
+ * Converts technical English to "Mababaw na Tagalog" (Conversational Taglish).
  */
 
 const DICTIONARY: Record<string, string> = {
-  // Action Verbs (Purong Tagalog)
-  "remove": "tanggalin",
-  "unscrew": "alisin ang tornilyo",
+  "remove": "baklasin",
+  "unscrew": "luwagan ang tornilyo",
   "disconnect": "hugutin ang koneksyon",
   "pull": "hilahin",
   "push": "itulak",
@@ -17,65 +17,54 @@ const DICTIONARY: Record<string, string> = {
   "close": "isara",
   "insert": "isuksok",
   "search": "hanapin",
-  "located": "matatagpuan",
-  "toward": "patungo sa",
+  "located": "makikita",
+  "toward": "papunta sa",
   "pop up": "aangat",
   "using": "gamit ang",
   "the": "ang",
   "front": "harapan",
-  "back": "hulihan",
-  "upper": "itaas",
+  "back": "likod",
+  "upper": "taas",
   "lower": "ibaba",
   "near": "malapit sa",
   "inside": "sa loob ng",
-  "search for": "hanapin ang",
-  "with": "gamit ang",
+  "with": "kasama ang",
   "and": "at",
   "both": "parehong",
-  "underside of": "ilalim ng",
-  "your": "iyong",
-  "index fingers": "mga hintuturo",
-  "levers": "mga panungkit",
-  "tabs": "mga tab",
-  "ribbed": "may mga guhit",
-  "keyboard": "tipaan",
-  "expansion bay": "bahagi ng pagpapalawak",
-  "module": "modyul",
-  "computer": "kompyuter",
-  "battery": "baterya",
+  "underside": "ilalim",
+  "keyboard": "keyboard",
+  "expansion bay": "expansion bay",
+  "module": "module",
+  "computer": "gadget",
+  "battery": "battery",
   "screw": "tornilyo",
   "screws": "mga tornilyo",
-  "case": "kaha",
+  "case": "case",
   "top": "itaas",
   "bottom": "ibaba",
-  "connector": "konektor",
-  "display": "tabing",
-  "screen": "tabing",
-  "tool": "kagamitan",
+  "connector": "connector",
+  "display": "screen",
+  "screen": "screen",
+  "tool": "gamit",
   "part": "piyesa",
   "replace": "palitan",
   "install": "ikabit",
 };
 
 /**
- * Performs a fast, dictionary-based translation of English repair instructions to Pure Tagalog.
+ * Translates a single sentence into Mababaw na Tagalog.
  */
-export function heuristicTranslate(text: string): string {
-  if (!text) return "";
-  
-  let result = text.toLowerCase();
+function translateSentence(sentence: string): string {
+  let result = sentence.toLowerCase().trim();
+  if (!result) return "";
 
-  // 1. Replace multi-word phrases first
+  // 1. Common Phrases
   const phrases = [
     ["search for", "hanapin ang"],
-    ["front of the computer", "harapan ng kompyuter"],
-    ["front of", "harapan ng"],
-    ["corners of", "mga sulok ng"],
-    ["underside of the", "ilalim ng"],
+    ["front of the", "harapan ng"],
     ["underside of", "ilalim ng"],
-    ["index fingers", "mga hintuturo"],
-    ["pull the tabs toward yourself", "hilahin ang mga tab patungo sa iyo"],
-    ["will pop up", "ay kusa nang aangat"],
+    ["pop up", "kusa nang aangat"],
+    ["pull the tabs", "hilahin ang mga lock"],
   ];
 
   phrases.forEach(([eng, tag]) => {
@@ -83,27 +72,41 @@ export function heuristicTranslate(text: string): string {
     result = result.replace(regex, tag);
   });
 
-  // 2. Replace single words based on dictionary
+  // 2. Single Words
   Object.entries(DICTIONARY).forEach(([eng, tag]) => {
     const regex = new RegExp(`\\b${eng}\\b`, 'gi');
     result = result.replace(regex, tag);
   });
 
-  // 3. Post-processing
+  // 3. Post-process
   result = result
     .replace(/\bang ang\b/g, "ang")
     .replace(/\bang sa\b/g, "sa")
     .replace(/\bgamit ang ang\b/g, "gamit ang");
 
-  // Capitalize first letter of sentences
-  result = result.replace(/(^\w|\.\s+\w)/gm, (m) => m.toUpperCase());
-  
-  return result;
+  // Capitalize first letter
+  return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
 /**
- * For backward compatibility
+ * Performs a fast, dictionary-based translation of English repair instructions to Mababaw na Tagalog.
+ * Processes the text sentence by sentence.
  */
-export async function translateFast(text: string): Promise<string> {
-  return heuristicTranslate(text);
+export function heuristicTranslate(text: string): string {
+  if (!text) return "";
+  
+  // Split by periods, exclamation marks, or newlines
+  const sentences = text.split(/([.!\n])/);
+  let result = "";
+
+  for (let i = 0; i < sentences.length; i++) {
+    const part = sentences[i];
+    if (/[.!\n]/.test(part)) {
+      result += part;
+    } else {
+      result += translateSentence(part);
+    }
+  }
+
+  return result;
 }
