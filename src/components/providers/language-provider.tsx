@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -33,9 +32,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const language = (i18n.language || 'en') as Language;
 
+  // Render children only after mounting to prevent hydration mismatches
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t, isMounted }}>
-      {children}
+      {isMounted ? children : <div className="invisible">{children}</div>}
     </LanguageContext.Provider>
   );
 }

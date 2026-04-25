@@ -26,8 +26,9 @@ export default function Home() {
         const trending = await getTrendingGuides(0, 6);
         if (trending && trending.length > 0) {
           setTrendingGuides(trending);
-        } else if (!trending) {
-          setHasError(true);
+        } else {
+          // If empty or null but no throw, might still be a fetch failure handled by server
+          setHasError(trending === null);
         }
       } catch (error) {
         console.error("Failed to load trending guides", error);
@@ -102,32 +103,6 @@ export default function Home() {
               </span>
             </Link>
           ))}
-        </div>
-      </section>
-
-      {/* Auxiliary Directory */}
-      <section className="container mx-auto px-6 mb-20">
-        <div className="flex items-center gap-6 mb-10 px-2 max-w-4xl mx-auto">
-          <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
-          <span className="text-[9px] font-black uppercase tracking-[0.4em] opacity-30">{t('home_auxiliary')}</span>
-          <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 max-w-4xl mx-auto">
-           {DIRECTORY_CATEGORIES.map((item) => (
-             <Link key={item.name} href={`/guides?search=${item.name.toLowerCase()}`}>
-               <div className="glass h-12 rounded-xl flex items-center group transition-all hover:bg-primary/5 hover:border-primary/20 overflow-hidden shadow-sm border-primary/5">
-                  <div className="w-10 h-full flex items-center justify-center bg-primary/10 text-primary font-black text-[8px] border-r border-primary/5">
-                    {item.count}
-                  </div>
-                  <div className="px-4 flex items-center justify-between w-full">
-                    <span className="text-[8px] font-black uppercase tracking-widest group-hover:text-primary transition-colors truncate">
-                      {item.name}
-                    </span>
-                  </div>
-               </div>
-             </Link>
-           ))}
         </div>
       </section>
 

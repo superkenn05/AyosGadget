@@ -2,8 +2,11 @@
 
 /**
  * @fileOverview iFixit API Client - Server Side Implementation.
- * Pinatibay ang fetch logic para iwas CORS at timeout errors.
+ * Pinatibay ang fetch logic para iwas CORS at timeout errors gamit ang Server Actions.
  */
+
+const IFIXIT_API_BASE = 'https://www.ifixit.com/api/2.0';
+const USER_AGENT = 'AyosGadget/1.0 (Neural Repair Engine; +https://ayosgadget.com)';
 
 function stripHtml(html: string) {
   if (!html) return '';
@@ -22,8 +25,7 @@ function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
 }
 
 /**
- * Internal helper to transform raw iFixit data to our internal RepairGuide format.
- * Not exported because it's not an async server action.
+ * Internal helper to transform raw iFixit data to our internal format.
  */
 function transformIFixitData(ifixit: any) {
   const rawId = ifixit.guideid ?? ifixit.id;
@@ -65,22 +67,18 @@ function transformIFixitData(ifixit: any) {
   };
 }
 
-const DEFAULT_HEADERS = {
-  'User-Agent': 'AyosGadget/1.0 (Neural Repair Engine; +https://ayosgadget.com)',
-  'Accept': 'application/json',
-  'Cache-Control': 'no-cache',
-};
-
 /**
- * Robust fetch wrapper to handle common iFixit API quirks.
+ * Robust fetch wrapper to handle CORS and iFixit API quirks.
  */
 async function fetchIFixit(endpoint: string) {
-  const url = endpoint.startsWith('http') ? endpoint : `https://www.ifixit.com/api/2.0/${endpoint}`;
+  const url = `${IFIXIT_API_BASE}/${endpoint}`;
   try {
     const res = await fetch(url, {
-      headers: DEFAULT_HEADERS,
-      cache: 'no-store',
-      next: { revalidate: 0 }
+      headers: {
+        'User-Agent': USER_AGENT,
+        'Accept': 'application/json',
+      },
+      next: { revalidate: 3600 } // Cache for 1 hour
     });
     
     if (!res.ok) {
@@ -102,7 +100,6 @@ export async function searchIFixitGuides(query: string) {
 }
 
 export async function getTrendingGuides(offset: number = 0, limit: number = 12) {
-  // Ang endpoint na ito ay nagbabalik ng array directly
   const data = await fetchIFixit(`guides?offset=${offset}&limit=${limit}`);
   if (!data || !Array.isArray(data)) return [];
   return data.map(transformIFixitData).filter(Boolean);
