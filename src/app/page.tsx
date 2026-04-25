@@ -27,9 +27,8 @@ export default function Home() {
         if (trending && trending.length > 0) {
           setTrendingGuides(trending);
         } else {
-          // If trending fails, we might still have trendingGuides as empty array
-          // Only show error if we have zero data after loading
-          if (trendingGuides.length === 0) setHasError(true);
+          // Fallback if data is empty
+          setHasError(true);
         }
       } catch (error) {
         console.error("Failed to load trending guides", error);
@@ -41,7 +40,7 @@ export default function Home() {
     fetchTrending();
   }, [isMounted]);
 
-  // Handle Hydration Error: Only render dynamic content after mount
+  // Handle Hydration Error: Avoid mismatch by showing a skeleton during server render
   if (!isMounted) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -130,9 +129,10 @@ export default function Home() {
         
         <div className="max-w-4xl mx-auto lg:max-w-none">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-primary/[0.02] rounded-3xl border border-dashed border-primary/10">
-              <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-              <p className="text-[9px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="glass-card animate-pulse rounded-3xl h-64 bg-primary/5" />
+              ))}
             </div>
           ) : trendingGuides.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
