@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -13,8 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { getGuideWithAllSteps } from '@/lib/ifixit-api';
-import { translateGuide } from '@/ai/flows/translate-guide-flow';
-import { heuristicTranslate } from '@/lib/translator';
+import { translateGuide, type TranslateGuideOutput } from '@/ai/flows/translate-guide-flow';
 import Image from 'next/image';
 
 export default function GuideDetailPage() {
@@ -26,13 +24,10 @@ export default function GuideDetailPage() {
   const { t, language, isMounted } = useLanguage();
   
   const [originalGuide, setOriginalGuide] = useState<any>(null);
+  const [translatedGuide, setTranslatedGuide] = useState<TranslateGuideOutput | null>(null);
   const [loading, setLoading] = useState(true);
-  
-  // Translation state
-  const [translatedMeta, setTranslatedMeta] = useState<{ title?: string; description?: string } | null>(null);
-  const [translatedSteps, setTranslatedSteps] = useState<Record<number, string>>({});
+  const [isTranslating, setIsTranslating] = useState(false);
   const translationCache = useRef<Record<string, any>>({});
-  const isTranslatingMeta = useRef(false);
 
   const bookmarkRef = useMemo(() => {
     if (!user || !id || !db) return null;
@@ -61,57 +56,41 @@ export default function GuideDetailPage() {
     fetchGuideData();
   }, [id]);
 
-  // 2. Meta AI Translation (Header only)
+  // 2. AI Translation (Whole Guide)
   useEffect(() => {
     if (!originalGuide || language !== 'fil') {
-      if (language !== 'fil') setTranslatedMeta(null);
+      if (language !== 'fil') setTranslatedGuide(null);
       return;
     }
 
-    if (isTranslatingMeta.current) return;
-
-    const cacheKey = `${id}-meta-fil`;
+    const cacheKey = `${id}-full-fil`;
     if (translationCache.current[cacheKey]) {
-      setTranslatedMeta(translationCache.current[cacheKey]);
+      setTranslatedGuide(translationCache.current[cacheKey]);
       return;
     }
 
-    async function translateHeader() {
-      isTranslatingMeta.current = true;
+    async function performFullTranslation() {
+      setIsTranslating(true);
       try {
-        const metaRes = await translateGuide({
+        const result = await translateGuide({
           title: originalGuide.title,
-          description: originalGuide.description
+          description: originalGuide.description,
+          steps: originalGuide.steps?.map((s: any) => ({
+            title: s.title,
+            description: s.description
+          }))
         });
-        const nextMeta = { 
-          title: metaRes.title || originalGuide.title, 
-          description: metaRes.description || originalGuide.description 
-        };
-        setTranslatedMeta(nextMeta);
-        translationCache.current[cacheKey] = nextMeta;
+        setTranslatedGuide(result);
+        translationCache.current[cacheKey] = result;
       } catch (e) {
-        console.error("Meta translation error", e);
+        console.error("Translation error", e);
       } finally {
-        isTranslatingMeta.current = false;
+        setIsTranslating(false);
       }
     }
 
-    translateHeader();
+    performFullTranslation();
   }, [language, originalGuide, id]);
-
-  // 3. Instant Heuristic Translation for Steps
-  useEffect(() => {
-    if (!originalGuide || language !== 'fil') {
-      setTranslatedSteps({});
-      return;
-    }
-
-    const newTranslatedSteps: Record<number, string> = {};
-    originalGuide.steps?.forEach((step: any, index: number) => {
-      newTranslatedSteps[index] = heuristicTranslate(step.description);
-    });
-    setTranslatedSteps(newTranslatedSteps);
-  }, [language, originalGuide]);
 
   const handleBookmark = () => {
     if (!user) {
@@ -151,9 +130,8 @@ export default function GuideDetailPage() {
     </div>
   );
 
-  const displayTitle = (language === 'fil' ? translatedMeta?.title : originalGuide.title) || originalGuide.title;
-  const displayDesc = (language === 'fil' ? translatedMeta?.description : originalGuide.description) || originalGuide.description;
-  const isSyncingMeta = language === 'fil' && !translatedMeta;
+  const displayTitle = (language === 'fil' && translatedGuide?.title) ? translatedGuide.title : originalGuide.title;
+  const displayDesc = (language === 'fil' && translatedGuide?.description) ? translatedGuide.description : originalGuide.description;
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -168,20 +146,16 @@ export default function GuideDetailPage() {
               <div className="flex flex-wrap items-center gap-3">
                 <Badge className="bg-primary/10 text-primary border-none font-black uppercase tracking-widest text-[8px]">{originalGuide.category}</Badge>
                 <Badge variant="outline" className="font-black uppercase tracking-widest text-[8px]">{originalGuide.difficulty}</Badge>
-                {language === 'fil' && (
+                {isTranslating && (
                   <Badge className="bg-amber-500/10 text-amber-500 border-none font-black uppercase tracking-widest text-[8px] animate-pulse">
-                    <Sparkles className="w-2 h-2 mr-1" /> Heuristic Sync Active
+                    <Sparkles className="w-2 h-2 mr-1" /> Neural Sync Active...
                   </Badge>
                 )}
               </div>
 
-              {isSyncingMeta ? (
-                <Skeleton className="h-12 w-3/4 rounded-xl" />
-              ) : (
-                <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-none">
-                  {displayTitle}
-                </h1>
-              )}
+              <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-none">
+                {displayTitle}
+              </h1>
 
               {originalGuide.thumbnail && (
                 <div className="relative aspect-video rounded-3xl overflow-hidden shadow-2xl glass border-primary/5">
@@ -192,13 +166,7 @@ export default function GuideDetailPage() {
               <div className="space-y-4">
                 <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">BEFORE YOU BEGIN</h2>
                 <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium glass p-8 rounded-3xl border-primary/5 min-h-[100px]">
-                  {isSyncingMeta ? (
-                    <div className="space-y-3">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-5/6" />
-                      <Skeleton className="h-4 w-4/6" />
-                    </div>
-                  ) : displayDesc}
+                  {displayDesc}
                 </div>
               </div>
             </header>
@@ -212,7 +180,9 @@ export default function GuideDetailPage() {
 
               <div className="space-y-12">
                 {originalGuide.steps?.map((step: any, index: number) => {
-                  const displayStepDesc = language === 'fil' ? (translatedSteps[index] || step.description) : step.description;
+                  const translatedStep = (language === 'fil' && translatedGuide?.steps?.[index]) ? translatedGuide.steps[index] : null;
+                  const displayStepTitle = translatedStep?.title || step.title || (language === 'en' ? `Step ${index + 1}` : `Hakbang ${index + 1}`);
+                  const displayStepDesc = translatedStep?.description || step.description;
                   
                   return (
                     <div key={index} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
@@ -223,7 +193,7 @@ export default function GuideDetailPage() {
                           </div>
                           <div className="flex-grow">
                             <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight mb-6">
-                              {step.title || (language === 'en' ? `Step ${index + 1}` : `Hakbang ${index + 1}`)}
+                              {displayStepTitle}
                             </h3>
                             <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
                               {displayStepDesc}
