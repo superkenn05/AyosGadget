@@ -4,7 +4,7 @@ import { useTheme } from '@/components/providers/theme-provider';
 import { useLanguage } from '@/components/providers/language-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Moon, Sun, Monitor, Shield, User, Globe, Info, LogOut, Check, Database, Loader2, CloudSync, Zap } from 'lucide-react';
+import { Moon, Sun, Monitor, Shield, User, Globe, Info, LogOut, Check, Database, Loader2, CloudDownload, Zap } from 'lucide-react';
 import { useUser, useAuth, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useState } from 'react';
@@ -162,7 +162,7 @@ export default function SettingsPage() {
                   <CardContent className="p-8 space-y-8">
                     <div className="p-6 bg-primary/5 rounded-3xl border border-primary/10">
                       <h4 className="font-black uppercase tracking-widest text-xs mb-2 flex items-center gap-2">
-                        <CloudSync className="w-4 h-4 text-primary" />
+                        <CloudDownload className="w-4 h-4 text-primary" />
                         Full Library Ingestion
                       </h4>
                       <p className="text-sm text-muted-foreground font-medium mb-6">
