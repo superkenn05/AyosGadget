@@ -27,7 +27,6 @@ export default function Home() {
         if (trending && trending.length > 0) {
           setTrendingGuides(trending);
         } else {
-          // Fallback if data is empty
           setHasError(true);
         }
       } catch (error) {
@@ -40,7 +39,7 @@ export default function Home() {
     fetchTrending();
   }, [isMounted]);
 
-  // Handle Hydration Error: Avoid mismatch by showing a skeleton during server render
+  // Use a loading skeleton to avoid hydration mismatch
   if (!isMounted) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">

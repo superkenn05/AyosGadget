@@ -1,13 +1,13 @@
 'use server';
 
 /**
- * @fileOverview iFixit API Client - Server Side Implementation.
- * Pinatibay na implementation para iwas CORS at blocking gamit ang Server Actions.
+ * @fileOverview iFixit API Client - Server Side Proxy Implementation.
+ * Ginagamit ito bilang PROXY para malusutan ang CORS Policy ng iFixit.
  */
 
 const IFIXIT_API_BASE = 'https://www.ifixit.com/api/2.0';
-// Standard browser-like user agent to avoid being blocked
-const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
+// Standard browser-like user agent to avoid being blocked by iFixit security
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 
 function stripHtml(html: string) {
   if (!html) return '';
@@ -75,17 +75,17 @@ async function fetchIFixit(endpoint: string) {
         'Accept': 'application/json',
         'Cache-Control': 'no-cache',
       },
-      next: { revalidate: 60 } // Cache for 1 minute only for faster updates
+      next: { revalidate: 3600 } // Cache for 1 hour
     });
     
     if (!res.ok) {
-      console.error(`iFixit API Error: ${res.status} for ${url}`);
+      console.error(`iFixit Proxy Error: ${res.status} for ${url}`);
       return null;
     }
     
     return await res.json();
   } catch (error) {
-    console.error(`Fetch failed for ${url}:`, error);
+    console.error(`Proxy fetch failed for ${url}:`, error);
     return null;
   }
 }
@@ -98,7 +98,6 @@ export async function searchIFixitGuides(query: string) {
 
 export async function getTrendingGuides(offset: number = 0, limit: number = 12) {
   const data = await fetchIFixit(`guides?offset=${offset}&limit=${limit}`);
-  // Trending endpoint usually returns an array directly
   if (!data) return [];
   const guides = Array.isArray(data) ? data : (data.results || []);
   return guides.map((g: any) => mapIFixitToInternal(g)).filter(Boolean);
