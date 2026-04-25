@@ -26,8 +26,9 @@ function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
 
 /**
  * Internal helper to transform raw iFixit data to our internal format.
+ * Not exported to prevent Next.js from treating it as a Server Action.
  */
-function transformIFixitData(ifixit: any) {
+function mapIFixitToInternal(ifixit: any) {
   const rawId = ifixit.guideid ?? ifixit.id;
   if (!rawId) return null;
   
@@ -96,19 +97,19 @@ async function fetchIFixit(endpoint: string) {
 export async function searchIFixitGuides(query: string) {
   const data = await fetchIFixit(`search/${encodeURIComponent(query)}?type=guide&limit=20`);
   if (!data || !data.results) return [];
-  return data.results.map(transformIFixitData).filter(Boolean);
+  return data.results.map((r: any) => mapIFixitToInternal(r)).filter(Boolean);
 }
 
 export async function getTrendingGuides(offset: number = 0, limit: number = 12) {
   const data = await fetchIFixit(`guides?offset=${offset}&limit=${limit}`);
   if (!data || !Array.isArray(data)) return [];
-  return data.map(transformIFixitData).filter(Boolean);
+  return data.map((g: any) => mapIFixitToInternal(g)).filter(Boolean);
 }
 
 export async function getGuideWithAllSteps(id: string): Promise<any> {
   const guide = await fetchIFixit(`guides/${id}`);
   if (!guide) return null;
-  return transformIFixitData(guide);
+  return mapIFixitToInternal(guide);
 }
 
 export async function getIFixitWiki(categoryName: string): Promise<any> {

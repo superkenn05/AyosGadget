@@ -2,7 +2,7 @@
 
 import CategoryIcon from '@/components/repair/CategoryIcon';
 import RepairCard from '@/components/repair/RepairCard';
-import { PRIMARY_CATEGORIES, DIRECTORY_CATEGORIES } from '@/lib/repair-data';
+import { PRIMARY_CATEGORIES } from '@/lib/repair-data';
 import { Button } from '@/components/ui/button';
 import { Activity, Cpu, Zap, ArrowRight, Globe, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -27,8 +27,7 @@ export default function Home() {
         if (trending && trending.length > 0) {
           setTrendingGuides(trending);
         } else {
-          // If empty or null but no throw, might still be a fetch failure handled by server
-          setHasError(trending === null);
+          setHasError(!trending);
         }
       } catch (error) {
         console.error("Failed to load trending guides", error);

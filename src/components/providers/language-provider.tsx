@@ -33,9 +33,10 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const language = (i18n.language || 'en') as Language;
 
   // Render children only after mounting to prevent hydration mismatches
+  // We return null or a skeleton if not mounted to ensure server/client HTML match
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t, isMounted }}>
-      {isMounted ? children : <div className="invisible">{children}</div>}
+      {isMounted ? children : null}
     </LanguageContext.Provider>
   );
 }
