@@ -27,7 +27,7 @@ export default function Home() {
         if (trending && trending.length > 0) {
           setTrendingGuides(trending);
         } else {
-          setHasError(!trending);
+          setHasError(true);
         }
       } catch (error) {
         console.error("Failed to load trending guides", error);
@@ -39,7 +39,14 @@ export default function Home() {
     fetchTrending();
   }, [isMounted]);
 
-  if (!isMounted) return null;
+  // Prevent hydration mismatch by rendering a skeleton or same content on server/client
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary opacity-20" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

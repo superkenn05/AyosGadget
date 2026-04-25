@@ -2,11 +2,11 @@
 
 /**
  * @fileOverview iFixit API Client - Server Side Implementation.
- * Pinatibay ang fetch logic para iwas CORS at timeout errors gamit ang Server Actions.
+ * Resulba sa CORS issues sa pamamagitan ng server-side fetching.
  */
 
 const IFIXIT_API_BASE = 'https://www.ifixit.com/api/2.0';
-const USER_AGENT = 'AyosGadget/1.0 (Neural Repair Engine; +https://ayosgadget.com)';
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 AyosGadget/1.0';
 
 function stripHtml(html: string) {
   if (!html) return '';
@@ -24,10 +24,6 @@ function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
   return 'hard';
 }
 
-/**
- * Internal helper to transform raw iFixit data to our internal format.
- * Not exported to prevent Next.js from treating it as a Server Action.
- */
 function mapIFixitToInternal(ifixit: any) {
   const rawId = ifixit.guideid ?? ifixit.id;
   if (!rawId) return null;
@@ -40,7 +36,7 @@ function mapIFixitToInternal(ifixit: any) {
         'black': '• ',
         'blue': '🔵 ',
         'orange': '🟠 ',
-        'caution': '⚠️ [BABALA]: ',
+        'caution': '⚠️ ',
       };
       return (bulletIcons[l.bullet] || '• ') + stripHtml(text).trim();
     }).filter(Boolean);
@@ -68,22 +64,20 @@ function mapIFixitToInternal(ifixit: any) {
   };
 }
 
-/**
- * Robust fetch wrapper to handle CORS and iFixit API quirks.
- */
 async function fetchIFixit(endpoint: string) {
   const url = `${IFIXIT_API_BASE}/${endpoint}`;
   try {
     const res = await fetch(url, {
+      method: 'GET',
       headers: {
         'User-Agent': USER_AGENT,
         'Accept': 'application/json',
       },
-      next: { revalidate: 3600 } // Cache for 1 hour
+      cache: 'no-store'
     });
     
     if (!res.ok) {
-      console.warn(`iFixit API Error: ${res.status} for ${url}`);
+      console.error(`iFixit API Error: ${res.status} for ${url}`);
       return null;
     }
     
