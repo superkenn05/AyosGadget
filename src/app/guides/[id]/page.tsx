@@ -1,8 +1,9 @@
+
 'use client';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Loader2, Wrench, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Loader2, Wrench, CheckCircle2, AlertTriangle, CloudDownload } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useUser, useFirestore, useDoc } from '@/firebase';
@@ -23,23 +24,47 @@ export default function GuideDetailPage() {
   
   const [guide, setGuide] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
+  // Reference for the global cached guide in Firestore
+  const globalGuideRef = useMemo(() => {
+    if (!id || !db) return null;
+    return doc(db, 'guides', id);
+  }, [id, db]);
+
+  // Reference for user's personal bookmark
   const bookmarkRef = useMemo(() => {
     if (!user || !id || !db) return null;
     return doc(db, 'users', user.uid, 'bookmarks', id);
   }, [user, id, db]);
 
+  const { data: cachedGuide } = useDoc(globalGuideRef);
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
   useEffect(() => {
-    async function fetchGuideData() {
+    async function fetchAndCacheGuide() {
       if (!id) return;
+      
+      // If we have cached guide in Firestore, use it immediately
+      if (cachedGuide) {
+        setGuide(cachedGuide);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       try {
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setGuide(fetchedGuide);
+          // Auto-save to global Firestore cache for next time
+          if (globalGuideRef) {
+            setDoc(globalGuideRef, {
+              ...fetchedGuide,
+              cachedAt: serverTimestamp()
+            }, { merge: true });
+          }
         }
       } catch (error) {
         console.error("Fetch failed:", error);
@@ -47,8 +72,11 @@ export default function GuideDetailPage() {
         setLoading(false);
       }
     }
-    fetchGuideData();
-  }, [id]);
+    
+    if (isMounted) {
+      fetchAndCacheGuide();
+    }
+  }, [id, isMounted, cachedGuide, globalGuideRef]);
 
   const handleBookmark = () => {
     if (!user) {
@@ -100,9 +128,17 @@ export default function GuideDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-8 space-y-12">
             <header className="space-y-6">
-              <Link href="/guides" className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-2 mb-8 hover:opacity-70 transition-opacity">
-                <ArrowLeft className="w-3 h-3" /> {t('guides_back')}
-              </Link>
+              <div className="flex items-center justify-between">
+                <Link href="/guides" className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-2 hover:opacity-70 transition-opacity">
+                  <ArrowLeft className="w-3 h-3" /> {t('guides_back')}
+                </Link>
+                {cachedGuide && (
+                  <div className="flex items-center gap-2 text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                    <CloudDownload className="w-3 h-3" />
+                    Vault Cached
+                  </div>
+                )}
+              </div>
               
               <div className="flex flex-wrap items-center gap-3">
                 <Badge className="bg-primary/10 text-primary border-none font-black uppercase tracking-widest text-[8px]">{guide.category}</Badge>

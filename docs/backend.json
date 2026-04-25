@@ -13,6 +13,24 @@
         "savedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["guideId", "title", "savedAt"]
+    },
+    "CachedGuide": {
+      "title": "Cached Guide",
+      "description": "A mirrored copy of an iFixit guide for faster access.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "device": { "type": "string" },
+        "category": { "type": "string" },
+        "difficulty": { "type": "string" },
+        "timeEstimate": { "type": "string" },
+        "description": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "steps": { "type": "array" },
+        "tools": { "type": "array" },
+        "cachedAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "auth": {
@@ -22,6 +40,10 @@
     "/users/{userId}/bookmarks/{bookmarkId}": {
       "schema": "Bookmark",
       "description": "User's bookmarked repair guides."
+    },
+    "/guides/{guideId}": {
+      "schema": "CachedGuide",
+      "description": "Mirrored repair guides from iFixit."
     }
   }
 }

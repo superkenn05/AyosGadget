@@ -1,12 +1,11 @@
+
 'use server';
 
 /**
- * @fileOverview iFixit API Client - Server Side Proxy Implementation.
- * Ginagamit ito bilang PROXY para malusutan ang CORS Policy ng iFixit.
+ * @fileOverview iFixit API Client with Firestore Caching Bridge.
  */
 
 const IFIXIT_API_BASE = 'https://www.ifixit.com/api/2.0';
-// Standard browser-like user agent to avoid being blocked by iFixit security
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 
 function stripHtml(html: string) {
@@ -75,17 +74,12 @@ async function fetchIFixit(endpoint: string) {
         'Accept': 'application/json',
         'Cache-Control': 'no-cache',
       },
-      next: { revalidate: 3600 } // Cache for 1 hour
+      next: { revalidate: 3600 }
     });
     
-    if (!res.ok) {
-      console.error(`iFixit Proxy Error: ${res.status} for ${url}`);
-      return null;
-    }
-    
+    if (!res.ok) return null;
     return await res.json();
   } catch (error) {
-    console.error(`Proxy fetch failed for ${url}:`, error);
     return null;
   }
 }
