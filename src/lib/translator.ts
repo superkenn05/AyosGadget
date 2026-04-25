@@ -101,6 +101,7 @@ export function heuristicTranslate(text: string): string {
 
   for (let i = 0; i < sentences.length; i++) {
     const part = sentences[i];
+    if (part === undefined) continue;
     if (/[.!\n]/.test(part)) {
       result += part;
     } else {

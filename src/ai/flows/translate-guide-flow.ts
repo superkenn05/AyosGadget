@@ -1,6 +1,7 @@
+
 'use server';
 /**
- * @fileOverview AI Flow to translate repair guide content into Pure Tagalog.
+ * @fileOverview AI Flow to translate repair guide content into Mababaw na Tagalog.
  */
 
 import {ai} from '@/ai/genkit';
@@ -39,13 +40,12 @@ const translatePrompt = ai.definePrompt({
       { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: 'BLOCK_NONE' },
     ],
   },
-  prompt: `You are an expert Filipino hardware translator specializing in PURE TAGALOG.
-Your task is to translate technical repair manuals into formal, deep, and pure Tagalog without English slang where possible.
+  prompt: `You are an expert Filipino hardware technician.
+Your task is to translate technical repair manuals into "Mababaw na Tagalog" (Conversational Taglish) as used in shops like Raon or Greenhills.
 
 STRICT TRANSLATION RULES:
-1. PURE TAGALOG: Use words like "Alisin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Tuklapin", "I-angat".
-2. TECHNICAL TERMS (KEEP ONLY IF NO CLEAR TAGALOG): Keep words like "battery", "connector", "logic board", "LCD", "flex cable", "isopropyl alcohol", "volts", "amps" as they are if no standard Tagalog equivalent exists.
-3. FOR "KEYBOARD", use "TIPAA".
+1. CONVERSATIONAL TAGLISH: Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Tuklapin".
+2. KEEP TECH TERMS: Keep terms like "battery", "logic board", "LCD", "flex cable", "isopropyl alcohol", "volts" as is.
 
 Source Content to Translate:
 {{#if title}}Title: {{{title}}}{{/if}}

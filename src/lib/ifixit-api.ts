@@ -60,6 +60,10 @@ function mapCategory(type: string): CategoryName {
   return 'Appliances';
 }
 
+/**
+ * Internal helper to map iFixit data to internal format.
+ * Not exported because Server Actions must be async.
+ */
 async function mapIFixitToInternal(ifixit: any) {
   const rawId = ifixit.guideid ?? ifixit.id;
   if (!rawId) return null;
@@ -139,7 +143,8 @@ export async function getIFixitGuide(id: string): Promise<IFixitGuide | null> {
   }
 }
 
-export async function getGuideWithAllSteps(id: string, visited = new Set<string>()): Promise<any> {
+export async function getGuideWithAllSteps(id: string, visitedRaw?: string[]): Promise<any> {
+  const visited = new Set(visitedRaw || []);
   if (visited.has(id) || visited.size > 20) return null; 
   visited.add(id);
 
@@ -152,7 +157,7 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
     
     if (guide.prerequisites && Array.isArray(guide.prerequisites)) {
       for (const prereq of guide.prerequisites) {
-        const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), new Set(visited));
+        const prereqData = await getGuideWithAllSteps(prereq.guideid.toString(), Array.from(visited));
         if (prereqData && prereqData.steps) {
           allSteps = [...allSteps, ...prereqData.steps];
           if (prereqData.description && !consolidatedDescription.includes(prereqData.description.slice(0, 40))) {

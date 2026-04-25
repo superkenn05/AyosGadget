@@ -26,10 +26,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const setLanguage = (lang: Language) => {
     i18n.changeLanguage(lang);
-    localStorage.setItem('app-lang', lang);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('app-lang', lang);
+    }
   };
 
-  const language = i18n.language as Language;
+  const language = (i18n.language || 'en') as Language;
 
   return (
     <LanguageContext.Provider value={{ language, setLanguage, t, isMounted }}>
