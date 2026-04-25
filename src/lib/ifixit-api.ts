@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -46,14 +45,14 @@ function stripHtml(html: string) {
 }
 
 function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
-  const d = diff.toLowerCase();
+  const d = (diff || '').toLowerCase();
   if (d.includes('easy')) return 'easy';
   if (d.includes('moderate') || d.includes('medium')) return 'medium';
   return 'hard';
 }
 
 function mapCategory(type: string): CategoryName {
-  const t = type.toLowerCase();
+  const t = (type || '').toLowerCase();
   if (t.includes('phone')) return 'Smartphones';
   if (t.includes('laptop')) return 'Laptops';
   if (t.includes('mac')) return 'Mac';
@@ -62,7 +61,6 @@ function mapCategory(type: string): CategoryName {
 
 /**
  * Internal helper to map iFixit data to internal format.
- * Not exported because Server Actions must be async.
  */
 async function mapIFixitToInternal(ifixit: any) {
   const rawId = ifixit.guideid ?? ifixit.id;

@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Heuristic pattern-based translator for repair guides.
  * Converts technical English to "Mababaw na Tagalog" (Conversational Taglish).
@@ -19,7 +18,7 @@ const DICTIONARY: Record<string, string> = {
   "search": "hanapin",
   "located": "makikita",
   "toward": "papunta sa",
-  "pop up": "aangat",
+  "pop up": "kusa nang aangat",
   "using": "gamit ang",
   "the": "ang",
   "front": "harapan",
