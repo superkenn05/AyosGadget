@@ -4,20 +4,36 @@ import { useTheme } from '@/components/providers/theme-provider';
 import { useLanguage } from '@/components/providers/language-provider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Moon, Sun, Monitor, Bell, Shield, User, Globe, Info, LogOut, Check } from 'lucide-react';
-import { useUser, useAuth } from '@/firebase';
+import { Moon, Sun, Monitor, Shield, User, Globe, Info, LogOut, Check, Database, Loader2, CloudSync, Zap } from 'lucide-react';
+import { useUser, useAuth, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
 import { useState } from 'react';
+import { ingestTopGuides, type SyncProgress } from '@/services/sync-service';
+import { Progress } from '@/components/ui/progress';
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
   const { user } = useUser();
   const auth = useAuth();
+  const db = useFirestore();
   const [activeTab, setActiveTab] = useState('appearance');
+
+  // Sync State
+  const [syncProgress, setSyncProgress] = useState<SyncProgress>({
+    total: 0,
+    current: 0,
+    status: 'idle',
+    message: ''
+  });
 
   const handleLogout = async () => {
     await signOut(auth);
+  };
+
+  const handleFullSync = async () => {
+    if (!db || !user) return;
+    await ingestTopGuides(db, 5, (p) => setSyncProgress(p));
   };
 
   const themes = [
@@ -43,6 +59,7 @@ export default function SettingsPage() {
               {[
                 { id: 'appearance', label: t('settings_appearance'), icon: Sun },
                 { id: 'language', label: t('settings_language'), icon: Globe },
+                { id: 'data', label: 'Data Protocols', icon: Database },
                 { id: 'account', label: t('settings_account'), icon: User },
                 { id: 'security', label: t('settings_security'), icon: Shield },
                 { id: 'about', label: t('settings_about'), icon: Info },
@@ -129,6 +146,66 @@ export default function SettingsPage() {
                           {language === lang.id && <Check className="w-5 h-5" />}
                         </button>
                       ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {activeTab === 'data' && (
+                <Card className="glass border-black/5 dark:border-white/10 rounded-[2.5rem] overflow-hidden">
+                  <CardHeader className="p-8 border-b border-black/5 dark:border-white/5">
+                    <CardTitle className="text-2xl font-black tracking-tight flex items-center gap-3">
+                      <Database className="w-6 h-6 text-primary" />
+                      Data Ingestion
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-8 space-y-8">
+                    <div className="p-6 bg-primary/5 rounded-3xl border border-primary/10">
+                      <h4 className="font-black uppercase tracking-widest text-xs mb-2 flex items-center gap-2">
+                        <CloudSync className="w-4 h-4 text-primary" />
+                        Full Library Ingestion
+                      </h4>
+                      <p className="text-sm text-muted-foreground font-medium mb-6">
+                        I-synchronize ang pinakabagong 100+ repair protocols mula sa iFixit library papunta sa iyong Firestore Vault. Ginagarantiyahan nito ang mabilis na access kahit walang internet.
+                      </p>
+
+                      {syncProgress.status !== 'idle' && (
+                        <div className="space-y-4 mb-6">
+                           <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                              <span className="text-primary">{syncProgress.message}</span>
+                              <span className="opacity-50">{syncProgress.current} / {syncProgress.total}</span>
+                           </div>
+                           <Progress value={(syncProgress.current / syncProgress.total) * 100} className="h-2" />
+                        </div>
+                      )}
+
+                      <Button 
+                        onClick={handleFullSync} 
+                        disabled={syncProgress.status === 'syncing' || !user}
+                        className="w-full h-14 rounded-2xl font-black uppercase tracking-widest text-[10px] gap-3 neon-glow"
+                      >
+                        {syncProgress.status === 'syncing' ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Zap className="w-4 h-4" />
+                        )}
+                        {syncProgress.status === 'syncing' ? 'Syncing Protocols...' : 'Initiate Full Ingestion'}
+                      </Button>
+                      {!user && <p className="text-[9px] text-center mt-3 text-rose-500 font-bold uppercase tracking-widest">Authentication Required to Write to Vault</p>}
+                    </div>
+
+                    <div className="space-y-4">
+                       <p className="text-[10px] font-black uppercase tracking-widest opacity-40">System Stats</p>
+                       <div className="grid grid-cols-2 gap-4">
+                          <div className="p-4 glass rounded-2xl border-black/5">
+                             <span className="text-[8px] font-black uppercase opacity-50 block">Status</span>
+                             <span className="text-xs font-bold text-emerald-500 uppercase">Synchronized</span>
+                          </div>
+                          <div className="p-4 glass rounded-2xl border-black/5">
+                             <span className="text-[8px] font-black uppercase opacity-50 block">Provider</span>
+                             <span className="text-xs font-bold uppercase">iFixit v2.0</span>
+                          </div>
+                       </div>
                     </div>
                   </CardContent>
                 </Card>

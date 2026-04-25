@@ -76,13 +76,13 @@ service cloud.firestore {
     match /repairGuides/{repairGuideId} {
       allow get, list: if true;
       allow create: if isSignedIn();
-      allow update: if isFieldOwner('authorId');
+      allow update: if isFieldOwner('authorId') || (isSignedIn() && resource.data.authorId == 'system_ifixit');
       allow delete: if isFieldOwner('authorId');
 
       match /steps/{stepId} {
         allow get, list: if true;
         allow create: if isSignedIn();
-        allow update: if isFieldOwner('repairGuideAuthorId');
+        allow update: if isFieldOwner('repairGuideAuthorId') || (isSignedIn() && resource.data.repairGuideAuthorId == 'system_ifixit');
         allow delete: if isFieldOwner('repairGuideAuthorId');
       }
 
