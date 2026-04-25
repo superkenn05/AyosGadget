@@ -4,7 +4,7 @@ import CategoryIcon from '@/components/repair/CategoryIcon';
 import RepairCard from '@/components/repair/RepairCard';
 import { PRIMARY_CATEGORIES, DIRECTORY_CATEGORIES } from '@/lib/repair-data';
 import { Button } from '@/components/ui/button';
-import { Activity, Cpu, Zap, ArrowRight, Globe, Loader2 } from 'lucide-react';
+import { Activity, Cpu, Zap, ArrowRight, Globe, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useState, useEffect } from 'react';
@@ -27,6 +27,7 @@ export default function Home() {
         if (trending && trending.length > 0) {
           setTrendingGuides(trending);
         } else {
+          // If empty but no exception, might just be no results or silent API fail
           setHasError(true);
         }
       } catch (error) {
@@ -157,15 +158,16 @@ export default function Home() {
                 <RepairCard key={guide.id} guide={guide} />
               ))}
             </div>
-          ) : (
-            <div className="p-16 glass rounded-3xl border-primary/5 text-center shadow-xl">
+          ) : hasError ? (
+            <div className="p-16 glass rounded-3xl border-primary/5 text-center shadow-xl bg-card">
+              <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-6 opacity-50" />
               <h2 className="text-xl font-black uppercase tracking-tighter mb-4">{t('common_error_link')}</h2>
-              <p className="text-muted-foreground mb-6 text-sm">{t('common_error_desc')}</p>
-              <Button onClick={() => window.location.reload()} className="rounded-xl h-12 px-8 font-black uppercase tracking-widest text-[10px]">
+              <p className="text-muted-foreground mb-8 text-sm max-w-md mx-auto">{t('common_error_desc')}</p>
+              <Button onClick={() => window.location.reload()} className="rounded-xl h-12 px-8 font-black uppercase tracking-widest text-[10px] neon-glow">
                 {t('common_retry')}
               </Button>
             </div>
-          )}
+          ) : null}
         </div>
       </section>
     </div>

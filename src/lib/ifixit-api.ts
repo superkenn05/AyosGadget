@@ -3,6 +3,7 @@
 /**
  * @fileOverview iFixit API Client - Server Side Implementation.
  * All functions here are async to satisfy Next.js Server Action requirements.
+ * Using robust fetch options to bypass CORS and handle timeouts.
  */
 
 function stripHtml(html: string) {
@@ -21,10 +22,6 @@ function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
   return 'hard';
 }
 
-/**
- * Internal helper to map iFixit data to our internal format.
- * Not exported as it is synchronous and would violate 'use server' if exported.
- */
 function transformIFixitData(ifixit: any) {
   const rawId = ifixit.guideid ?? ifixit.id;
   if (!rawId) return null;
@@ -66,69 +63,60 @@ function transformIFixitData(ifixit: any) {
 }
 
 const DEFAULT_HEADERS = {
-  'User-Agent': 'AyosGadget/1.0 (Neural Repair Engine)',
+  'User-Agent': 'AyosGadget/1.0 (Neural Repair Engine; +https://ayosgadget.com)',
   'Accept': 'application/json',
+  'Cache-Control': 'no-cache',
 };
 
-export async function searchIFixitGuides(query: string) {
+/**
+ * Robust fetch wrapper to handle common iFixit API quirks.
+ */
+async function fetchIFixit(endpoint: string) {
+  const url = endpoint.startsWith('http') ? endpoint : `https://www.ifixit.com/api/2.0/${endpoint}`;
   try {
-    const res = await fetch(`https://www.ifixit.com/api/2.0/search/${encodeURIComponent(query)}?type=guide&limit=20`, {
-      headers: DEFAULT_HEADERS
+    const res = await fetch(url, {
+      headers: DEFAULT_HEADERS,
+      cache: 'no-store',
+      next: { revalidate: 0 }
     });
-    if (!res.ok) throw new Error(`iFixit Search Failed: ${res.status}`);
-    const data = await res.json();
-    return (data.results || []).map(transformIFixitData).filter(Boolean);
+    
+    if (!res.ok) {
+      console.warn(`iFixit API Error: ${res.status} for ${url}`);
+      return null;
+    }
+    
+    return await res.json();
   } catch (error) {
-    console.error('iFixit search error:', error);
-    return [];
+    console.error(`Fetch failed for ${url}:`, error);
+    return null;
   }
+}
+
+export async function searchIFixitGuides(query: string) {
+  const data = await fetchIFixit(`search/${encodeURIComponent(query)}?type=guide&limit=20`);
+  if (!data || !data.results) return [];
+  return data.results.map(transformIFixitData).filter(Boolean);
 }
 
 export async function getTrendingGuides(offset: number = 0, limit: number = 12) {
-  try {
-    const res = await fetch(`https://www.ifixit.com/api/2.0/guides?offset=${offset}&limit=${limit}`, {
-      headers: DEFAULT_HEADERS,
-      next: { revalidate: 3600 }
-    });
-    if (!res.ok) throw new Error(`iFixit Trending Failed: ${res.status}`);
-    const data = await res.json();
-    if (!Array.isArray(data)) return [];
-    return data.map(transformIFixitData).filter(Boolean);
-  } catch (error) {
-    console.error('iFixit trending error:', error);
-    return [];
-  }
+  const data = await fetchIFixit(`guides?offset=${offset}&limit=${limit}`);
+  if (!data || !Array.isArray(data)) return [];
+  return data.map(transformIFixitData).filter(Boolean);
 }
 
 export async function getGuideWithAllSteps(id: string): Promise<any> {
-  try {
-    const res = await fetch(`https://www.ifixit.com/api/2.0/guides/${id}`, {
-      headers: DEFAULT_HEADERS
-    });
-    if (!res.ok) throw new Error(`iFixit Guide Fetch Failed: ${res.status}`);
-    const guide = await res.json();
-    return transformIFixitData(guide);
-  } catch (error) {
-    console.error('iFixit fetch error:', error);
-    return null;
-  }
+  const guide = await fetchIFixit(`guides/${id}`);
+  if (!guide) return null;
+  return transformIFixitData(guide);
 }
 
 export async function getIFixitWiki(categoryName: string): Promise<any> {
-  try {
-    const res = await fetch(`https://www.ifixit.com/api/2.0/wikis/CATEGORY/${encodeURIComponent(categoryName)}`, {
-      headers: DEFAULT_HEADERS
-    });
-    if (!res.ok) throw new Error(`iFixit Wiki Failed: ${res.status}`);
-    const data = await res.json();
-    return {
-      title: data.title,
-      description: stripHtml(data.description_rendered || data.description || ''),
-      image: data.image,
-      children: data.children || [],
-    };
-  } catch (error) {
-    console.error('iFixit wiki error:', error);
-    return null;
-  }
+  const data = await fetchIFixit(`wikis/CATEGORY/${encodeURIComponent(categoryName)}`);
+  if (!data) return null;
+  return {
+    title: data.title,
+    description: stripHtml(data.description_rendered || data.description || ''),
+    image: data.image,
+    children: data.children || [],
+  };
 }
