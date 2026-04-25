@@ -2,8 +2,7 @@
 
 /**
  * @fileOverview iFixit API Client - Server Side Implementation.
- * All functions here are async to satisfy Next.js Server Action requirements.
- * Using robust fetch options to bypass CORS and handle timeouts.
+ * Pinatibay ang fetch logic para iwas CORS at timeout errors.
  */
 
 function stripHtml(html: string) {
@@ -22,6 +21,10 @@ function mapDifficulty(diff: string): 'easy' | 'medium' | 'hard' {
   return 'hard';
 }
 
+/**
+ * Internal helper to transform raw iFixit data to our internal RepairGuide format.
+ * Not exported because it's not an async server action.
+ */
 function transformIFixitData(ifixit: any) {
   const rawId = ifixit.guideid ?? ifixit.id;
   if (!rawId) return null;
@@ -99,6 +102,7 @@ export async function searchIFixitGuides(query: string) {
 }
 
 export async function getTrendingGuides(offset: number = 0, limit: number = 12) {
+  // Ang endpoint na ito ay nagbabalik ng array directly
   const data = await fetchIFixit(`guides?offset=${offset}&limit=${limit}`);
   if (!data || !Array.isArray(data)) return [];
   return data.map(transformIFixitData).filter(Boolean);

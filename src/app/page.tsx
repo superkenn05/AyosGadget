@@ -13,7 +13,7 @@ import { getTrendingGuides } from '@/lib/ifixit-api';
 export default function Home() {
   const { t, isMounted } = useLanguage();
   const [trendingGuides, setTrendingGuides] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
@@ -26,8 +26,7 @@ export default function Home() {
         const trending = await getTrendingGuides(0, 6);
         if (trending && trending.length > 0) {
           setTrendingGuides(trending);
-        } else {
-          // If empty but no exception, might just be no results or silent API fail
+        } else if (!trending) {
           setHasError(true);
         }
       } catch (error) {
@@ -167,7 +166,11 @@ export default function Home() {
                 {t('common_retry')}
               </Button>
             </div>
-          ) : null}
+          ) : (
+            <div className="text-center py-20 opacity-30 italic text-[10px] uppercase font-black tracking-widest">
+               Walang nakitang protocols sa ngayon.
+            </div>
+          )}
         </div>
       </section>
     </div>
