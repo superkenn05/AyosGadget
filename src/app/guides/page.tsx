@@ -1,4 +1,3 @@
-
 'use client';
 
 import RepairCard from '@/components/repair/RepairCard';
@@ -13,11 +12,15 @@ import { searchIFixitGuides, getTrendingGuides, getIFixitWiki } from '@/lib/ifix
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useFirestore, useUser } from '@/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 function GuidesContent() {
   const { t, isMounted } = useLanguage();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const db = useFirestore();
+  const { user } = useUser();
   
   const categoryParam = searchParams.get('category');
   const searchParam = searchParams.get('search');
@@ -39,12 +42,47 @@ function GuidesContent() {
     });
   };
 
-  const sections = useMemo(() => {
-    const replacement = globalGuides.filter(g => g.type === 'replacement' || !g.type);
-    const teardowns = globalGuides.filter(g => g.type === 'teardown');
-    const techniques = globalGuides.filter(g => g.type === 'technique' || g.type === 'troubleshooting');
-    return { replacement, teardowns, techniques };
-  }, [globalGuides]);
+  // Auto-save to Firestore (Syncing Engine)
+  const syncDataToFirestore = async (guides: any[], category?: any) => {
+    if (!db || !user) return; // Only sync if user is logged in (due to rules)
+
+    try {
+      // Sync Category
+      if (category) {
+        const catRef = doc(db, 'categories', category.id || category.title.toLowerCase().replace(/\s+/g, '-'));
+        setDoc(catRef, {
+          id: category.id || category.title.toLowerCase().replace(/\s+/g, '-'),
+          name: category.title,
+          description: category.description || '',
+          iconUrl: category.iconUrl || '',
+          syncedAt: serverTimestamp(),
+        }, { merge: true });
+      }
+
+      // Sync Guides (Light version for list view)
+      for (const guide of guides) {
+        const guideRef = doc(db, 'repairGuides', guide.id);
+        setDoc(guideRef, {
+          ...guide,
+          syncedAt: serverTimestamp(),
+        }, { merge: true });
+
+        // Optional: Sync Device reference
+        if (guide.device) {
+          const deviceRef = doc(db, 'devices', guide.device.toLowerCase().replace(/\s+/g, '-'));
+          setDoc(deviceRef, {
+            id: guide.device.toLowerCase().replace(/\s+/g, '-'),
+            name: guide.device,
+            description: `Hardware protocols for ${guide.device}`,
+            imageUrl: guide.thumbnail || '',
+            syncedAt: serverTimestamp(),
+          }, { merge: true });
+        }
+      }
+    } catch (e) {
+      console.warn('Sync failed:', e);
+    }
+  };
 
   useEffect(() => {
     setSelectedCategory(categoryParam);
@@ -62,11 +100,19 @@ function GuidesContent() {
           setCategoryWiki(wiki);
           
           const results = await searchIFixitGuides(selectedCategory);
-          setGlobalGuides(deduplicateGuides(results));
+          const deduped = deduplicateGuides(results);
+          setGlobalGuides(deduped);
+          
+          // Trigger Auto-Sync
+          syncDataToFirestore(deduped, wiki);
         } else if (!searchQuery) {
           setCategoryWiki(null);
           const trending = await getTrendingGuides(0, 12);
-          setGlobalGuides(deduplicateGuides(trending));
+          const deduped = deduplicateGuides(trending);
+          setGlobalGuides(deduped);
+          
+          // Trigger Auto-Sync for Trending
+          syncDataToFirestore(deduped);
         }
       } catch (error) {
         console.error("Error loading category data:", error);
@@ -75,7 +121,7 @@ function GuidesContent() {
       }
     }
     loadCategoryData();
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, db, user]);
 
   const loadMore = async () => {
     const nextPage = page + 1;
@@ -89,8 +135,12 @@ function GuidesContent() {
         more = await getTrendingGuides(nextPage * 12, 12);
       }
       
-      setGlobalGuides(prev => deduplicateGuides([...prev, ...more]));
+      const combined = deduplicateGuides([...globalGuides, ...more]);
+      setGlobalGuides(combined);
       setPage(nextPage);
+      
+      // Sync more data
+      syncDataToFirestore(more);
     } catch (error) {
       console.error("Error loading more guides:", error);
     } finally {
@@ -104,10 +154,6 @@ function GuidesContent() {
       params.set('category', catName);
     }
     router.push(`/guides?${params.toString()}`);
-  };
-
-  const handleBack = () => {
-    router.back();
   };
 
   if (!isMounted) return null;
@@ -155,7 +201,7 @@ function GuidesContent() {
             <span className="text-primary truncate">{selectedCategory}</span>
           </nav>
 
-          {isLoading ? (
+          {isLoading && globalGuides.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-6" />
               <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
@@ -165,7 +211,7 @@ function GuidesContent() {
               {categoryWiki && (
                 <div className="bg-white dark:bg-card rounded-3xl p-6 md:p-10 mb-12 border border-slate-100 dark:border-white/10 shadow-sm relative overflow-hidden group">
                   <div className="absolute top-4 left-4">
-                    <Button variant="ghost" size="sm" onClick={handleBack} className="text-[9px] font-black uppercase tracking-widest gap-2 h-8 rounded-xl">
+                    <Button variant="ghost" size="sm" onClick={() => router.push('/guides')} className="text-[9px] font-black uppercase tracking-widest gap-2 h-8 rounded-xl">
                       <ChevronLeft className="w-3 h-3" /> Back
                     </Button>
                   </div>
@@ -208,9 +254,9 @@ function GuidesContent() {
                         className="group flex flex-col items-center gap-3 active:scale-95 transition-transform"
                       >
                         <div className="relative aspect-square w-full bg-white dark:bg-card border border-black/5 dark:border-white/10 rounded-[2rem] shadow-lg overflow-hidden p-6 flex items-center justify-center group-hover:border-primary/50 transition-all">
-                          {child.image?.thumbnail ? (
+                          {child.imageUrl ? (
                             <Image 
-                              src={child.image.thumbnail} 
+                              src={child.imageUrl} 
                               alt={child.title} 
                               fill 
                               className="object-contain p-4 group-hover:scale-110 transition-transform" 
@@ -278,7 +324,7 @@ function GuidesContent() {
             </div>
           )}
 
-          {isLoading ? (
+          {isLoading && globalGuides.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24">
               <Loader2 className="w-12 h-12 animate-spin text-primary mb-6" />
               <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>

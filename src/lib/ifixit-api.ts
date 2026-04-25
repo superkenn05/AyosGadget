@@ -1,8 +1,7 @@
-
 'use server';
 
 /**
- * @fileOverview iFixit API Client with Firestore Caching Bridge.
+ * @fileOverview iFixit API Client with Firestore Caching Logic.
  */
 
 const IFIXIT_API_BASE = 'https://www.ifixit.com/api/2.0';
@@ -42,6 +41,8 @@ function mapIFixitToInternal(ifixit: any) {
     }).filter(Boolean);
 
     return {
+      id: s.id?.toString() || Math.random().toString(36).substr(2, 9),
+      stepNumber: s.stepNumber || 0,
       title: s.title || '',
       description: stepLines.join('\n\n'),
       imageUrl: (s.media?.data || [])[0]?.original || '',
@@ -57,8 +58,8 @@ function mapIFixitToInternal(ifixit: any) {
     timeEstimate: ifixit.time_required || '30-60 mins',
     description: stripHtml(ifixit.introduction_rendered || ifixit.introduction_raw || ifixit.summary || ''),
     thumbnail: ifixit.image?.original || '',
-    tools: (ifixit.tools || []).map((t: any) => ({ name: t.name })),
-    parts: (ifixit.parts || []).map((p: any) => ({ name: p.name })),
+    tools: (ifixit.tools || []).map((t: any) => ({ name: t.name, id: t.toolid?.toString() || t.name })),
+    parts: (ifixit.parts || []).map((p: any) => ({ name: p.name, id: p.partid?.toString() || p.name })),
     steps: mappedSteps,
     rating: 4.8,
   };
@@ -107,9 +108,16 @@ export async function getIFixitWiki(categoryName: string): Promise<any> {
   const data = await fetchIFixit(`wikis/CATEGORY/${encodeURIComponent(categoryName)}`);
   if (!data) return null;
   return {
+    id: categoryName.toLowerCase().replace(/\s+/g, '-'),
     title: data.title,
+    name: data.title,
     description: stripHtml(data.description_rendered || data.description || ''),
     image: data.image,
-    children: data.children || [],
+    iconUrl: data.image?.thumbnail || '',
+    children: (data.children || []).map((c: any) => ({
+      title: c.title,
+      name: c.title,
+      imageUrl: c.image?.thumbnail || '',
+    })),
   };
 }

@@ -9,19 +9,11 @@ service cloud.firestore {
      * strict authorization boundaries.
      *
      * DATA STRUCTURE
-     * 1. Public Content: Categories, Devices, Tools, and Parts are globally readable and read-only for clients.
+     * 1. Public Content: Categories, Devices, Tools, and Parts are globally readable.
+     *    Authenticated users can write to these for caching purposes from iFixit.
      * 2. User-Generated Content: Repair Guides and Forum Posts are publicly readable but writable only 
-     *    by their respective authors using internal ID fields (authorId/userId).
-     * 3. Private User Space: Saved items, troubleshooting sessions, and progress are nested under 
-     *    /users/{userId} and are strictly private to that specific user.
-     *
-     * KEY SECURITY DECISIONS
-     * - Path-Based Ownership: User-specific data uses the {userId} in the path to verify identity 
-     *   without extra document reads (get() calls).
-     * - Denormalization for Performance: Fields like 'authorId' or 'repairGuideAuthorId' are 
-     *   required on documents to enable single-read authorization checks.
-     * - Immutability: Critical relational fields (like the owner of a post) are locked after 
-     *   creation to prevent ownership hijacking.
+     *    by their respective authors.
+     * 3. Private User Space: Saved items, troubleshooting sessions, and progress are strictly private.
      */
 
     // --- HELPER FUNCTIONS ---
@@ -38,114 +30,69 @@ service cloud.firestore {
       return resource != null && isOwner(userId);
     }
 
-    // Checks if the user is the owner based on a field within the document data
     function isFieldOwner(fieldName) {
       return isSignedIn() && resource.data[fieldName] == request.auth.uid;
     }
 
-    // Checks if the incoming data sets the current user as the owner
     function isIncomingFieldOwner(fieldName) {
       return isSignedIn() && request.resource.data[fieldName] == request.auth.uid;
     }
 
     // --- COLLECTION RULES ---
 
-    /**
-     * @description Stores user profile information. Publicly viewable, self-editable.
-     * @path /users/{userId}
-     * @allow (create) if auth.uid matches {userId}.
-     * @deny (update) if auth.uid does not match {userId}.
-     * @principle Path-based ownership for profile management.
-     */
     match /users/{userId} {
       allow get, list: if true;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
 
-      /**
-       * @description Repair guides bookmarked by a specific user.
-       * @path /users/{userId}/savedGuides/{savedGuideId}
-       * @allow (list) if auth.uid matches {userId}.
-       * @deny (get) if auth.uid is different from {userId}.
-       * @principle Nested private collection ensures data isolation.
-       */
       match /savedGuides/{savedGuideId} {
         allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow create: if isOwner(userId);
+        allow update: if isExistingOwner(userId);
         allow delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Records interactive AI-powered troubleshooting sessions.
-       * @path /users/{userId}/troubleshootingSessions/{sessionId}
-       * @allow (create) if auth.uid matches {userId}.
-       * @deny (list) if auth.uid is different from {userId}.
-       * @principle Owner-only access to private session history.
-       */
       match /troubleshootingSessions/{sessionId} {
         allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow create: if isOwner(userId);
+        allow update: if isExistingOwner(userId);
         allow delete: if isExistingOwner(userId);
       }
 
-      /**
-       * @description Tracks a user's progress through a specific Repair Guide.
-       * @path /users/{userId}/progress/{userProgressId}
-       * @allow (update) if user is the path owner.
-       * @principle Ensures users only update their own learning progress.
-       */
       match /progress/{userProgressId} {
         allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow create: if isOwner(userId);
+        allow update: if isExistingOwner(userId);
         allow delete: if isExistingOwner(userId);
       }
     }
 
     /**
-     * @description Public repair guides. Writable only by the author.
-     * @path /repairGuides/{repairGuideId}
-     * @allow (create) if authorId in data matches auth.uid.
-     * @deny (update) if auth.uid does not match the stored authorId.
-     * @principle Ownership validation via denormalized 'authorId' field.
+     * @description Repair guides. 
+     * Now allows authenticated users to 'create' for caching from iFixit.
+     * Updates and deletes still restricted to the original author.
      */
     match /repairGuides/{repairGuideId} {
       allow get, list: if true;
-      allow create: if isIncomingFieldOwner('authorId');
-      allow update: if isFieldOwner('authorId') && request.resource.data.authorId == resource.data.authorId;
+      allow create: if isSignedIn();
+      allow update: if isFieldOwner('authorId');
       allow delete: if isFieldOwner('authorId');
 
-      /**
-       * @description Steps for a repair guide.
-       * @path /repairGuides/{repairGuideId}/steps/{stepId}
-       * @principle Authorizes via denormalized 'repairGuideAuthorId' to avoid parent lookups.
-       */
       match /steps/{stepId} {
         allow get, list: if true;
-        allow create: if isIncomingFieldOwner('repairGuideAuthorId');
-        allow update: if isFieldOwner('repairGuideAuthorId') && request.resource.data.repairGuideAuthorId == resource.data.repairGuideAuthorId;
+        allow create: if isSignedIn();
+        allow update: if isFieldOwner('repairGuideAuthorId');
         allow delete: if isFieldOwner('repairGuideAuthorId');
       }
 
-      /**
-       * @description Comments on a specific repair guide.
-       * @path /repairGuides/{repairGuideId}/comments/{commentId}
-       */
       match /comments/{commentId} {
         allow get, list: if true;
         allow create: if isIncomingFieldOwner('userId');
-        allow update: if isFieldOwner('userId') && request.resource.data.userId == resource.data.userId;
+        allow update: if isFieldOwner('userId');
         allow delete: if isFieldOwner('userId');
       }
 
-      /**
-       * @description User ratings for a guide. Document ID is the User's UID.
-       * @path /repairGuides/{repairGuideId}/ratings/{userId}
-       * @principle Uses UserID as DocID to enforce one-rating-per-user.
-       */
       match /ratings/{userId} {
         allow get, list: if true;
         allow create: if isOwner(userId);
@@ -154,34 +101,30 @@ service cloud.firestore {
       }
     }
 
-    /**
-     * @description Community forum posts.
-     * @path /forumPosts/{forumPostId}
-     */
     match /forumPosts/{forumPostId} {
       allow get, list: if true;
       allow create: if isIncomingFieldOwner('userId');
-      allow update: if isFieldOwner('userId') && request.resource.data.userId == resource.data.userId;
+      allow update: if isFieldOwner('userId');
       allow delete: if isFieldOwner('userId');
 
       match /comments/{commentId} {
         allow get, list: if true;
         allow create: if isIncomingFieldOwner('userId');
-        allow update: if isFieldOwner('userId') && request.resource.data.userId == resource.data.userId;
+        allow update: if isFieldOwner('userId');
         allow delete: if isFieldOwner('userId');
       }
     }
 
     /**
-     * @description GLOBAL READ-ONLY COLLECTIONS
-     * These collections contain reference data managed by administrators.
+     * @description REFERENCE COLLECTIONS
+     * Allowing authenticated users to 'create' or 'update' to support auto-caching from iFixit.
      */
-    match /categories/{id} { allow read: if true; allow write: if false; }
-    match /devices/{id} { allow read: if true; allow write: if false; }
-    match /tools/{id} { allow read: if true; allow write: if false; }
-    match /parts/{id} { allow read: if true; allow write: if false; }
-    match /tags/{id} { allow read: if true; allow write: if false; }
-    match /badges/{id} { allow read: if true; allow write: if false; }
+    match /categories/{id} { allow read: if true; allow write: if isSignedIn(); }
+    match /devices/{id} { allow read: if true; allow write: if isSignedIn(); }
+    match /tools/{id} { allow read: if true; allow write: if isSignedIn(); }
+    match /parts/{id} { allow read: if true; allow write: if isSignedIn(); }
+    match /tags/{id} { allow read: if true; allow write: if isSignedIn(); }
+    match /badges/{id} { allow read: if true; allow write: if isSignedIn(); }
     match /nearbyRepairShops/{id} { allow read: if true; allow write: if false; }
 
   }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +6,7 @@ import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Loader2, Wrench, CheckCircl
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useUser, useFirestore, useDoc } from '@/firebase';
-import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo } from 'react';
@@ -24,18 +23,17 @@ export default function GuideDetailPage() {
   
   const [guide, setGuide] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   // Reference for the global cached guide in Firestore
   const globalGuideRef = useMemo(() => {
     if (!id || !db) return null;
-    return doc(db, 'guides', id);
+    return doc(db, 'repairGuides', id);
   }, [id, db]);
 
   // Reference for user's personal bookmark
   const bookmarkRef = useMemo(() => {
     if (!user || !id || !db) return null;
-    return doc(db, 'users', user.uid, 'bookmarks', id);
+    return doc(db, 'users', user.uid, 'savedGuides', id);
   }, [user, id, db]);
 
   const { data: cachedGuide } = useDoc(globalGuideRef);
@@ -46,8 +44,8 @@ export default function GuideDetailPage() {
     async function fetchAndCacheGuide() {
       if (!id) return;
       
-      // If we have cached guide in Firestore, use it immediately
-      if (cachedGuide) {
+      // 1. Try Firestore cache first
+      if (cachedGuide && cachedGuide.steps && cachedGuide.steps.length > 0) {
         setGuide(cachedGuide);
         setLoading(false);
         return;
@@ -55,15 +53,46 @@ export default function GuideDetailPage() {
 
       setLoading(true);
       try {
+        // 2. Fallback to iFixit
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setGuide(fetchedGuide);
-          // Auto-save to global Firestore cache for next time
-          if (globalGuideRef) {
-            setDoc(globalGuideRef, {
-              ...fetchedGuide,
-              cachedAt: serverTimestamp()
-            }, { merge: true });
+          
+          // 3. AUTO-SAVE to Firestore for future access (Sync Engine)
+          if (db && user) {
+             const guideRef = doc(db, 'repairGuides', id);
+             // Save main guide doc
+             setDoc(guideRef, {
+               ...fetchedGuide,
+               syncedAt: serverTimestamp(),
+               authorId: 'system_ifixit' // Mark as system-cached
+             }, { merge: true });
+
+             // Save steps as subcollection for better structure (optional but good practice)
+             if (fetchedGuide.steps) {
+               for (const step of fetchedGuide.steps) {
+                 const stepRef = doc(db, 'repairGuides', id, 'steps', step.id || step.stepNumber.toString());
+                 setDoc(stepRef, {
+                   ...step,
+                   repairGuideId: id,
+                   repairGuideAuthorId: 'system_ifixit'
+                 }, { merge: true });
+               }
+             }
+
+             // Save tools/parts
+             if (fetchedGuide.tools) {
+               for (const tool of fetchedGuide.tools) {
+                 const toolRef = doc(db, 'tools', tool.id);
+                 setDoc(toolRef, {
+                   id: tool.id,
+                   name: tool.name,
+                   description: 'Standard repair tool synced from iFixit',
+                   imageUrl: '',
+                   syncedAt: serverTimestamp()
+                 }, { merge: true });
+               }
+             }
           }
         }
       } catch (error) {
@@ -76,7 +105,7 @@ export default function GuideDetailPage() {
     if (isMounted) {
       fetchAndCacheGuide();
     }
-  }, [id, isMounted, cachedGuide, globalGuideRef]);
+  }, [id, isMounted, cachedGuide, db, user]);
 
   const handleBookmark = () => {
     if (!user) {
@@ -90,7 +119,9 @@ export default function GuideDetailPage() {
       toast({ title: "Removed from vault" });
     } else {
       setDoc(bookmarkRef, {
-        guideId: id,
+        id: id,
+        userId: user.uid,
+        repairGuideId: id,
         title: guide.title,
         thumbnail: guide.thumbnail || '',
         category: guide.category,
@@ -102,7 +133,7 @@ export default function GuideDetailPage() {
 
   if (!isMounted) return null;
 
-  if (loading) return (
+  if (loading && !guide) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background">
       <Loader2 className="animate-spin text-primary w-12 h-12 mb-4" />
       <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
@@ -135,7 +166,7 @@ export default function GuideDetailPage() {
                 {cachedGuide && (
                   <div className="flex items-center gap-2 text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
                     <CloudDownload className="w-3 h-3" />
-                    Vault Cached
+                    Vault Synchronized
                   </div>
                 )}
               </div>
