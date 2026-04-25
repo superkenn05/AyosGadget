@@ -1,6 +1,7 @@
+
 /**
  * @fileOverview Heuristic pattern-based translator for repair guides.
- * Converts technical English to "Mababaw na Tagalog" (Conversational Taglish).
+ * Processes technical English to "Mababaw na Tagalog" (Conversational Taglish).
  */
 
 const DICTIONARY: Record<string, string> = {
@@ -57,7 +58,7 @@ function translateSentence(sentence: string): string {
   let result = sentence.toLowerCase().trim();
   if (!result) return "";
 
-  // 1. Common Phrases (Heuristic)
+  // 1. Common Phrases
   const phrases = [
     ["search for", "hanapin ang"],
     ["front of the", "harapan ng"],
@@ -79,24 +80,23 @@ function translateSentence(sentence: string): string {
     result = result.replace(regex, tag);
   });
 
-  // 3. Post-process cleanup
+  // Post-process cleanup
   result = result
     .replace(/\bang ang\b/g, "ang")
     .replace(/\bang sa\b/g, "sa")
     .replace(/\bgamit ang ang\b/g, "gamit ang");
 
-  // Capitalize first letter
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
 /**
  * Performs a fast, dictionary-based translation of English repair instructions to Mababaw na Tagalog.
- * Processes the text sentence by sentence for natural flow.
+ * Processes the text sentence by sentence for a more natural flow.
  */
 export function heuristicTranslate(text: string): string {
   if (!text) return "";
   
-  // Split by periods, exclamation marks, or newlines to process per sentence
+  // Split by common sentence terminators and process per sentence
   const sentences = text.split(/([.!\n])/);
   let result = "";
 
