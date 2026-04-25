@@ -27,7 +27,9 @@ export default function Home() {
         if (trending && trending.length > 0) {
           setTrendingGuides(trending);
         } else {
-          setHasError(true);
+          // If trending fails, we might still have trendingGuides as empty array
+          // Only show error if we have zero data after loading
+          if (trendingGuides.length === 0) setHasError(true);
         }
       } catch (error) {
         console.error("Failed to load trending guides", error);
@@ -39,7 +41,7 @@ export default function Home() {
     fetchTrending();
   }, [isMounted]);
 
-  // Prevent hydration mismatch by rendering a skeleton or same content on server/client
+  // Handle Hydration Error: Only render dynamic content after mount
   if (!isMounted) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">

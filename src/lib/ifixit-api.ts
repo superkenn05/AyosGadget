@@ -2,11 +2,11 @@
 
 /**
  * @fileOverview iFixit API Client - Server Side Implementation.
- * Resulba sa CORS issues sa pamamagitan ng server-side fetching.
+ * Pinatibay na implementation para iwas CORS at blocking.
  */
 
 const IFIXIT_API_BASE = 'https://www.ifixit.com/api/2.0';
-const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 AyosGadget/1.0';
+const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 AyosGadget/1.0';
 
 function stripHtml(html: string) {
   if (!html) return '';
@@ -73,7 +73,7 @@ async function fetchIFixit(endpoint: string) {
         'User-Agent': USER_AGENT,
         'Accept': 'application/json',
       },
-      cache: 'no-store'
+      next: { revalidate: 3600 } // Cache for 1 hour
     });
     
     if (!res.ok) {
@@ -96,6 +96,7 @@ export async function searchIFixitGuides(query: string) {
 
 export async function getTrendingGuides(offset: number = 0, limit: number = 12) {
   const data = await fetchIFixit(`guides?offset=${offset}&limit=${limit}`);
+  // Trending endpoint returns an array directly
   if (!data || !Array.isArray(data)) return [];
   return data.map((g: any) => mapIFixitToInternal(g)).filter(Boolean);
 }
