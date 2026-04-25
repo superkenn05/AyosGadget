@@ -57,13 +57,15 @@ function translateSentence(sentence: string): string {
   let result = sentence.toLowerCase().trim();
   if (!result) return "";
 
-  // 1. Common Phrases
+  // 1. Common Phrases (Heuristic)
   const phrases = [
     ["search for", "hanapin ang"],
     ["front of the", "harapan ng"],
     ["underside of", "ilalim ng"],
     ["pop up", "kusa nang aangat"],
     ["pull the tabs", "hilahin ang mga lock"],
+    ["be careful", "ingat lang"],
+    ["make sure", "siguraduhin"],
   ];
 
   phrases.forEach(([eng, tag]) => {
@@ -77,7 +79,7 @@ function translateSentence(sentence: string): string {
     result = result.replace(regex, tag);
   });
 
-  // 3. Post-process
+  // 3. Post-process cleanup
   result = result
     .replace(/\bang ang\b/g, "ang")
     .replace(/\bang sa\b/g, "sa")
@@ -89,18 +91,19 @@ function translateSentence(sentence: string): string {
 
 /**
  * Performs a fast, dictionary-based translation of English repair instructions to Mababaw na Tagalog.
- * Processes the text sentence by sentence.
+ * Processes the text sentence by sentence for natural flow.
  */
 export function heuristicTranslate(text: string): string {
   if (!text) return "";
   
-  // Split by periods, exclamation marks, or newlines
+  // Split by periods, exclamation marks, or newlines to process per sentence
   const sentences = text.split(/([.!\n])/);
   let result = "";
 
   for (let i = 0; i < sentences.length; i++) {
     const part = sentences[i];
     if (part === undefined) continue;
+    
     if (/[.!\n]/.test(part)) {
       result += part;
     } else {

@@ -2,6 +2,7 @@
 
 /**
  * @fileOverview iFixit API Client - Server Side Implementation to avoid CORS.
+ * All exported functions must be async for Server Actions.
  */
 
 import { CategoryName } from './repair-data';
@@ -61,8 +62,9 @@ function mapCategory(type: string): CategoryName {
 
 /**
  * Internal helper to map iFixit data to internal format.
+ * Not exported to prevent Next.js Server Action build errors.
  */
-async function mapIFixitToInternal(ifixit: any) {
+function internalMapper(ifixit: any) {
   const rawId = ifixit.guideid ?? ifixit.id;
   if (!rawId) return null;
   
@@ -109,7 +111,7 @@ export async function searchIFixitGuides(query: string) {
     if (!res.ok) return [];
     const data = await res.json();
     const results = data.results || [];
-    const mapped = await Promise.all(results.map((r: any) => mapIFixitToInternal(r)));
+    const mapped = results.map((r: any) => internalMapper(r));
     return mapped.filter(Boolean);
   } catch (error) {
     console.error('iFixit search error:', error);
@@ -119,10 +121,13 @@ export async function searchIFixitGuides(query: string) {
 
 export async function getTrendingGuides(offset: number = 0, limit: number = 12) {
   try {
-    const res = await fetch(`https://www.ifixit.com/api/2.0/guides?offset=${offset}&limit=${limit}`);
-    if (!res.ok) return [];
+    const res = await fetch(`https://www.ifixit.com/api/2.0/guides?offset=${offset}&limit=${limit}`, {
+      next: { revalidate: 3600 } // Cache for 1 hour
+    });
+    if (!res.ok) throw new Error('Failed to fetch trending guides');
     const data = await res.json();
-    const mapped = await Promise.all((data || []).map((r: any) => mapIFixitToInternal(r)));
+    if (!Array.isArray(data)) return [];
+    const mapped = data.map((r: any) => internalMapper(r));
     return mapped.filter(Boolean);
   } catch (error) {
     console.error('iFixit trending error:', error);
@@ -147,9 +152,10 @@ export async function getGuideWithAllSteps(id: string, visitedRaw?: string[]): P
   visited.add(id);
 
   try {
-    const guide = await getIFixitGuide(id);
-    if (!guide) return null;
-
+    const res = await fetch(`https://www.ifixit.com/api/2.0/guides/${id}`);
+    if (!res.ok) return null;
+    const guide = await res.json();
+    
     let allSteps: any[] = [];
     let consolidatedDescription = stripHtml(guide.introduction_rendered || guide.introduction_raw || guide.summary || '');
     

@@ -1,4 +1,3 @@
-
 'use client';
 
 import CategoryIcon from '@/components/repair/CategoryIcon';
@@ -15,21 +14,30 @@ export default function Home() {
   const { t, isMounted } = useLanguage();
   const [trendingGuides, setTrendingGuides] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    if (!isMounted) return;
+
     async function fetchTrending() {
       setIsLoading(true);
+      setHasError(false);
       try {
         const trending = await getTrendingGuides(0, 6);
-        setTrendingGuides(trending);
+        if (trending && trending.length > 0) {
+          setTrendingGuides(trending);
+        } else {
+          setHasError(true);
+        }
       } catch (error) {
         console.error("Failed to load trending guides", error);
+        setHasError(true);
       } finally {
         setIsLoading(false);
       }
     }
     fetchTrending();
-  }, []);
+  }, [isMounted]);
 
   if (!isMounted) return null;
 
@@ -152,6 +160,7 @@ export default function Home() {
           ) : (
             <div className="p-16 glass rounded-3xl border-primary/5 text-center shadow-xl">
               <h2 className="text-xl font-black uppercase tracking-tighter mb-4">{t('common_error_link')}</h2>
+              <p className="text-muted-foreground mb-6 text-sm">{t('common_error_desc')}</p>
               <Button onClick={() => window.location.reload()} className="rounded-xl h-12 px-8 font-black uppercase tracking-widest text-[10px]">
                 {t('common_retry')}
               </Button>
