@@ -5,8 +5,8 @@ service cloud.firestore {
     /**
      * CORE PHILOSOPHY
      * This ruleset enforces a "Creator-Ownership" model designed for the AyosGadget repair platform.
-     * It prioritizes high-speed iteration by allowing flexible data shapes while maintaining 
-     * strict authorization boundaries.
+     * PUBLIC COLLECTIONS: Categories, Devices, and RepairGuides are publicly readable AND writable 
+     * to support the global auto-caching mechanism from iFixit.
      */
 
     // --- HELPER FUNCTIONS ---
@@ -63,18 +63,13 @@ service cloud.firestore {
 
     /**
      * @description Repair guides. 
-     * Explicit public read for library protocols.
+     * Open for public read/write to allow the iFixit auto-ingestion engine to work for all users.
      */
     match /repairGuides/{id} {
-      allow read: if true;
-      allow create: if isSignedIn();
-      allow update: if isFieldOwner('authorId') || (isSignedIn() && resource.data.authorId == 'system_ifixit');
-      allow delete: if isFieldOwner('authorId');
+      allow read, write: if true;
 
       match /steps/{stepId} {
-        allow read: if true;
-        allow create: if isSignedIn();
-        allow update, delete: if isSignedIn();
+        allow read, write: if true;
       }
 
       match /comments/{commentId} {
@@ -104,13 +99,14 @@ service cloud.firestore {
     /**
      * @description GLOBAL REFERENCE COLLECTIONS
      * Wide open for reads to ensure protocols are always available.
+     * Writable by all to support auto-syncing of master modules.
      */
-    match /categories/{id} { allow read: if true; allow write: if isSignedIn(); }
-    match /devices/{id} { allow read: if true; allow write: if isSignedIn(); }
-    match /tools/{id} { allow read: if true; allow write: if isSignedIn(); }
-    match /parts/{id} { allow read: if true; allow write: if isSignedIn(); }
-    match /tags/{id} { allow read: if true; allow write: if isSignedIn(); }
-    match /badges/{id} { allow read: if true; allow write: if isSignedIn(); }
+    match /categories/{id} { allow read, write: if true; }
+    match /devices/{id} { allow read, write: if true; }
+    match /tools/{id} { allow read, write: if true; }
+    match /parts/{id} { allow read, write: if true; }
+    match /tags/{id} { allow read, write: if true; }
+    match /badges/{id} { allow read, write: if true; }
     match /nearbyRepairShops/{id} { allow read: if true; allow write: if false; }
 
   }

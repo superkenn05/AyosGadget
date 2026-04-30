@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -39,18 +38,18 @@ export default function GuideDetailPage() {
     return doc(db, 'users', user.uid, 'savedGuides', id);
   }, [user, id, db]);
 
-  const { data: cachedGuide } = useDoc(globalGuideRef);
+  const { data: cachedGuide, isLoading: isCacheLoading } = useDoc(globalGuideRef);
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
-  // 1. Fetch Main Content
+  // 1. Fetch Main Content & Sync to Firestore
   useEffect(() => {
     async function fetchAndCacheGuide() {
-      if (!id) return;
+      if (!id || !isMounted) return;
       
+      // If we have cached guide in Firestore, use it immediately
       if (cachedGuide && cachedGuide.steps && cachedGuide.steps.length > 0) {
         setGuide(cachedGuide);
-        // Check if translation already exists in cache
         if (cachedGuide.translations?.[language]) {
           setTranslatedGuide(cachedGuide.translations[language]);
         }
@@ -58,18 +57,24 @@ export default function GuideDetailPage() {
         return;
       }
 
+      // If cache is still loading, wait
+      if (isCacheLoading) return;
+
+      // If not in cache, fetch from iFixit
       setLoading(true);
       try {
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setGuide(fetchedGuide);
+          
+          // AUTO-SAVE TO FIRESTORE (Everyone can do this now)
           if (db) {
              const guideRef = doc(db, 'repairGuides', id);
              setDoc(guideRef, {
                ...fetchedGuide,
                syncedAt: serverTimestamp(),
                authorId: 'system_ifixit'
-             }, { merge: true }).catch(() => {});
+             }, { merge: true }).catch((e) => console.warn("Auto-sync failed", e));
           }
         }
       } catch (error) {
@@ -79,16 +84,16 @@ export default function GuideDetailPage() {
       }
     }
     
-    if (isMounted) {
-      fetchAndCacheGuide();
-    }
-  }, [id, isMounted, cachedGuide, db, language]);
+    fetchAndCacheGuide();
+  }, [id, isMounted, cachedGuide, isCacheLoading, db, language]);
 
   // 2. Handle AI Translation with Caching
   useEffect(() => {
     async function handleAITranslation() {
+      // Only translate if language is Filipino and we don't have it yet
       if (language === 'fil' && guide && !translatedGuide && !isTranslating) {
-        // Double check if it appeared in Firestore while we were looking
+        
+        // Final check if translation appeared in the guide object
         if (guide.translations?.fil) {
           setTranslatedGuide(guide.translations.fil);
           return;
@@ -108,13 +113,13 @@ export default function GuideDetailPage() {
           if (result && (result.title !== guide.title || result.description !== guide.description)) {
             setTranslatedGuide(result);
             
-            // SAVE TO FIRESTORE CACHE for "Instant" future access
+            // SAVE TRANSLATION TO FIRESTORE CACHE for "Instant" future access
             if (db && id) {
               const guideRef = doc(db, 'repairGuides', id);
               updateDoc(guideRef, {
                 [`translations.${language}`]: result,
                 lastTranslatedAt: serverTimestamp()
-              }).catch((e) => console.warn("Cache save failed", e));
+              }).catch((e) => console.warn("Translation cache save failed", e));
             }
           }
         } catch (error) {
