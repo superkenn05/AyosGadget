@@ -17,7 +17,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function GuideDetailPage() {
   const params = useParams();
-  const id = params?.id as string;
+  const rawId = params?.id as string;
+  const id = rawId?.trim(); // Ensure no trailing spaces
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
@@ -67,7 +68,7 @@ export default function GuideDetailPage() {
         if (fetchedGuide) {
           setGuide(fetchedGuide);
           
-          // AUTO-SAVE TO FIRESTORE (Everyone can do this now)
+          // AUTO-SAVE TO FIRESTORE (Publicly accessible now)
           if (db) {
              const guideRef = doc(db, 'repairGuides', id);
              setDoc(guideRef, {
@@ -93,7 +94,7 @@ export default function GuideDetailPage() {
       // Only translate if language is Filipino and we don't have it yet
       if (language === 'fil' && guide && !translatedGuide && !isTranslating) {
         
-        // Final check if translation appeared in the guide object
+        // Final check if translation appeared in the guide object or cache
         if (guide.translations?.fil) {
           setTranslatedGuide(guide.translations.fil);
           return;
