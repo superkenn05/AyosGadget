@@ -90,6 +90,8 @@ const resources = {
       settings_version: 'Software Version',
       settings_check_updates: 'Check Updates',
       card_priority_task: 'Priority Task',
+      // Manual Overrides for common guide instructions
+      manual_step_keyboard_lombard: "• Remove both expansion bay modules using the levers on the front of the computer.\n\n• Insert your index fingers inside the expansion bays and search for the two ribbed tabs on the underside of the upper case. The tabs are located near the bottom corners of the keyboard.\n\n• Pull the tabs toward yourself and the keyboard will pop up."
     }
   },
   fil: {
@@ -176,6 +178,8 @@ const resources = {
       settings_version: 'Bersyon',
       settings_check_updates: 'Tingnan ang Updates',
       card_priority_task: 'Mahalagang Gawain',
+      // Manual Overrides for common guide instructions
+      manual_step_keyboard_lombard: "• Hugutin ang parehong expansion bay modules gamit ang mga lever sa harap ng computer.\n\n• Isuot ang mga hintuturo sa loob ng expansion bays at kapain yung dalawang ribbed tab sa ilalim ng upper case. Malapit lang yan sa kanto sa ilalim ng keyboard.\n\n• Hilahin yung mga tab pabalik sa 'yo at kusa nang tatalbog pataas yung keyboard."
     }
   }
 };

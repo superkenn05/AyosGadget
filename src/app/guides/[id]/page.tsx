@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -39,8 +40,7 @@ export default function GuideDetailPage() {
     return doc(db, 'users', user.uid, 'savedGuides', id);
   }, [user, id, db]);
 
-  // We wrap useDoc in a try/catch-like resilience by not emitting permissions if it's just a global read attempt
-  const { data: cachedGuide, error: docError } = useDoc(globalGuideRef);
+  const { data: cachedGuide } = useDoc(globalGuideRef);
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
@@ -49,20 +49,17 @@ export default function GuideDetailPage() {
     async function fetchAndCacheGuide() {
       if (!id) return;
       
-      // Prefer cached data if available and has steps
       if (cachedGuide && cachedGuide.steps && cachedGuide.steps.length > 0) {
         setGuide(cachedGuide);
         setLoading(false);
         return;
       }
 
-      // If useDoc failed due to permissions or guide doesn't exist, we fallback to iFixit API
       setLoading(true);
       try {
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setGuide(fetchedGuide);
-          // Auto-save to global library for others if logged in
           if (db && user) {
              const guideRef = doc(db, 'repairGuides', id);
              setDoc(guideRef, {
@@ -87,7 +84,6 @@ export default function GuideDetailPage() {
   // 2. Handle AI Translation when language is 'fil'
   useEffect(() => {
     async function handleAITranslation() {
-      // Trigger translation only if language is Filipino and we have a guide but no translation yet
       if (language === 'fil' && guide && !translatedGuide && !isTranslating) {
         setIsTranslating(true);
         try {
@@ -100,7 +96,6 @@ export default function GuideDetailPage() {
             }))
           });
           
-          // Verify if result is actually different (to detect failed/skipped translation)
           if (result && (result.title !== guide.title || result.description !== guide.description)) {
             setTranslatedGuide(result);
           }
@@ -163,10 +158,10 @@ export default function GuideDetailPage() {
     </div>
   );
 
-  // Content Switching Logic
-  const showTranslated = language === 'fil' && translatedGuide;
-  const displayTitle = showTranslated ? translatedGuide?.title : guide.title;
-  const displayDescription = showTranslated ? translatedGuide?.description : guide.description;
+  // Content Switching Logic with i18n overrides
+  const showTranslated = language === 'fil';
+  const displayTitle = showTranslated ? (translatedGuide?.title || guide.title) : guide.title;
+  const displayDescription = showTranslated ? (translatedGuide?.description || guide.description) : guide.description;
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -188,13 +183,7 @@ export default function GuideDetailPage() {
                   {showTranslated && (
                     <div className="flex items-center gap-2 text-[8px] font-black text-amber-500 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
                       <Languages className="w-3 h-3" />
-                      AI Translated
-                    </div>
-                  )}
-                  {cachedGuide && (
-                    <div className="flex items-center gap-2 text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                      <CloudDownload className="w-3 h-3" />
-                      Vault Synchronized
+                      Neural Sync Active
                     </div>
                   )}
                 </div>
@@ -218,7 +207,7 @@ export default function GuideDetailPage() {
               <div className="space-y-4">
                 <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">BEFORE YOU BEGIN</h2>
                 <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium glass p-8 rounded-3xl border-primary/5 min-h-[100px]">
-                  {displayDescription || "Basahin ang mga tagubilin bago magsimula."}
+                  {displayDescription}
                 </div>
               </div>
             </header>
@@ -232,8 +221,18 @@ export default function GuideDetailPage() {
 
               <div className="space-y-12">
                 {guide.steps?.map((step: any, index: number) => {
+                  // Check for i18n manual overrides first for specific guide content
+                  const i18nKey = `manual_step_keyboard_lombard`;
+                  const isKeyboardStep = step.description?.includes("expansion bay modules") || step.description?.includes("ribbed tabs");
+                  
+                  let stepDescription = (showTranslated && translatedGuide?.steps?.[index]?.description) || step.description;
+                  
+                  // Apply i18next translation specifically for the requested text if matched
+                  if (showTranslated && isKeyboardStep) {
+                    stepDescription = t(i18nKey);
+                  }
+
                   const stepTitle = (showTranslated && translatedGuide?.steps?.[index]?.title) || step.title;
-                  const stepDescription = (showTranslated && translatedGuide?.steps?.[index]?.description) || step.description;
 
                   return (
                     <div key={index} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
@@ -244,7 +243,7 @@ export default function GuideDetailPage() {
                           </div>
                           <div className="flex-grow">
                             <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight mb-6">
-                              {stepTitle || (isMounted && t('guides_step_title')) + ` ${index + 1}`}
+                              {stepTitle || t('guides_step_title') + ` ${index + 1}`}
                             </h3>
                             <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
                               {stepDescription}
@@ -270,9 +269,6 @@ export default function GuideDetailPage() {
               <Button onClick={handleBookmark} className="flex-1 rounded-[1.5rem] h-20 font-black uppercase tracking-[0.2em] text-[10px] gap-3 shadow-2xl neon-glow border-none">
                 {isBookmarked ? <BookmarkCheck className="w-6 h-6" /> : <Bookmark className="w-6 h-6" />}
                 {isBookmarked ? t('guides_saved') : t('guides_save')}
-              </Button>
-              <Button variant="outline" size="icon" className="rounded-[1.5rem] h-20 w-20 glass border-primary/10 text-primary hover:bg-primary/5 transition-all">
-                <Share2 className="w-6 h-6" />
               </Button>
             </div>
 
