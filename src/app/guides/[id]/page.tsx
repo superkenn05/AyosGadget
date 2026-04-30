@@ -3,11 +3,11 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Bookmark, BookmarkCheck, Wrench, CheckCircle2, AlertTriangle, Sparkles, Languages } from 'lucide-react';
+import { ArrowLeft, Bookmark, BookmarkCheck, Wrench, CheckCircle2, AlertTriangle, Sparkles, Languages, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState } from 'react';
@@ -43,12 +43,17 @@ export default function GuideDetailPage() {
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
+  // 1. Fetch Main Content
   useEffect(() => {
     async function fetchAndCacheGuide() {
       if (!id) return;
       
       if (cachedGuide && cachedGuide.steps && cachedGuide.steps.length > 0) {
         setGuide(cachedGuide);
+        // Check if translation already exists in cache
+        if (cachedGuide.translations?.[language]) {
+          setTranslatedGuide(cachedGuide.translations[language]);
+        }
         setLoading(false);
         return;
       }
@@ -58,7 +63,7 @@ export default function GuideDetailPage() {
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setGuide(fetchedGuide);
-          if (db && user) {
+          if (db) {
              const guideRef = doc(db, 'repairGuides', id);
              setDoc(guideRef, {
                ...fetchedGuide,
@@ -77,11 +82,18 @@ export default function GuideDetailPage() {
     if (isMounted) {
       fetchAndCacheGuide();
     }
-  }, [id, isMounted, cachedGuide, db, user]);
+  }, [id, isMounted, cachedGuide, db, language]);
 
+  // 2. Handle AI Translation with Caching
   useEffect(() => {
     async function handleAITranslation() {
       if (language === 'fil' && guide && !translatedGuide && !isTranslating) {
+        // Double check if it appeared in Firestore while we were looking
+        if (guide.translations?.fil) {
+          setTranslatedGuide(guide.translations.fil);
+          return;
+        }
+
         setIsTranslating(true);
         try {
           const result = await translateGuide({
@@ -95,6 +107,15 @@ export default function GuideDetailPage() {
           
           if (result && (result.title !== guide.title || result.description !== guide.description)) {
             setTranslatedGuide(result);
+            
+            // SAVE TO FIRESTORE CACHE for "Instant" future access
+            if (db && id) {
+              const guideRef = doc(db, 'repairGuides', id);
+              updateDoc(guideRef, {
+                [`translations.${language}`]: result,
+                lastTranslatedAt: serverTimestamp()
+              }).catch((e) => console.warn("Cache save failed", e));
+            }
           }
         } catch (error) {
           console.error("Translation failed", error);
@@ -104,10 +125,10 @@ export default function GuideDetailPage() {
       }
     }
     
-    if (isMounted && guide) {
+    if (isMounted && guide && language === 'fil') {
       handleAITranslation();
     }
-  }, [language, guide, translatedGuide, isTranslating, isMounted]);
+  }, [language, guide, translatedGuide, isTranslating, isMounted, db, id]);
 
   const handleBookmark = () => {
     if (!user) {
@@ -153,17 +174,7 @@ export default function GuideDetailPage() {
                   <Skeleton className="h-40 w-full rounded-3xl" />
                </div>
             </div>
-            <div className="space-y-10 pt-10">
-               <Skeleton className="h-10 w-48" />
-               {[...Array(3)].map((_, i) => (
-                 <Skeleton key={i} className="h-96 w-full rounded-[2.5rem]" />
-               ))}
-            </div>
           </div>
-          <aside className="lg:col-span-4 space-y-8 sticky top-32">
-             <Skeleton className="h-20 w-full rounded-[1.5rem]" />
-             <Skeleton className="h-64 w-full rounded-[2.5rem]" />
-          </aside>
         </div>
       </div>
     </div>
@@ -203,10 +214,10 @@ export default function GuideDetailPage() {
                       Neural Translating...
                     </div>
                   )}
-                  {showTranslated && (
-                    <div className="flex items-center gap-2 text-[8px] font-black text-amber-500 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                  {showTranslated && translatedGuide && (
+                    <div className="flex items-center gap-2 text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
                       <Languages className="w-3 h-3" />
-                      Neural Sync Active
+                      Neural Cache Active
                     </div>
                   )}
                 </div>
@@ -218,7 +229,7 @@ export default function GuideDetailPage() {
               </div>
 
               <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-none">
-                {showTranslated && isTranslating && !translatedGuide ? <Skeleton className="h-16 w-full" /> : displayTitle}
+                {showTranslated && !translatedGuide ? <Skeleton className="h-16 w-full" /> : displayTitle}
               </h1>
 
               {guide.thumbnail && (
@@ -230,7 +241,7 @@ export default function GuideDetailPage() {
               <div className="space-y-4">
                 <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">BEFORE YOU BEGIN</h2>
                 <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium glass p-8 rounded-3xl border-primary/5 min-h-[100px]">
-                  {showTranslated && isTranslating && !translatedGuide ? (
+                  {showTranslated && !translatedGuide ? (
                     <div className="space-y-3">
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-5/6" />
