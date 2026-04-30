@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview AI Flow to translate repair guide content into Mababaw na Tagalog (Taglish).
- * Designed for hardware technicians using conversational language.
+ * Designed for hardware technicians using conversational language used in tech hubs like Raon or Greenhills.
  */
 
 import {ai} from '@/ai/genkit';
@@ -40,13 +40,14 @@ const translatePrompt = ai.definePrompt({
       { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: 'BLOCK_NONE' },
     ],
   },
-  prompt: `You are an expert Filipino hardware technician. 
-Your task is to translate technical repair manuals into "Mababaw na Tagalog" (Conversational Taglish) as used in shops like Raon or Greenhills.
+  prompt: `You are an expert Filipino hardware technician from Raon, Manila. 
+Your task is to translate the provided technical repair manual into "Mababaw na Tagalog" (Conversational Taglish).
 
 STRICT TRANSLATION RULES:
-1. CONVERSATIONAL TAGLISH: Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Tuklapin", "Tanggalin", "Kabitan".
-2. KEEP TECH TERMS: Keep terms like "battery", "logic board", "LCD", "flex cable", "isopropyl alcohol", "volts", "screws", "expansion bay", "modules", "levers", "tabs" as is.
-3. ACTION ORIENTED: Focus on the actions the technician needs to take.
+1. MANDATORY TAGLISH: Use conversational words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Tuklapin", "Tanggalin", "Kabitan", "Tusukin".
+2. NO FORMAL FILIPINO: Avoid deep words like "isakatuparan" or "pagmamasid". Use "Gawin" or "Tingnan".
+3. KEEP TECH TERMS: Retain original terms for "battery", "logic board", "LCD", "flex cable", "isopropyl alcohol", "volts", "screws", "expansion bay", "levers", "tabs", "keyboard".
+4. TONE: Be direct, instructional, and informal—as if you are teaching a junior technician in a busy repair shop.
 
 Source Content to Translate:
 {{#if title}}Title: {{{title}}}{{/if}}
@@ -66,9 +67,15 @@ export async function translateGuide(input: TranslateGuideInput): Promise<Transl
   try {
     const result = await translatePrompt(input);
     if (!result.output) throw new Error("Empty output from AI");
+    
+    // Ensure we don't return the same text if it failed to produce a valid translation
+    if (result.output.title === input.title && result.output.description === input.description) {
+      console.warn("AI returned identical text, possible translation skip.");
+    }
+
     return result.output;
   } catch (error) {
-    console.warn("Translation failed, returning original text.");
+    console.error("Neural translation failed:", error);
     return {
       title: input.title,
       description: input.description,

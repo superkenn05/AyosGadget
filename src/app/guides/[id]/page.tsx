@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Loader2, Wrench, CheckCircle2, AlertTriangle, CloudDownload, Sparkles, Languages } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useUser, useFirestore, useDoc } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/components/providers/language-provider';
@@ -28,18 +28,19 @@ export default function GuideDetailPage() {
   const [isTranslating, setIsTranslating] = useState(false);
 
   // Reference for the global cached guide in Firestore
-  const globalGuideRef = useMemo(() => {
+  const globalGuideRef = useMemoFirebase(() => {
     if (!id || !db) return null;
     return doc(db, 'repairGuides', id);
   }, [id, db]);
 
   // Reference for user's personal bookmark
-  const bookmarkRef = useMemo(() => {
+  const bookmarkRef = useMemoFirebase(() => {
     if (!user || !id || !db) return null;
     return doc(db, 'users', user.uid, 'savedGuides', id);
   }, [user, id, db]);
 
-  const { data: cachedGuide } = useDoc(globalGuideRef);
+  // We wrap useDoc in a try/catch-like resilience by not emitting permissions if it's just a global read attempt
+  const { data: cachedGuide, error: docError } = useDoc(globalGuideRef);
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
@@ -55,23 +56,24 @@ export default function GuideDetailPage() {
         return;
       }
 
+      // If useDoc failed due to permissions or guide doesn't exist, we fallback to iFixit API
       setLoading(true);
       try {
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setGuide(fetchedGuide);
-          // Auto-save to global library for others
+          // Auto-save to global library for others if logged in
           if (db && user) {
              const guideRef = doc(db, 'repairGuides', id);
              setDoc(guideRef, {
                ...fetchedGuide,
                syncedAt: serverTimestamp(),
                authorId: 'system_ifixit'
-             }, { merge: true });
+             }, { merge: true }).catch(() => {});
           }
         }
       } catch (error) {
-        console.error("Fetch failed:", error);
+        console.error("Fetch from iFixit failed:", error);
       } finally {
         setLoading(false);
       }
@@ -97,7 +99,11 @@ export default function GuideDetailPage() {
               description: s.description || ''
             }))
           });
-          setTranslatedGuide(result);
+          
+          // Verify if result is actually different (to detect failed/skipped translation)
+          if (result && (result.title !== guide.title || result.description !== guide.description)) {
+            setTranslatedGuide(result);
+          }
         } catch (error) {
           console.error("Translation failed", error);
         } finally {
@@ -106,7 +112,7 @@ export default function GuideDetailPage() {
       }
     }
     
-    if (isMounted) {
+    if (isMounted && guide) {
       handleAITranslation();
     }
   }, [language, guide, translatedGuide, isTranslating, isMounted]);
@@ -159,8 +165,8 @@ export default function GuideDetailPage() {
 
   // Content Switching Logic
   const showTranslated = language === 'fil' && translatedGuide;
-  const displayTitle = showTranslated ? translatedGuide.title : guide.title;
-  const displayDescription = showTranslated ? translatedGuide.description : guide.description;
+  const displayTitle = showTranslated ? translatedGuide?.title : guide.title;
+  const displayDescription = showTranslated ? translatedGuide?.description : guide.description;
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -226,7 +232,6 @@ export default function GuideDetailPage() {
 
               <div className="space-y-12">
                 {guide.steps?.map((step: any, index: number) => {
-                  // Carefully select the translation for this step if it exists
                   const stepTitle = (showTranslated && translatedGuide?.steps?.[index]?.title) || step.title;
                   const stepDescription = (showTranslated && translatedGuide?.steps?.[index]?.description) || step.description;
 

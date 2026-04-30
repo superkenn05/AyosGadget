@@ -7,13 +7,6 @@ service cloud.firestore {
      * This ruleset enforces a "Creator-Ownership" model designed for the AyosGadget repair platform.
      * It prioritizes high-speed iteration by allowing flexible data shapes while maintaining 
      * strict authorization boundaries.
-     *
-     * DATA STRUCTURE
-     * 1. Public Content: Categories, Devices, Tools, and Parts are globally readable.
-     *    Authenticated users can write to these for caching purposes from iFixit.
-     * 2. User-Generated Content: Repair Guides and Forum Posts are publicly readable but writable only 
-     *    by their respective authors.
-     * 3. Private User Space: Saved items, troubleshooting sessions, and progress are strictly private.
      */
 
     // --- HELPER FUNCTIONS ---
@@ -70,54 +63,47 @@ service cloud.firestore {
 
     /**
      * @description Repair guides. 
-     * Now allows authenticated users to 'create' for caching from iFixit.
-     * Updates and deletes still restricted to the original author.
+     * Explicit public read for library protocols.
      */
-    match /repairGuides/{repairGuideId} {
-      allow get, list: if true;
+    match /repairGuides/{id} {
+      allow read: if true;
       allow create: if isSignedIn();
       allow update: if isFieldOwner('authorId') || (isSignedIn() && resource.data.authorId == 'system_ifixit');
       allow delete: if isFieldOwner('authorId');
 
       match /steps/{stepId} {
-        allow get, list: if true;
+        allow read: if true;
         allow create: if isSignedIn();
-        allow update: if isFieldOwner('repairGuideAuthorId') || (isSignedIn() && resource.data.repairGuideAuthorId == 'system_ifixit');
-        allow delete: if isFieldOwner('repairGuideAuthorId');
+        allow update, delete: if isSignedIn();
       }
 
       match /comments/{commentId} {
-        allow get, list: if true;
+        allow read: if true;
         allow create: if isIncomingFieldOwner('userId');
-        allow update: if isFieldOwner('userId');
-        allow delete: if isFieldOwner('userId');
+        allow update, delete: if isFieldOwner('userId');
       }
 
       match /ratings/{userId} {
-        allow get, list: if true;
-        allow create: if isOwner(userId);
-        allow update: if isExistingOwner(userId);
-        allow delete: if isExistingOwner(userId);
+        allow read: if true;
+        allow create, update, delete: if isOwner(userId);
       }
     }
 
     match /forumPosts/{forumPostId} {
-      allow get, list: if true;
+      allow read: if true;
       allow create: if isIncomingFieldOwner('userId');
-      allow update: if isFieldOwner('userId');
-      allow delete: if isFieldOwner('userId');
+      allow update, delete: if isFieldOwner('userId');
 
       match /comments/{commentId} {
-        allow get, list: if true;
+        allow read: if true;
         allow create: if isIncomingFieldOwner('userId');
-        allow update: if isFieldOwner('userId');
-        allow delete: if isFieldOwner('userId');
+        allow update, delete: if isFieldOwner('userId');
       }
     }
 
     /**
-     * @description REFERENCE COLLECTIONS
-     * Allowing authenticated users to 'create' or 'update' to support auto-caching from iFixit.
+     * @description GLOBAL REFERENCE COLLECTIONS
+     * Wide open for reads to ensure protocols are always available.
      */
     match /categories/{id} { allow read: if true; allow write: if isSignedIn(); }
     match /devices/{id} { allow read: if true; allow write: if isSignedIn(); }
