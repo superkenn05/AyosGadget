@@ -1,6 +1,7 @@
 'use server';
 /**
- * @fileOverview AI Flow to translate repair guide content into Mababaw na Tagalog.
+ * @fileOverview AI Flow to translate repair guide content into Mababaw na Tagalog (Taglish).
+ * Designed for hardware technicians using conversational language.
  */
 
 import {ai} from '@/ai/genkit';
@@ -39,23 +40,26 @@ const translatePrompt = ai.definePrompt({
       { category: 'HARM_CATEGORY_CIVIC_INTEGRITY', threshold: 'BLOCK_NONE' },
     ],
   },
-  prompt: `You are an expert Filipino hardware technician.
+  prompt: `You are an expert Filipino hardware technician. 
 Your task is to translate technical repair manuals into "Mababaw na Tagalog" (Conversational Taglish) as used in shops like Raon or Greenhills.
 
 STRICT TRANSLATION RULES:
-1. CONVERSATIONAL TAGLISH: Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Tuklapin".
-2. KEEP TECH TERMS: Keep terms like "battery", "logic board", "LCD", "flex cable", "isopropyl alcohol", "volts" as is.
+1. CONVERSATIONAL TAGLISH: Use words like "Baklasin", "Hugutin", "Luwagan", "Ikabit", "I-check", "Tuklapin", "Tanggalin", "Kabitan".
+2. KEEP TECH TERMS: Keep terms like "battery", "logic board", "LCD", "flex cable", "isopropyl alcohol", "volts", "screws", "expansion bay", "modules", "levers", "tabs" as is.
+3. ACTION ORIENTED: Focus on the actions the technician needs to take.
 
 Source Content to Translate:
 {{#if title}}Title: {{{title}}}{{/if}}
-{{#if description}}Description: {{{description}}}{{if steps}}
+{{#if description}}Description: {{{description}}}{{/if}}
+
+{{#if steps}}
 Steps to Translate:
 {{#each steps}}
 --- STEP {{@index}} ---
 {{#if this.title}}Step Title: {{this.title}}{{/if}}
 Instruction: {{{this.description}}}
 {{/each}}
-{{/if}}{{/if}}`,
+{{/if}}`,
 });
 
 export async function translateGuide(input: TranslateGuideInput): Promise<TranslateGuideOutput> {

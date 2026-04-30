@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -49,6 +48,7 @@ export default function GuideDetailPage() {
     async function fetchAndCacheGuide() {
       if (!id) return;
       
+      // Prefer cached data if available and has steps
       if (cachedGuide && cachedGuide.steps && cachedGuide.steps.length > 0) {
         setGuide(cachedGuide);
         setLoading(false);
@@ -60,6 +60,7 @@ export default function GuideDetailPage() {
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setGuide(fetchedGuide);
+          // Auto-save to global library for others
           if (db && user) {
              const guideRef = doc(db, 'repairGuides', id);
              setDoc(guideRef, {
@@ -84,6 +85,7 @@ export default function GuideDetailPage() {
   // 2. Handle AI Translation when language is 'fil'
   useEffect(() => {
     async function handleAITranslation() {
+      // Trigger translation only if language is Filipino and we have a guide but no translation yet
       if (language === 'fil' && guide && !translatedGuide && !isTranslating) {
         setIsTranslating(true);
         try {
@@ -91,8 +93,8 @@ export default function GuideDetailPage() {
             title: guide.title,
             description: guide.description,
             steps: guide.steps?.map((s: any) => ({
-              title: s.title,
-              description: s.description
+              title: s.title || '',
+              description: s.description || ''
             }))
           });
           setTranslatedGuide(result);
@@ -103,8 +105,11 @@ export default function GuideDetailPage() {
         }
       }
     }
-    handleAITranslation();
-  }, [language, guide, translatedGuide, isTranslating]);
+    
+    if (isMounted) {
+      handleAITranslation();
+    }
+  }, [language, guide, translatedGuide, isTranslating, isMounted]);
 
   const handleBookmark = () => {
     if (!user) {
@@ -221,8 +226,9 @@ export default function GuideDetailPage() {
 
               <div className="space-y-12">
                 {guide.steps?.map((step: any, index: number) => {
-                  const stepTitle = (showTranslated && translatedGuide.steps?.[index]?.title) || step.title;
-                  const stepDescription = (showTranslated && translatedGuide.steps?.[index]?.description) || step.description;
+                  // Carefully select the translation for this step if it exists
+                  const stepTitle = (showTranslated && translatedGuide?.steps?.[index]?.title) || step.title;
+                  const stepDescription = (showTranslated && translatedGuide?.steps?.[index]?.description) || step.description;
 
                   return (
                     <div key={index} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
