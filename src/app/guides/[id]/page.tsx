@@ -1,16 +1,18 @@
+
 'use client';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Loader2, Wrench, CheckCircle2, AlertTriangle, CloudDownload } from 'lucide-react';
+import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Loader2, Wrench, CheckCircle2, AlertTriangle, CloudDownload, Sparkles, Languages } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useUser, useFirestore, useDoc } from '@/firebase';
-import { doc, setDoc, deleteDoc, serverTimestamp, collection } from 'firebase/firestore';
+import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useEffect, useState, useMemo } from 'react';
 import { getGuideWithAllSteps } from '@/lib/ifixit-api';
+import { translateGuide, type TranslateGuideOutput } from '@/ai/flows/translate-guide-flow';
 import Image from 'next/image';
 
 export default function GuideDetailPage() {
@@ -19,10 +21,12 @@ export default function GuideDetailPage() {
   const { user } = useUser();
   const db = useFirestore();
   const { toast } = useToast();
-  const { t, isMounted } = useLanguage();
+  const { t, language, isMounted } = useLanguage();
   
   const [guide, setGuide] = useState<any>(null);
+  const [translatedGuide, setTranslatedGuide] = useState<TranslateGuideOutput | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   // Reference for the global cached guide in Firestore
   const globalGuideRef = useMemo(() => {
@@ -40,11 +44,11 @@ export default function GuideDetailPage() {
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
+  // 1. Fetch Guide Data
   useEffect(() => {
     async function fetchAndCacheGuide() {
       if (!id) return;
       
-      // 1. Try Firestore cache first
       if (cachedGuide && cachedGuide.steps && cachedGuide.steps.length > 0) {
         setGuide(cachedGuide);
         setLoading(false);
@@ -53,46 +57,16 @@ export default function GuideDetailPage() {
 
       setLoading(true);
       try {
-        // 2. Fallback to iFixit
         const fetchedGuide = await getGuideWithAllSteps(id);
         if (fetchedGuide) {
           setGuide(fetchedGuide);
-          
-          // 3. AUTO-SAVE to Firestore for future access (Sync Engine)
           if (db && user) {
              const guideRef = doc(db, 'repairGuides', id);
-             // Save main guide doc
              setDoc(guideRef, {
                ...fetchedGuide,
                syncedAt: serverTimestamp(),
-               authorId: 'system_ifixit' // Mark as system-cached
+               authorId: 'system_ifixit'
              }, { merge: true });
-
-             // Save steps as subcollection for better structure (optional but good practice)
-             if (fetchedGuide.steps) {
-               for (const step of fetchedGuide.steps) {
-                 const stepRef = doc(db, 'repairGuides', id, 'steps', step.id || step.stepNumber.toString());
-                 setDoc(stepRef, {
-                   ...step,
-                   repairGuideId: id,
-                   repairGuideAuthorId: 'system_ifixit'
-                 }, { merge: true });
-               }
-             }
-
-             // Save tools/parts
-             if (fetchedGuide.tools) {
-               for (const tool of fetchedGuide.tools) {
-                 const toolRef = doc(db, 'tools', tool.id);
-                 setDoc(toolRef, {
-                   id: tool.id,
-                   name: tool.name,
-                   description: 'Standard repair tool synced from iFixit',
-                   imageUrl: '',
-                   syncedAt: serverTimestamp()
-                 }, { merge: true });
-               }
-             }
           }
         }
       } catch (error) {
@@ -106,6 +80,31 @@ export default function GuideDetailPage() {
       fetchAndCacheGuide();
     }
   }, [id, isMounted, cachedGuide, db, user]);
+
+  // 2. Handle AI Translation when language is 'fil'
+  useEffect(() => {
+    async function handleAITranslation() {
+      if (language === 'fil' && guide && !translatedGuide && !isTranslating) {
+        setIsTranslating(true);
+        try {
+          const result = await translateGuide({
+            title: guide.title,
+            description: guide.description,
+            steps: guide.steps?.map((s: any) => ({
+              title: s.title,
+              description: s.description
+            }))
+          });
+          setTranslatedGuide(result);
+        } catch (error) {
+          console.error("Translation failed", error);
+        } finally {
+          setIsTranslating(false);
+        }
+      }
+    }
+    handleAITranslation();
+  }, [language, guide, translatedGuide, isTranslating]);
 
   const handleBookmark = () => {
     if (!user) {
@@ -144,7 +143,7 @@ export default function GuideDetailPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 text-center">
       <AlertTriangle className="text-rose-500 w-12 h-12 mb-4" /> 
       <h2 className="text-2xl font-black uppercase tracking-tighter mb-2">Protocol Offline</h2>
-      <p className="text-muted-foreground mb-8">Hindi namin mahanap ang gabay na ito. Maaaring tinanggal na ito o may isyu sa network.</p>
+      <p className="text-muted-foreground mb-8">Hindi namin mahanap ang gabay na ito.</p>
       <Link href="/guides">
         <Button variant="outline" className="rounded-xl h-12 px-8 font-black uppercase tracking-widest text-[10px]">
           Bumalik sa Aklatan
@@ -152,6 +151,11 @@ export default function GuideDetailPage() {
       </Link>
     </div>
   );
+
+  // Content Switching Logic
+  const showTranslated = language === 'fil' && translatedGuide;
+  const displayTitle = showTranslated ? translatedGuide.title : guide.title;
+  const displayDescription = showTranslated ? translatedGuide.description : guide.description;
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -163,12 +167,26 @@ export default function GuideDetailPage() {
                 <Link href="/guides" className="text-[10px] font-black uppercase tracking-[0.3em] text-primary flex items-center gap-2 hover:opacity-70 transition-opacity">
                   <ArrowLeft className="w-3 h-3" /> {t('guides_back')}
                 </Link>
-                {cachedGuide && (
-                  <div className="flex items-center gap-2 text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                    <CloudDownload className="w-3 h-3" />
-                    Vault Synchronized
-                  </div>
-                )}
+                <div className="flex items-center gap-4">
+                  {isTranslating && (
+                    <div className="flex items-center gap-2 text-[8px] font-black text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full border border-primary/20 animate-pulse">
+                      <Sparkles className="w-3 h-3" />
+                      Neural Translating...
+                    </div>
+                  )}
+                  {showTranslated && (
+                    <div className="flex items-center gap-2 text-[8px] font-black text-amber-500 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                      <Languages className="w-3 h-3" />
+                      AI Translated
+                    </div>
+                  )}
+                  {cachedGuide && (
+                    <div className="flex items-center gap-2 text-[8px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+                      <CloudDownload className="w-3 h-3" />
+                      Vault Synchronized
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className="flex flex-wrap items-center gap-3">
@@ -177,7 +195,7 @@ export default function GuideDetailPage() {
               </div>
 
               <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-none">
-                {guide.title}
+                {displayTitle}
               </h1>
 
               {guide.thumbnail && (
@@ -189,7 +207,7 @@ export default function GuideDetailPage() {
               <div className="space-y-4">
                 <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">BEFORE YOU BEGIN</h2>
                 <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium glass p-8 rounded-3xl border-primary/5 min-h-[100px]">
-                  {guide.description || "Basahin ang mga tagubilin bago magsimula."}
+                  {displayDescription || "Basahin ang mga tagubilin bago magsimula."}
                 </div>
               </div>
             </header>
@@ -202,31 +220,36 @@ export default function GuideDetailPage() {
               </div>
 
               <div className="space-y-12">
-                {guide.steps?.map((step: any, index: number) => (
-                  <div key={index} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
-                    <div className="p-8 md:p-14">
-                      <div className="flex items-start gap-6 md:gap-12 mb-10">
-                        <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-xl md:text-3xl shadow-xl neon-glow">
-                          {index + 1}
-                        </div>
-                        <div className="flex-grow">
-                          <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight mb-6">
-                            {step.title || (isMounted && t('guides_step_title')) + ` ${index + 1}`}
-                          </h3>
-                          <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
-                            {step.description}
+                {guide.steps?.map((step: any, index: number) => {
+                  const stepTitle = (showTranslated && translatedGuide.steps?.[index]?.title) || step.title;
+                  const stepDescription = (showTranslated && translatedGuide.steps?.[index]?.description) || step.description;
+
+                  return (
+                    <div key={index} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
+                      <div className="p-8 md:p-14">
+                        <div className="flex items-start gap-6 md:gap-12 mb-10">
+                          <div className="w-12 h-12 md:w-20 md:h-20 rounded-2xl md:rounded-3xl bg-primary flex items-center justify-center text-primary-foreground shrink-0 font-black text-xl md:text-3xl shadow-xl neon-glow">
+                            {index + 1}
+                          </div>
+                          <div className="flex-grow">
+                            <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight mb-6">
+                              {stepTitle || (isMounted && t('guides_step_title')) + ` ${index + 1}`}
+                            </h3>
+                            <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
+                              {stepDescription}
+                            </div>
                           </div>
                         </div>
+                        
+                        {step.imageUrl && (
+                          <div className="relative aspect-video rounded-[2rem] overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 bg-black/5">
+                            <Image src={step.imageUrl} alt={`Step ${index + 1}`} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                          </div>
+                        )}
                       </div>
-                      
-                      {step.imageUrl && (
-                        <div className="relative aspect-video rounded-[2rem] overflow-hidden shadow-2xl border border-black/5 dark:border-white/5 bg-black/5">
-                          <Image src={step.imageUrl} alt={`Step ${index + 1}`} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
-                        </div>
-                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           </div>
