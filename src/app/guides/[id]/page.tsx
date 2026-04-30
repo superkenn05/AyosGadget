@@ -1,19 +1,19 @@
-
 'use client';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Share2, Bookmark, BookmarkCheck, Loader2, Wrench, CheckCircle2, AlertTriangle, CloudDownload, Sparkles, Languages } from 'lucide-react';
+import { ArrowLeft, Bookmark, BookmarkCheck, Wrench, CheckCircle2, AlertTriangle, Sparkles, Languages } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/components/providers/language-provider';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { getGuideWithAllSteps } from '@/lib/ifixit-api';
 import { translateGuide, type TranslateGuideOutput } from '@/ai/flows/translate-guide-flow';
 import Image from 'next/image';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function GuideDetailPage() {
   const params = useParams();
@@ -28,13 +28,11 @@ export default function GuideDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isTranslating, setIsTranslating] = useState(false);
 
-  // Reference for the global cached guide in Firestore
   const globalGuideRef = useMemoFirebase(() => {
     if (!id || !db) return null;
     return doc(db, 'repairGuides', id);
   }, [id, db]);
 
-  // Reference for user's personal bookmark
   const bookmarkRef = useMemoFirebase(() => {
     if (!user || !id || !db) return null;
     return doc(db, 'users', user.uid, 'savedGuides', id);
@@ -44,7 +42,6 @@ export default function GuideDetailPage() {
   const { data: bookmark } = useDoc(bookmarkRef);
   const isBookmarked = !!bookmark;
 
-  // 1. Fetch Guide Data
   useEffect(() => {
     async function fetchAndCacheGuide() {
       if (!id) return;
@@ -81,7 +78,6 @@ export default function GuideDetailPage() {
     }
   }, [id, isMounted, cachedGuide, db, user]);
 
-  // 2. Handle AI Translation when language is 'fil'
   useEffect(() => {
     async function handleAITranslation() {
       if (language === 'fil' && guide && !translatedGuide && !isTranslating) {
@@ -139,9 +135,36 @@ export default function GuideDetailPage() {
   if (!isMounted) return null;
 
   if (loading && !guide) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-      <Loader2 className="animate-spin text-primary w-12 h-12 mb-4" />
-      <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
+    <div className="min-h-screen bg-background pb-32">
+      <div className="container mx-auto px-4 pt-24 md:pt-32">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div className="lg:col-span-8 space-y-12">
+            <div className="space-y-6">
+               <Skeleton className="h-4 w-32" />
+               <div className="flex gap-2">
+                 <Skeleton className="h-5 w-20 rounded-full" />
+                 <Skeleton className="h-5 w-20 rounded-full" />
+               </div>
+               <Skeleton className="h-16 md:h-24 w-full" />
+               <Skeleton className="aspect-video w-full rounded-3xl" />
+               <div className="space-y-4 pt-8">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-40 w-full rounded-3xl" />
+               </div>
+            </div>
+            <div className="space-y-10 pt-10">
+               <Skeleton className="h-10 w-48" />
+               {[...Array(3)].map((_, i) => (
+                 <Skeleton key={i} className="h-96 w-full rounded-[2.5rem]" />
+               ))}
+            </div>
+          </div>
+          <aside className="lg:col-span-4 space-y-8 sticky top-32">
+             <Skeleton className="h-20 w-full rounded-[1.5rem]" />
+             <Skeleton className="h-64 w-full rounded-[2.5rem]" />
+          </aside>
+        </div>
+      </div>
     </div>
   );
 
@@ -158,7 +181,6 @@ export default function GuideDetailPage() {
     </div>
   );
 
-  // Content Switching Logic with i18n overrides
   const showTranslated = language === 'fil';
   const displayTitle = showTranslated ? (translatedGuide?.title || guide.title) : guide.title;
   const displayDescription = showTranslated ? (translatedGuide?.description || guide.description) : guide.description;
@@ -221,13 +243,11 @@ export default function GuideDetailPage() {
 
               <div className="space-y-12">
                 {guide.steps?.map((step: any, index: number) => {
-                  // Check for i18n manual overrides first for specific guide content
                   const i18nKey = `manual_step_keyboard_lombard`;
                   const isKeyboardStep = step.description?.includes("expansion bay modules") || step.description?.includes("ribbed tabs");
                   
                   let stepDescription = (showTranslated && translatedGuide?.steps?.[index]?.description) || step.description;
                   
-                  // Apply i18next translation specifically for the requested text if matched
                   if (showTranslated && isKeyboardStep) {
                     stepDescription = t(i18nKey);
                   }

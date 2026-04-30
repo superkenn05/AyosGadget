@@ -1,11 +1,12 @@
 'use client';
 
 import RepairCard from '@/components/repair/RepairCard';
+import RepairCardSkeleton from '@/components/repair/RepairCardSkeleton';
 import CategoryIcon from '@/components/repair/CategoryIcon';
 import { PRIMARY_CATEGORIES } from '@/lib/repair-data';
 import { Input } from '@/components/ui/input';
 import { Search, Loader2, Sparkles, ChevronRight, ChevronLeft, Layers, Wrench, LayoutGrid } from 'lucide-react';
-import { useState, useEffect, Suspense, useMemo } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
 import { searchIFixitGuides, getTrendingGuides, getIFixitWiki } from '@/lib/ifixit-api';
@@ -14,6 +15,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useFirestore, useUser } from '@/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function GuidesContent() {
   const { t, isMounted } = useLanguage();
@@ -42,12 +44,10 @@ function GuidesContent() {
     });
   };
 
-  // Auto-save to Firestore (Syncing Engine)
   const syncDataToFirestore = async (guides: any[], category?: any) => {
-    if (!db || !user) return; // Only sync if user is logged in (due to rules)
+    if (!db || !user) return; 
 
     try {
-      // Sync Category
       if (category) {
         const catRef = doc(db, 'categories', category.id || category.title.toLowerCase().replace(/\s+/g, '-'));
         setDoc(catRef, {
@@ -59,7 +59,6 @@ function GuidesContent() {
         }, { merge: true });
       }
 
-      // Sync Guides (Light version for list view)
       for (const guide of guides) {
         const guideRef = doc(db, 'repairGuides', guide.id);
         setDoc(guideRef, {
@@ -67,7 +66,6 @@ function GuidesContent() {
           syncedAt: serverTimestamp(),
         }, { merge: true });
 
-        // Optional: Sync Device reference
         if (guide.device) {
           const deviceRef = doc(db, 'devices', guide.device.toLowerCase().replace(/\s+/g, '-'));
           setDoc(deviceRef, {
@@ -103,7 +101,6 @@ function GuidesContent() {
           const deduped = deduplicateGuides(results);
           setGlobalGuides(deduped);
           
-          // Trigger Auto-Sync
           syncDataToFirestore(deduped, wiki);
         } else if (!searchQuery) {
           setCategoryWiki(null);
@@ -111,7 +108,6 @@ function GuidesContent() {
           const deduped = deduplicateGuides(trending);
           setGlobalGuides(deduped);
           
-          // Trigger Auto-Sync for Trending
           syncDataToFirestore(deduped);
         }
       } catch (error) {
@@ -139,7 +135,6 @@ function GuidesContent() {
       setGlobalGuides(combined);
       setPage(nextPage);
       
-      // Sync more data
       syncDataToFirestore(more);
     } catch (error) {
       console.error("Error loading more guides:", error);
@@ -202,9 +197,24 @@ function GuidesContent() {
           </nav>
 
           {isLoading && globalGuides.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24">
-              <Loader2 className="w-12 h-12 animate-spin text-primary mb-6" />
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
+            <div className="space-y-12">
+               <div className="bg-white dark:bg-card rounded-3xl p-6 md:p-10 mb-12 border border-slate-100 dark:border-white/10 shadow-sm animate-pulse">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                    <div className="md:col-span-4 flex justify-center">
+                       <Skeleton className="aspect-square w-full max-w-[200px] rounded-2xl" />
+                    </div>
+                    <div className="md:col-span-8 space-y-4">
+                       <Skeleton className="h-12 w-3/4" />
+                       <Skeleton className="h-4 w-full" />
+                       <Skeleton className="h-4 w-5/6" />
+                    </div>
+                  </div>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(6)].map((_, i) => (
+                  <RepairCardSkeleton key={i} />
+                ))}
+              </div>
             </div>
           ) : (
             <>
@@ -325,9 +335,16 @@ function GuidesContent() {
           )}
 
           {isLoading && globalGuides.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-24">
-              <Loader2 className="w-12 h-12 animate-spin text-primary mb-6" />
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
+            <div className="space-y-12">
+               <div className="flex items-center gap-4 px-2">
+                  <Skeleton className="h-4 w-32" />
+                  <div className="h-px flex-grow bg-primary/10" />
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(6)].map((_, i) => (
+                  <RepairCardSkeleton key={i} />
+                ))}
+              </div>
             </div>
           ) : globalGuides.length > 0 ? (
             <div className="space-y-12">

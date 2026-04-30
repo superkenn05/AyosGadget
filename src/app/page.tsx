@@ -2,6 +2,7 @@
 
 import CategoryIcon from '@/components/repair/CategoryIcon';
 import RepairCard from '@/components/repair/RepairCard';
+import RepairCardSkeleton from '@/components/repair/RepairCardSkeleton';
 import { PRIMARY_CATEGORIES } from '@/lib/repair-data';
 import { Button } from '@/components/ui/button';
 import { Activity, Cpu, Zap, ArrowRight, Globe, Loader2, AlertCircle } from 'lucide-react';
@@ -39,7 +40,6 @@ export default function Home() {
     fetchTrending();
   }, [isMounted]);
 
-  // Use a loading skeleton to avoid hydration mismatch
   if (!isMounted) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -130,7 +130,7 @@ export default function Home() {
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="glass-card animate-pulse rounded-3xl h-64 bg-primary/5" />
+                <RepairCardSkeleton key={i} />
               ))}
             </div>
           ) : trendingGuides.length > 0 ? (
