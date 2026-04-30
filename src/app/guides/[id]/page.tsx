@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Badge } from '@/components/ui/badge';
@@ -217,7 +218,7 @@ export default function GuideDetailPage() {
               </div>
 
               <h1 className="text-3xl md:text-6xl font-black tracking-tighter uppercase leading-none">
-                {displayTitle}
+                {showTranslated && isTranslating && !translatedGuide ? <Skeleton className="h-16 w-full" /> : displayTitle}
               </h1>
 
               {guide.thumbnail && (
@@ -229,7 +230,13 @@ export default function GuideDetailPage() {
               <div className="space-y-4">
                 <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">BEFORE YOU BEGIN</h2>
                 <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium glass p-8 rounded-3xl border-primary/5 min-h-[100px]">
-                  {displayDescription}
+                  {showTranslated && isTranslating && !translatedGuide ? (
+                    <div className="space-y-3">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-5/6" />
+                      <Skeleton className="h-4 w-4/6" />
+                    </div>
+                  ) : displayDescription}
                 </div>
               </div>
             </header>
@@ -243,16 +250,28 @@ export default function GuideDetailPage() {
 
               <div className="space-y-12">
                 {guide.steps?.map((step: any, index: number) => {
-                  const i18nKey = `manual_step_keyboard_lombard`;
+                  const keyboardKey = `manual_step_keyboard_lombard`;
+                  const macbookKey = `manual_step_macbook_screws`;
+                  
                   const isKeyboardStep = step.description?.includes("expansion bay modules") || step.description?.includes("ribbed tabs");
-                  
-                  let stepDescription = (showTranslated && translatedGuide?.steps?.[index]?.description) || step.description;
-                  
-                  if (showTranslated && isKeyboardStep) {
-                    stepDescription = t(i18nKey);
-                  }
+                  const isMacbookStep = step.description?.includes("securing the lower case to the MacBook Pro");
 
-                  const stepTitle = (showTranslated && translatedGuide?.steps?.[index]?.title) || step.title;
+                  let stepDescription = step.description;
+                  let stepTitle = step.title;
+                  let isContentReady = true;
+
+                  if (showTranslated) {
+                    if (isKeyboardStep) {
+                      stepDescription = t(keyboardKey);
+                    } else if (isMacbookStep) {
+                      stepDescription = t(macbookKey);
+                    } else if (translatedGuide?.steps?.[index]) {
+                      stepDescription = translatedGuide.steps[index].description;
+                      stepTitle = translatedGuide.steps[index].title || stepTitle;
+                    } else {
+                      isContentReady = false;
+                    }
+                  }
 
                   return (
                     <div key={index} className="glass rounded-[2.5rem] overflow-hidden border-primary/5 hover:border-primary/20 transition-all group">
@@ -263,10 +282,16 @@ export default function GuideDetailPage() {
                           </div>
                           <div className="flex-grow">
                             <h3 className="text-xl md:text-3xl font-black uppercase tracking-tight mb-6">
-                              {stepTitle || t('guides_step_title') + ` ${index + 1}`}
+                              {!isContentReady ? <Skeleton className="h-8 w-48" /> : (stepTitle || t('guides_step_title') + ` ${index + 1}`)}
                             </h3>
                             <div className="text-muted-foreground text-sm md:text-xl whitespace-pre-wrap leading-relaxed font-medium">
-                              {stepDescription}
+                              {!isContentReady ? (
+                                <div className="space-y-3">
+                                  <Skeleton className="h-4 w-full" />
+                                  <Skeleton className="h-4 w-full" />
+                                  <Skeleton className="h-4 w-2/3" />
+                                </div>
+                              ) : stepDescription}
                             </div>
                           </div>
                         </div>
