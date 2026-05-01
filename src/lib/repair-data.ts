@@ -4,7 +4,7 @@ export interface Step {
   title: string;
   description: string;
   imageUrl: string;
-  images?: string[]; // Added support for multiple images
+  images?: string[];
 }
 
 export interface Part {
@@ -16,7 +16,24 @@ export interface Tool {
   name: string;
 }
 
-export type CategoryName = 'Smartphones' | 'Laptops' | 'Tablets' | 'Consoles' | 'Appliances' | 'Audio' | 'Cameras' | 'Desktop PCs' | 'Mac' | 'PC' | 'Car and Truck' | 'Medical Device' | 'Power Tool' | 'Household' | 'Electronics' | 'Skills';
+// ✅ Updated categories based on UI
+export type CategoryName =
+  | 'Apparel'
+  | 'Appliance'
+  | 'Camera'
+  | 'Car and Truck'
+  | 'Computer Hardware'
+  | 'Electronics'
+  | 'Game Console'
+  | 'Household'
+  | 'Mac'
+  | 'Medical Device'
+  | 'PC'
+  | 'Phone'
+  | 'Skills'
+  | 'Tablet'
+  | 'Tool'
+  | 'Vehicle';
 
 export interface RepairGuide {
   id: string;
@@ -34,29 +51,47 @@ export interface RepairGuide {
   reviewsCount: number;
 }
 
+// ✅ Main categories (top section UI)
 export const PRIMARY_CATEGORIES = [
-  { name: 'Mac', icon: 'Monitor', hint: 'Apple computer' },
-  { name: 'Smartphones', icon: 'Smartphone', hint: 'Mobile phone' },
-  { name: 'Consoles', icon: 'Gamepad', hint: 'Gaming console' },
-  { name: 'Laptops', icon: 'Laptop', hint: 'Portable computer' },
-  { name: 'Appliances', icon: 'Home', hint: 'Home appliance' },
+  { name: 'Apparel', icon: 'Shirt', hint: 'Clothing repair' },
+  { name: 'Appliance', icon: 'Microwave', hint: 'Home appliance' },
+  { name: 'Camera', icon: 'Camera', hint: 'Photography device' },
   { name: 'Car and Truck', icon: 'Car', hint: 'Vehicle repair' },
-  { name: 'Power Tool', icon: 'Wrench', hint: 'Electric tools' },
+  { name: 'Computer Hardware', icon: 'Cpu', hint: 'PC components' },
+  { name: 'Electronics', icon: 'Cpu', hint: 'Electronic devices' },
+  { name: 'Game Console', icon: 'Gamepad', hint: 'Gaming systems' },
+  { name: 'Household', icon: 'Home', hint: 'Home items' },
+  { name: 'Mac', icon: 'Monitor', hint: 'Apple computer' },
   { name: 'Medical Device', icon: 'Activity', hint: 'Medical equipment' },
+  { name: 'PC', icon: 'Monitor', hint: 'Desktop computer' },
+  { name: 'Phone', icon: 'Smartphone', hint: 'Mobile devices' },
+  { name: 'Skills', icon: 'Wrench', hint: 'Repair skills' },
+  { name: 'Tablet', icon: 'Tablet', hint: 'Tablet devices' },
+  { name: 'Tool', icon: 'Wrench', hint: 'Repair tools' },
+  { name: 'Vehicle', icon: 'Motorcycle', hint: 'Motorcycle' },
 ] as const;
 
+// ✅ Directory list (optional counts)
 export const DIRECTORY_CATEGORIES = [
   { name: 'Apparel', count: 709 },
-  { name: 'Cameras', count: 2071 },
+  { name: 'Appliance', count: 1200 },
+  { name: 'Camera', count: 2071 },
+  { name: 'Car and Truck', count: 1800 },
+  { name: 'Computer Hardware', count: 2629 },
   { name: 'Electronics', count: 6614 },
+  { name: 'Game Console', count: 950 },
   { name: 'Household', count: 2139 },
-  { name: 'Tablets', count: 1522 },
-  { name: 'Audio', count: 3241 },
-  { name: 'Desktop PCs', count: 2629 },
+  { name: 'Mac', count: 800 },
+  { name: 'Medical Device', count: 400 },
+  { name: 'PC', count: 2000 },
+  { name: 'Phone', count: 5000 },
   { name: 'Skills', count: 332 },
+  { name: 'Tablet', count: 1522 },
+  { name: 'Tool', count: 900 },
+  { name: 'Vehicle', count: 1100 },
 ] as const;
 
-// For backward compatibility
+// Backward compatibility
 export const REPAIR_CATEGORIES = [...PRIMARY_CATEGORIES];
 
 export const FEATURED_REPAIRS: RepairGuide[] = [];
