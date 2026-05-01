@@ -53,23 +53,9 @@ export interface RepairGuide {
 
 // ✅ Main categories (top section UI)
 export const PRIMARY_CATEGORIES = [
-<<<<<<< HEAD
   { name: 'Apparel', icon: 'Shirt', hint: 'Clothing repair' },
   { name: 'Appliance', icon: 'Microwave', hint: 'Home appliance' },
   { name: 'Camera', icon: 'Camera', hint: 'Photography device' },
-=======
-  { name: 'Mac', icon: 'Monitor', hint: 'Apple computer' },
-  { name: 'Smartphones', icon: 'Smartphone', hint: 'Mobile phone' },
-  { name: 'Tablets', icon: 'Tablet', hint: 'Tablet device' },
-  { name: 'Laptops', icon: 'Laptop', hint: 'Portable computer' },
-  { name: 'Desktop PCs', icon: 'Cpu', hint: 'Desktop computer' },
-  { name: 'Consoles', icon: 'Gamepad', hint: 'Gaming console' },
-  { name: 'Audio', icon: 'Music', hint: 'Audio equipment' },
-  { name: 'Cameras', icon: 'Camera', hint: 'Digital camera' },
-  { name: 'Appliances', icon: 'Home', hint: 'Home appliance' },
-  { name: 'Household', icon: 'Lightbulb', hint: 'Household item' },
-  { name: 'Electronics', icon: 'Zap', hint: 'Electronics' },
->>>>>>> refs/remotes/origin/main
   { name: 'Car and Truck', icon: 'Car', hint: 'Vehicle repair' },
   { name: 'Computer Hardware', icon: 'Cpu', hint: 'PC components' },
   { name: 'Electronics', icon: 'Cpu', hint: 'Electronic devices' },
@@ -77,17 +63,12 @@ export const PRIMARY_CATEGORIES = [
   { name: 'Household', icon: 'Home', hint: 'Home items' },
   { name: 'Mac', icon: 'Monitor', hint: 'Apple computer' },
   { name: 'Medical Device', icon: 'Activity', hint: 'Medical equipment' },
-<<<<<<< HEAD
   { name: 'PC', icon: 'Monitor', hint: 'Desktop computer' },
   { name: 'Phone', icon: 'Smartphone', hint: 'Mobile devices' },
   { name: 'Skills', icon: 'Wrench', hint: 'Repair skills' },
   { name: 'Tablet', icon: 'Tablet', hint: 'Tablet devices' },
   { name: 'Tool', icon: 'Wrench', hint: 'Repair tools' },
-  { name: 'Vehicle', icon: 'Motorcycle', hint: 'Motorcycle' },
-=======
-  { name: 'Skills', icon: 'BookOpen', hint: 'Repair skills' },
-  { name: 'Apparel', icon: 'Shirt', hint: 'Clothing' },
->>>>>>> refs/remotes/origin/main
+  { name: 'Vehicle', icon: 'Bike', hint: 'Motorcycle & others' },
 ] as const;
 
 // ✅ Directory list (optional counts)
