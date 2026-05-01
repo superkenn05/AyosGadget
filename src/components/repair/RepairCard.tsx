@@ -41,10 +41,11 @@ export default function RepairCard({ guide, variant = 'default' }: RepairCardPro
              </div>
           </div>
           <div className="relative w-32 h-full shrink-0 border-l border-black/5 dark:border-white/5">
-            <Image 
-              src={thumbnailSrc} 
-              alt={guide.title} 
-              fill 
+            <Image
+              src={thumbnailSrc}
+              alt={guide.title}
+              fill
+              sizes="128px"
               className="object-cover transition-transform group-hover:scale-110"
               data-ai-hint="repair gadget"
             />
@@ -60,10 +61,11 @@ export default function RepairCard({ guide, variant = 'default' }: RepairCardPro
       <Link href={`/guides/${guide.id}`}>
         <div className="glass group rounded-2xl overflow-hidden flex flex-col transition-all hover:border-amber-500/50 active:scale-95 bg-amber-500/[0.02]">
           <div className="relative aspect-square">
-            <Image 
-              src={thumbnailSrc} 
-              alt={guide.title} 
-              fill 
+            <Image
+              src={thumbnailSrc}
+              alt={guide.title}
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
               data-ai-hint="broken device"
             />
@@ -92,6 +94,8 @@ export default function RepairCard({ guide, variant = 'default' }: RepairCardPro
             src={thumbnailSrc}
             alt={guide.title}
             fill
+            priority
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover transition-transform duration-700 group-hover:scale-110"
             data-ai-hint="electronics repair"
           />

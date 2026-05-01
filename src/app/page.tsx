@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useState, useEffect } from 'react';
 import { getTrendingGuides } from '@/lib/ifixit-api';
+import Logo from '@/components/layout/Logo';
 
 export default function Home() {
   const { t, isMounted } = useLanguage();
@@ -57,6 +58,9 @@ export default function Home() {
             <div className="absolute inset-0 scan-line opacity-[0.03]" />
             
             <div className="flex flex-col gap-6 relative z-10 items-center text-center">
+              <div className="flex items-center justify-center gap-2">
+                <Logo compact className="mx-auto" showSubtitle={false} />
+              </div>
               <div className="space-y-3">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10 text-primary font-black uppercase tracking-[0.2em] text-[8px]">
                   <Activity className="w-3 h-3 animate-pulse" />

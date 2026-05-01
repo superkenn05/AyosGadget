@@ -37,12 +37,20 @@ export interface RepairGuide {
 export const PRIMARY_CATEGORIES = [
   { name: 'Mac', icon: 'Monitor', hint: 'Apple computer' },
   { name: 'Smartphones', icon: 'Smartphone', hint: 'Mobile phone' },
-  { name: 'Consoles', icon: 'Gamepad', hint: 'Gaming console' },
+  { name: 'Tablets', icon: 'Tablet', hint: 'Tablet device' },
   { name: 'Laptops', icon: 'Laptop', hint: 'Portable computer' },
+  { name: 'Desktop PCs', icon: 'Cpu', hint: 'Desktop computer' },
+  { name: 'Consoles', icon: 'Gamepad', hint: 'Gaming console' },
+  { name: 'Audio', icon: 'Music', hint: 'Audio equipment' },
+  { name: 'Cameras', icon: 'Camera', hint: 'Digital camera' },
   { name: 'Appliances', icon: 'Home', hint: 'Home appliance' },
+  { name: 'Household', icon: 'Lightbulb', hint: 'Household item' },
+  { name: 'Electronics', icon: 'Zap', hint: 'Electronics' },
   { name: 'Car and Truck', icon: 'Car', hint: 'Vehicle repair' },
   { name: 'Power Tool', icon: 'Wrench', hint: 'Electric tools' },
   { name: 'Medical Device', icon: 'Activity', hint: 'Medical equipment' },
+  { name: 'Skills', icon: 'BookOpen', hint: 'Repair skills' },
+  { name: 'Apparel', icon: 'Shirt', hint: 'Clothing' },
 ] as const;
 
 export const DIRECTORY_CATEGORIES = [
