@@ -1,27 +1,1088 @@
-
 {
   "entities": {
-    "Bookmark": {
-      "title": "Bookmark",
-      "description": "A saved repair guide for a user.",
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
       "type": "object",
+      "description": "Represents a category for devices and repair guides, such as 'Smartphones' or 'Home Appliances'.",
       "properties": {
-        "guideId": { "type": "string" },
-        "title": { "type": "string" },
-        "thumbnail": { "type": "string" },
-        "category": { "type": "string" },
-        "savedAt": { "type": "string", "format": "date-time" }
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Category entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the category (e.g., 'Smartphones', 'Laptops')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A brief description of the category."
+        },
+        "iconUrl": {
+          "type": "string",
+          "description": "URL to an icon representing this category.",
+          "format": "uri"
+        }
       },
-      "required": ["guideId", "title", "savedAt"]
+      "required": [
+        "id",
+        "name",
+        "description",
+        "iconUrl"
+      ]
+    },
+    "Device": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Device",
+      "type": "object",
+      "description": "Represents a specific electronic device model that can be repaired.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Device entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The full name of the device (e.g., 'iPhone 13 Pro Max')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A short description of the device."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to the main image of the device.",
+          "format": "uri"
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to the Category this device belongs to. (Relationship: Category 1:N Device)"
+        },
+        "slug": {
+          "type": "string",
+          "description": "A URL-friendly identifier for the device (e.g., 'iphone-13-pro-max')."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "imageUrl",
+        "categoryId",
+        "slug"
+      ]
+    },
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user's profile information, separate from authentication details.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity, typically provided by an external authentication system."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The public display name of the user."
+        },
+        "profileImageUrl": {
+          "type": "string",
+          "description": "URL to the user's profile avatar.",
+          "format": "uri"
+        },
+        "bio": {
+          "type": "string",
+          "description": "A short biographical text about the user."
+        },
+        "location": {
+          "type": "string",
+          "description": "The user's general location."
+        },
+        "joinDate": {
+          "type": "string",
+          "description": "The date and time when the user joined the platform.",
+          "format": "date-time"
+        },
+        "points": {
+          "type": "number",
+          "description": "Total gamification points accumulated by the user."
+        },
+        "badgeIds": {
+          "type": "array",
+          "description": "References to Badges earned by the user. (Relationship: User N:N Badge)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "displayName",
+        "profileImageUrl",
+        "joinDate",
+        "points"
+      ]
+    },
+    "Tool": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Tool",
+      "type": "object",
+      "description": "Represents a specific tool required for device repair.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Tool entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the tool (e.g., 'Pentalobe Screwdriver')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the tool and its typical use."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to an image of the tool.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "imageUrl"
+      ]
+    },
+    "Part": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Part",
+      "type": "object",
+      "description": "Represents a replacement part needed for device repair.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Part entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the part (e.g., 'iPhone 13 Pro Max Display Assembly')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the part."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to an image of the part.",
+          "format": "uri"
+        },
+        "partNumber": {
+          "type": "string",
+          "description": "The manufacturer's part number or SKU."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "imageUrl"
+      ]
+    },
+    "RepairGuide": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RepairGuide",
+      "type": "object",
+      "description": "Detailed step-by-step instructions for repairing a specific device.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the RepairGuide entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the repair guide (e.g., 'iPhone 13 Pro Max Screen Replacement')."
+        },
+        "description": {
+          "type": "string",
+          "description": "An overview or summary of the repair guide."
+        },
+        "deviceId": {
+          "type": "string",
+          "description": "Reference to the Device this guide is for. (Relationship: Device 1:N RepairGuide)"
+        },
+        "difficultyLevel": {
+          "type": "string",
+          "description": "The perceived difficulty of the repair.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "estimatedTimeMinutes": {
+          "type": "number",
+          "description": "The estimated time in minutes required to complete the repair."
+        },
+        "authorId": {
+          "type": "string",
+          "description": "Reference to the User who created or uploaded this guide. (Relationship: User 1:N RepairGuide)"
+        },
+        "averageRating": {
+          "type": "number",
+          "description": "The calculated average rating (e.g., 0-5 stars) for this guide."
+        },
+        "viewCount": {
+          "type": "number",
+          "description": "The number of times this guide has been viewed."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the guide was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time when the guide was last updated.",
+          "format": "date-time"
+        },
+        "requiredToolIds": {
+          "type": "array",
+          "description": "References to Tools required for this repair guide. (Relationship: RepairGuide N:N Tool)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requiredPartIds": {
+          "type": "array",
+          "description": "References to Parts required for this repair guide. (Relationship: RepairGuide N:N Part)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "deviceId",
+        "difficultyLevel",
+        "estimatedTimeMinutes",
+        "authorId",
+        "createdAt",
+        "requiredToolIds",
+        "requiredPartIds"
+      ]
+    },
+    "RepairStep": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "RepairStep",
+      "type": "object",
+      "description": "A single step within a Repair Guide, containing instructions, images, and videos.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the RepairStep entity."
+        },
+        "repairGuideId": {
+          "type": "string",
+          "description": "Reference to the RepairGuide this step belongs to. (Relationship: RepairGuide 1:N RepairStep)"
+        },
+        "stepNumber": {
+          "type": "number",
+          "description": "The sequential number of the step within the guide."
+        },
+        "title": {
+          "type": "string",
+          "description": "A concise title for the repair step."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed instructions for completing this step."
+        },
+        "imageUrls": {
+          "type": "array",
+          "description": "An array of URLs to images illustrating this step.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "videoUrls": {
+          "type": "array",
+          "description": "An array of URLs to videos demonstrating this step.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "repairGuideId",
+        "stepNumber",
+        "title",
+        "description"
+      ]
+    },
+    "GuideComment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GuideComment",
+      "type": "object",
+      "description": "A comment left by a user on a specific Repair Guide.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the GuideComment entity."
+        },
+        "repairGuideId": {
+          "type": "string",
+          "description": "Reference to the RepairGuide the comment is for. (Relationship: RepairGuide 1:N GuideComment)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who posted the comment. (Relationship: User 1:N GuideComment)"
+        },
+        "commentText": {
+          "type": "string",
+          "description": "The actual text content of the comment."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the comment was posted.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time when the comment was last updated.",
+          "format": "date-time"
+        },
+        "parentId": {
+          "type": "string",
+          "description": "Optional reference to a parent GuideComment, indicating this is a reply. (Relationship: GuideComment 1:N GuideComment)"
+        }
+      },
+      "required": [
+        "id",
+        "repairGuideId",
+        "userId",
+        "commentText",
+        "createdAt"
+      ]
+    },
+    "GuideRating": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "GuideRating",
+      "type": "object",
+      "description": "A rating given by a user to a specific Repair Guide.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the GuideRating entity."
+        },
+        "repairGuideId": {
+          "type": "string",
+          "description": "Reference to the RepairGuide being rated. (Relationship: RepairGuide 1:N GuideRating)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who provided the rating. (Relationship: User 1:N GuideRating)"
+        },
+        "rating": {
+          "type": "number",
+          "description": "The rating value, typically on a scale (e.g., 1-5 stars)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the rating was submitted.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "repairGuideId",
+        "userId",
+        "rating",
+        "createdAt"
+      ]
+    },
+    "SavedGuide": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SavedGuide",
+      "type": "object",
+      "description": "Records a Repair Guide that a user has bookmarked or saved.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SavedGuide entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who saved the guide. (Relationship: User 1:N SavedGuide)"
+        },
+        "repairGuideId": {
+          "type": "string",
+          "description": "Reference to the RepairGuide that was saved. (Relationship: RepairGuide 1:N SavedGuide)"
+        },
+        "savedAt": {
+          "type": "string",
+          "description": "The date and time when the guide was saved.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "repairGuideId",
+        "savedAt"
+      ]
+    },
+    "TroubleshootingSession": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "TroubleshootingSession",
+      "type": "object",
+      "description": "Records an interactive AI-powered troubleshooting session conducted by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the TroubleshootingSession entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Optional reference to the User conducting the session. (Relationship: User 1:N TroubleshootingSession)"
+        },
+        "deviceName": {
+          "type": "string",
+          "description": "The name of the device being troubleshooted."
+        },
+        "problemDescription": {
+          "type": "string",
+          "description": "The user's initial description of the problem."
+        },
+        "interactionLog": {
+          "type": "array",
+          "description": "A chronological log of user and AI interactions within the session.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "suggestedRepairGuideIds": {
+          "type": "array",
+          "description": "References to RepairGuides suggested by the AI during or at the end of the session. (Relationship: TroubleshootingSession N:N RepairGuide)",
+          "items": {
+            "type": "string"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the session was started.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time when the session was last updated.",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the troubleshooting session (e.g., 'in_progress', 'completed', 'abandoned', 'resolved')."
+        }
+      },
+      "required": [
+        "id",
+        "deviceName",
+        "problemDescription",
+        "interactionLog",
+        "createdAt",
+        "status"
+      ]
+    },
+    "Tag": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Tag",
+      "type": "object",
+      "description": "Represents a tag used to categorize forum posts or potentially repair guides.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Tag entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the tag (e.g., 'screen-repair', 'battery-drain')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of what the tag represents."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ]
+    },
+    "ForumPost": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ForumPost",
+      "type": "object",
+      "description": "A post created by a user in the community forum.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ForumPost entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who created the post. (Relationship: User 1:N ForumPost)"
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the forum post."
+        },
+        "content": {
+          "type": "string",
+          "description": "The main content or body of the forum post."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the forum post (e.g., 'Troubleshooting', 'General Discussion')."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the post was created.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time when the post was last updated.",
+          "format": "date-time"
+        },
+        "viewCount": {
+          "type": "number",
+          "description": "The number of times the forum post has been viewed."
+        },
+        "upvoteCount": {
+          "type": "number",
+          "description": "The number of upvotes the post has received."
+        },
+        "downvoteCount": {
+          "type": "number",
+          "description": "The number of downvotes the post has received."
+        },
+        "tagIds": {
+          "type": "array",
+          "description": "References to Tags associated with this forum post. (Relationship: ForumPost N:N Tag)",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "title",
+        "content",
+        "category",
+        "createdAt"
+      ]
+    },
+    "ForumComment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ForumComment",
+      "type": "object",
+      "description": "A comment made by a user on a specific Forum Post.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ForumComment entity."
+        },
+        "forumPostId": {
+          "type": "string",
+          "description": "Reference to the ForumPost the comment is for. (Relationship: ForumPost 1:N ForumComment)"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who posted the comment. (Relationship: User 1:N ForumComment)"
+        },
+        "commentText": {
+          "type": "string",
+          "description": "The actual text content of the comment."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time when the comment was posted.",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "The date and time when the comment was last updated.",
+          "format": "date-time"
+        },
+        "parentId": {
+          "type": "string",
+          "description": "Optional reference to a parent ForumComment, indicating this is a reply. (Relationship: ForumComment 1:N ForumComment)"
+        }
+      },
+      "required": [
+        "id",
+        "forumPostId",
+        "userId",
+        "commentText",
+        "createdAt"
+      ]
+    },
+    "UserProgress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProgress",
+      "type": "object",
+      "description": "Tracks a user's progress through a specific Repair Guide.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProgress entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User whose progress is being tracked. (Relationship: User 1:N UserProgress)"
+        },
+        "repairGuideId": {
+          "type": "string",
+          "description": "Reference to the RepairGuide being followed. (Relationship: RepairGuide 1:N UserProgress)"
+        },
+        "currentStepNumber": {
+          "type": "number",
+          "description": "The number of the current step the user is on (0 if not started, or the last completed step number + 1)."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the repair progress (e.g., 'not_started', 'in_progress', 'completed')."
+        },
+        "startedAt": {
+          "type": "string",
+          "description": "The date and time when the user started the repair.",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "The date and time when the user completed the repair.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "repairGuideId",
+        "currentStepNumber",
+        "status"
+      ]
+    },
+    "Badge": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Badge",
+      "type": "object",
+      "description": "Represents a gamification badge that users can earn.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Badge entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the badge (e.g., 'First Repair', 'Master Troubleshooter')."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of what the badge represents."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "URL to the icon or image representing the badge.",
+          "format": "uri"
+        },
+        "criteria": {
+          "type": "string",
+          "description": "Description of the conditions required to earn this badge."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "imageUrl",
+        "criteria"
+      ]
+    },
+    "NearbyRepairShop": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "NearbyRepairShop",
+      "type": "object",
+      "description": "Represents a physical repair shop discovered through maps integration.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the NearbyRepairShop entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the repair shop."
+        },
+        "address": {
+          "type": "string",
+          "description": "The full street address of the repair shop."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The geographical latitude coordinate of the shop's location."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The geographical longitude coordinate of the shop's location."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The contact phone number for the repair shop."
+        },
+        "websiteUrl": {
+          "type": "string",
+          "description": "The official website URL of the repair shop.",
+          "format": "uri"
+        },
+        "hoursOfOperation": {
+          "type": "string",
+          "description": "A string describing the typical hours of operation (e.g., 'Mon-Fri: 9am-5pm')."
+        },
+        "servicesOffered": {
+          "type": "array",
+          "description": "A list of services offered by the repair shop (e.g., 'Screen Repair', 'Battery Replacement').",
+          "items": {
+            "type": "string"
+          }
+        },
+        "imageUrls": {
+          "type": "array",
+          "description": "An array of URLs to images of the repair shop.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "address",
+        "latitude",
+        "longitude",
+        "phoneNumber"
+      ]
     }
   },
   "auth": {
-    "providers": ["google.com"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/users/{userId}/bookmarks/{bookmarkId}": {
-      "schema": "Bookmark",
-      "description": "User's bookmarked repair guides."
-    }
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. Accessible for reads by all, editable only by the authenticated user matching {userId}. Path-based ownership ensures authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Top-level collection for device categories. Read-only for all users, enabling QAPs for category lists.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "The unique ID of the category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/devices/{deviceId}",
+        "definition": {
+          "entityName": "Device",
+          "schema": {
+            "$ref": "#/backend/entities/Device"
+          },
+          "description": "Top-level collection for specific device models. Read-only for all users, enabling QAPs for device lists. Includes 'categoryId' for linking.",
+          "params": [
+            {
+              "name": "deviceId",
+              "description": "The unique ID of the device."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/tools/{toolId}",
+        "definition": {
+          "entityName": "Tool",
+          "schema": {
+            "$ref": "#/backend/entities/Tool"
+          },
+          "description": "Top-level collection for repair tools. Read-only for all users, enabling QAPs for tool lists.",
+          "params": [
+            {
+              "name": "toolId",
+              "description": "The unique ID of the tool."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/parts/{partId}",
+        "definition": {
+          "entityName": "Part",
+          "schema": {
+            "$ref": "#/backend/entities/Part"
+          },
+          "description": "Top-level collection for replacement parts. Read-only for all users, enabling QAPs for part lists.",
+          "params": [
+            {
+              "name": "partId",
+              "description": "The unique ID of the part."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/tags/{tagId}",
+        "definition": {
+          "entityName": "Tag",
+          "schema": {
+            "$ref": "#/backend/entities/Tag"
+          },
+          "description": "Top-level collection for organizing content with tags. Read-only for all users, enabling QAPs for tag lists.",
+          "params": [
+            {
+              "name": "tagId",
+              "description": "The unique ID of the tag."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/badges/{badgeId}",
+        "definition": {
+          "entityName": "Badge",
+          "schema": {
+            "$ref": "#/backend/entities/Badge"
+          },
+          "description": "Top-level collection for gamification badges. Read-only for all users, enabling QAPs for badge lists.",
+          "params": [
+            {
+              "name": "badgeId",
+              "description": "The unique ID of the badge."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/repairGuides/{repairGuideId}",
+        "definition": {
+          "entityName": "RepairGuide",
+          "schema": {
+            "$ref": "#/backend/entities/RepairGuide"
+          },
+          "description": "Top-level collection for repair guides. Readable by all. Writable and deletable only by the 'authorId' stored in the document, ensuring authorization independence.",
+          "params": [
+            {
+              "name": "repairGuideId",
+              "description": "The unique ID of the repair guide."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/repairGuides/{repairGuideId}/steps/{stepId}",
+        "definition": {
+          "entityName": "RepairStep",
+          "schema": {
+            "$ref": "#/backend/entities/RepairStep"
+          },
+          "description": "Steps for a specific repair guide. Readable by all. Writable only by the 'authorId' of the parent repair guide (denormalized as 'repairGuideAuthorId' in each step document for authorization independence).",
+          "params": [
+            {
+              "name": "repairGuideId",
+              "description": "The unique ID of the parent repair guide."
+            },
+            {
+              "name": "stepId",
+              "description": "The unique ID of the repair step."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/repairGuides/{repairGuideId}/comments/{commentId}",
+        "definition": {
+          "entityName": "GuideComment",
+          "schema": {
+            "$ref": "#/backend/entities/GuideComment"
+          },
+          "description": "Comments on a specific repair guide. Readable by all. Writable and deletable only by the 'userId' stored in the document, ensuring authorization independence.",
+          "params": [
+            {
+              "name": "repairGuideId",
+              "description": "The unique ID of the parent repair guide."
+            },
+            {
+              "name": "commentId",
+              "description": "The unique ID of the comment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/repairGuides/{repairGuideId}/ratings/{userId}",
+        "definition": {
+          "entityName": "GuideRating",
+          "schema": {
+            "$ref": "#/backend/entities/GuideRating"
+          },
+          "description": "User ratings for a specific repair guide. Readable by all. Writable only by the authenticated user matching the '{userId}' document ID, ensuring authorization independence. Document ID is 'userId' to enforce one rating per user per guide.",
+          "params": [
+            {
+              "name": "repairGuideId",
+              "description": "The unique ID of the parent repair guide."
+            },
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who provided the rating (also the document ID)."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/forumPosts/{forumPostId}",
+        "definition": {
+          "entityName": "ForumPost",
+          "schema": {
+            "$ref": "#/backend/entities/ForumPost"
+          },
+          "description": "Top-level collection for community forum posts. Readable by all. Writable and deletable only by the 'userId' stored in the document, ensuring authorization independence.",
+          "params": [
+            {
+              "name": "forumPostId",
+              "description": "The unique ID of the forum post."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/forumPosts/{forumPostId}/comments/{commentId}",
+        "definition": {
+          "entityName": "ForumComment",
+          "schema": {
+            "$ref": "#/backend/entities/ForumComment"
+          },
+          "description": "Comments on a specific forum post. Readable by all. Writable and deletable only by the 'userId' stored in the document, ensuring authorization independence.",
+          "params": [
+            {
+              "name": "forumPostId",
+              "description": "The unique ID of the parent forum post."
+            },
+            {
+              "name": "commentId",
+              "description": "The unique ID of the comment."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/savedGuides/{savedGuideId}",
+        "definition": {
+          "entityName": "SavedGuide",
+          "schema": {
+            "$ref": "#/backend/entities/SavedGuide"
+          },
+          "description": "Repair guides bookmarked by a specific user. Accessible only by the authenticated user matching {userId}. Path-based ownership provides strong authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user who saved the guide."
+            },
+            {
+              "name": "savedGuideId",
+              "description": "The unique ID of the saved guide entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/troubleshootingSessions/{sessionId}",
+        "definition": {
+          "entityName": "TroubleshootingSession",
+          "schema": {
+            "$ref": "#/backend/entities/TroubleshootingSession"
+          },
+          "description": "Records interactive troubleshooting sessions for a specific user. Accessible only by the authenticated user matching {userId}. Path-based ownership provides strong authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user conducting the session."
+            },
+            {
+              "name": "sessionId",
+              "description": "The unique ID of the troubleshooting session."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/progress/{userProgressId}",
+        "definition": {
+          "entityName": "UserProgress",
+          "schema": {
+            "$ref": "#/backend/entities/UserProgress"
+          },
+          "description": "Tracks a user's progress through repair guides. Accessible only by the authenticated user matching {userId}. Path-based ownership provides strong authorization independence.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user whose progress is being tracked."
+            },
+            {
+              "name": "userProgressId",
+              "description": "The unique ID of the user's progress entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/nearbyRepairShops/{shopId}",
+        "definition": {
+          "entityName": "NearbyRepairShop",
+          "schema": {
+            "$ref": "#/backend/entities/NearbyRepairShop"
+          },
+          "description": "Top-level collection for nearby repair shop information. Read-only for all users, enabling QAPs for shop listings.",
+          "params": [
+            {
+              "name": "shopId",
+              "description": "The unique ID of the nearby repair shop."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The data structure for AyosGadget prioritizes security, scalability, and debuggability in Firestore by strictly adhering to the core design principles: Authorization Independence, Structural Segregation, and consistent Access Modeling.\n\nAuthorization Independence:\nThis is achieved primarily through two mechanisms:\n1. Path-Based Ownership: For user-specific private data like SavedGuide, TroubleshootingSession, and UserProgress, documents are nested under /users/{userId}/.... This automatically makes request.auth.uid == userId the authorization condition, completely eliminating the need for get() calls in security rules. This makes rules atomic and robust.\n2. Denormalized Authorization Fields: For collections where documents are publicly readable but privately writable by their owner (e.g., RepairGuide, ForumPost, GuideComment, ForumComment, RepairStep, GuideRating), the owner's ID (authorId or userId) is explicitly stored within each document. This allows security rules to evaluate request.auth.uid == resource.data.authorId (or resource.data.userId) without fetching any parent documents or relying on complex cross-collection lookups (get()). This design is crucial for enabling atomic operations (transactions, batch writes) and simplifying rule debugging, as each document carries its authorization context. For RepairStep, while 'authorId' is not in the original schema, it is assumed to be denormalized from the parent RepairGuide into each step document if individual step modifications require authorization without a get() call, aligning with the critical mandate.\n\nStructural Segregation (Homogeneous Security Posture) & QAPs (Rules are not Filters):\nThe design uses distinct top-level collections for different types of data with homogeneous security requirements, directly supporting QAPs (queryable by all paths).\n* Public, Read-Only Collections: Entities like Category, Device, Tool, Part, Tag, Badge, and NearbyRepairShop reside in their own top-level collections (e.g., /categories, /devices). These collections are designed for global, read-only access for all users. This allows for efficient list operations without requiring complex server-side filtering by security rules, as all documents in these collections share the same 'public read' security posture.\n* Public Read, Owner Write Collections: RepairGuide and ForumPost are top-level collections where documents are readable by everyone, but only the authorId specified within the document can modify them. This segregation ensures that list queries for these entities return all relevant documents without being filtered by rules, while still enforcing granular write access.\n* User-Specific Private Collections: SavedGuide, TroubleshootingSession, and UserProgress are subcollections under /users/{userId}/. This structure ensures that only the userId specified in the path can read or write to these documents. list operations within these collections are naturally secured by the path, allowing users to query their own saved items or sessions without rules filtering out data belonging to other users.\n* Nested Public/Owner-Write Collections: RepairStep, GuideComment, GuideRating, and ForumComment are nested under their respective parent documents (RepairGuide or ForumPost). These subcollections maintain a public read posture while granting write access to the authorId/userId associated with the comment/rating/step, as denormalized into their documents. This allows listing all comments or steps for a given guide/post while ensuring individual item security.\n\nBy consistently applying these principles, the Firestore structure provides a clear, efficient, and robust foundation for AyosGadget, making security rules simpler to write, understand, and debug, while maintaining high performance for diverse data access patterns and enabling features like 'auto save' for user-generated content."
   }
 }

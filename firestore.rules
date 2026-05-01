@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * CORE PHILOSOPHY
+     * This ruleset enforces a "Creator-Ownership" model for user data while keeping
+     * the Hardware Protocol Library (repairGuides, devices, categories) WIDE OPEN.
+     * This is required for the Auto-Caching and Neural Translation Engine to work globally.
+     */
+
+    // --- HELPER FUNCTIONS ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // --- USER DATA (PRIVATE) ---
+
+    match /users/{userId} {
+      allow get, list: if true;
+      allow create: if isOwner(userId);
+      allow update, delete: if isOwner(userId);
+
+      match /savedGuides/{id} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /troubleshootingSessions/{id} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /progress/{id} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // --- HARDWARE PROTOCOL LIBRARY (PUBLIC READ/WRITE) ---
+    // Wide open for Auto-Cache and Neural Translation storage for all users.
+    
+    match /repairGuides/{guideId} {
+      allow read, write: if true;
+      
+      match /{allSubcollections=**} {
+        allow read, write: if true;
+      }
+    }
+
+    match /categories/{id} { allow read, write: if true; }
+    match /devices/{id} { allow read, write: if true; }
+    match /tools/{id} { allow read, write: if true; }
+    match /parts/{id} { allow read, write: if true; }
+    match /tags/{id} { allow read, write: if true; }
+    match /badges/{id} { allow read, write: if true; }
+    match /nearbyRepairShops/{id} { allow read: if true; }
+
+    // --- COMMUNITY FORUM (PUBLIC READ, AUTH WRITE) ---
+
+    match /forumPosts/{postId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isSignedIn();
+        allow update, delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      }
+    }
+
+  }
+}

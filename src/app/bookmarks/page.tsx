@@ -1,9 +1,9 @@
 'use client';
 
 import RepairCard from '@/components/repair/RepairCard';
+import RepairCardSkeleton from '@/components/repair/RepairCardSkeleton';
 import { useUser, useFirestore, useCollection, useAuth } from '@/firebase';
 import { collection, query, orderBy } from 'firebase/firestore';
-import { FEATURED_REPAIRS } from '@/lib/repair-data';
 import { Bookmark, Loader2, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -26,18 +26,16 @@ export default function BookmarksPage() {
   };
 
   const bookmarksQuery = user ? query(
-    collection(db, 'users', user.uid, 'bookmarks'),
+    collection(db, 'users', user.uid, 'savedGuides'),
     orderBy('savedAt', 'desc')
   ) : null;
 
   const { data: bookmarks, loading: bookmarksLoading } = useCollection(bookmarksQuery);
 
-  if (userLoading || bookmarksLoading) {
+  if (userLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <div className="flex-grow flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -59,13 +57,12 @@ export default function BookmarksPage() {
     );
   }
 
-  // Map bookmarks back to FEATURED_REPAIRS data or ifixit id's
   const bookmarkedGuides = (bookmarks || []).map(b => ({
-    id: b.guideId,
+    id: b.repairGuideId || b.id,
     title: b.title,
     thumbnail: b.thumbnail,
     category: b.category,
-    difficulty: 'easy', // Fallback for UI
+    difficulty: 'easy', 
     device: 'Hardware',
     timeEstimate: '30-60 mins',
     rating: 4.5
@@ -84,7 +81,13 @@ export default function BookmarksPage() {
           </div>
         </div>
 
-        {bookmarkedGuides.length > 0 ? (
+        {bookmarksLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(3)].map((_, i) => (
+              <RepairCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : bookmarkedGuides.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {bookmarkedGuides.map((guide) => (
               <RepairCard key={guide.id} guide={guide as any} />

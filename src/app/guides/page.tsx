@@ -1,22 +1,28 @@
 'use client';
 
 import RepairCard from '@/components/repair/RepairCard';
+import RepairCardSkeleton from '@/components/repair/RepairCardSkeleton';
 import CategoryIcon from '@/components/repair/CategoryIcon';
 import { PRIMARY_CATEGORIES } from '@/lib/repair-data';
 import { Input } from '@/components/ui/input';
 import { Search, Loader2, Sparkles, ChevronRight, ChevronLeft, Layers, Wrench, LayoutGrid } from 'lucide-react';
-import { useState, useEffect, Suspense, useMemo } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/components/providers/language-provider';
-import { searchIFixitGuides, getTrendingGuides, mapIFixitToInternal, getIFixitWiki, IFixitWiki } from '@/lib/ifixit-api';
+import { searchIFixitGuides, getTrendingGuides, getIFixitWiki } from '@/lib/ifixit-api';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useFirestore, useUser } from '@/firebase';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function GuidesContent() {
-  const { t } = useLanguage();
+  const { t, isMounted } = useLanguage();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const db = useFirestore();
+  const { user } = useUser();
   
   const categoryParam = searchParams.get('category');
   const searchParam = searchParams.get('search');
@@ -24,7 +30,7 @@ function GuidesContent() {
   const [searchQuery, setSearchQuery] = useState(searchParam || '');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(categoryParam);
   const [globalGuides, setGlobalGuides] = useState<any[]>([]);
-  const [categoryWiki, setCategoryWiki] = useState<IFixitWiki | null>(null);
+  const [categoryWiki, setCategoryWiki] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(0);
 
@@ -38,12 +44,43 @@ function GuidesContent() {
     });
   };
 
-  const sections = useMemo(() => {
-    const replacement = globalGuides.filter(g => g.type === 'replacement' || !g.type);
-    const teardowns = globalGuides.filter(g => g.type === 'teardown');
-    const techniques = globalGuides.filter(g => g.type === 'technique' || g.type === 'troubleshooting');
-    return { replacement, teardowns, techniques };
-  }, [globalGuides]);
+  const syncDataToFirestore = async (guides: any[], category?: any) => {
+    if (!db || !user) return; 
+
+    try {
+      if (category) {
+        const catRef = doc(db, 'categories', category.id || category.title.toLowerCase().replace(/\s+/g, '-'));
+        setDoc(catRef, {
+          id: category.id || category.title.toLowerCase().replace(/\s+/g, '-'),
+          name: category.title,
+          description: category.description || '',
+          iconUrl: category.iconUrl || '',
+          syncedAt: serverTimestamp(),
+        }, { merge: true });
+      }
+
+      for (const guide of guides) {
+        const guideRef = doc(db, 'repairGuides', guide.id);
+        setDoc(guideRef, {
+          ...guide,
+          syncedAt: serverTimestamp(),
+        }, { merge: true });
+
+        if (guide.device) {
+          const deviceRef = doc(db, 'devices', guide.device.toLowerCase().replace(/\s+/g, '-'));
+          setDoc(deviceRef, {
+            id: guide.device.toLowerCase().replace(/\s+/g, '-'),
+            name: guide.device,
+            description: `Hardware protocols for ${guide.device}`,
+            imageUrl: guide.thumbnail || '',
+            syncedAt: serverTimestamp(),
+          }, { merge: true });
+        }
+      }
+    } catch (e) {
+      console.warn('Sync failed:', e);
+    }
+  };
 
   useEffect(() => {
     setSelectedCategory(categoryParam);
@@ -61,11 +98,17 @@ function GuidesContent() {
           setCategoryWiki(wiki);
           
           const results = await searchIFixitGuides(selectedCategory);
-          setGlobalGuides(deduplicateGuides(results.map(mapIFixitToInternal)));
+          const deduped = deduplicateGuides(results);
+          setGlobalGuides(deduped);
+          
+          syncDataToFirestore(deduped, wiki);
         } else if (!searchQuery) {
           setCategoryWiki(null);
           const trending = await getTrendingGuides(0, 12);
-          setGlobalGuides(deduplicateGuides(trending.map(mapIFixitToInternal)));
+          const deduped = deduplicateGuides(trending);
+          setGlobalGuides(deduped);
+          
+          syncDataToFirestore(deduped);
         }
       } catch (error) {
         console.error("Error loading category data:", error);
@@ -74,7 +117,7 @@ function GuidesContent() {
       }
     }
     loadCategoryData();
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, db, user]);
 
   const loadMore = async () => {
     const nextPage = page + 1;
@@ -82,15 +125,17 @@ function GuidesContent() {
     try {
       let more: any[] = [];
       if (selectedCategory || searchQuery) {
-        const query = searchQuery || selectedCategory || '';
-        more = await searchIFixitGuides(query); 
+        const queryStr = searchQuery || selectedCategory || '';
+        more = await searchIFixitGuides(queryStr); 
       } else {
         more = await getTrendingGuides(nextPage * 12, 12);
       }
       
-      const mappedMore = more.map(mapIFixitToInternal);
-      setGlobalGuides(prev => deduplicateGuides([...prev, ...mappedMore]));
+      const combined = deduplicateGuides([...globalGuides, ...more]);
+      setGlobalGuides(combined);
       setPage(nextPage);
+      
+      syncDataToFirestore(more);
     } catch (error) {
       console.error("Error loading more guides:", error);
     } finally {
@@ -106,13 +151,11 @@ function GuidesContent() {
     router.push(`/guides?${params.toString()}`);
   };
 
-  const handleBack = () => {
-    router.back();
-  };
+  if (!isMounted) return null;
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Search and Header Section */}
+      {/* Header */}
       <section className="pt-24 pb-8 px-6">
         <div className="container mx-auto max-w-4xl space-y-8">
           <div className="flex items-center justify-between">
@@ -153,17 +196,32 @@ function GuidesContent() {
             <span className="text-primary truncate">{selectedCategory}</span>
           </nav>
 
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-24">
-              <Loader2 className="w-12 h-12 animate-spin text-primary mb-6" />
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
+          {isLoading && globalGuides.length === 0 ? (
+            <div className="space-y-12">
+               <div className="bg-white dark:bg-card rounded-3xl p-6 md:p-10 mb-12 border border-slate-100 dark:border-white/10 shadow-sm animate-pulse">
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                    <div className="md:col-span-4 flex justify-center">
+                       <Skeleton className="aspect-square w-full max-w-[200px] rounded-2xl" />
+                    </div>
+                    <div className="md:col-span-8 space-y-4">
+                       <Skeleton className="h-12 w-3/4" />
+                       <Skeleton className="h-4 w-full" />
+                       <Skeleton className="h-4 w-5/6" />
+                    </div>
+                  </div>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(6)].map((_, i) => (
+                  <RepairCardSkeleton key={i} />
+                ))}
+              </div>
             </div>
           ) : (
             <>
               {categoryWiki && (
                 <div className="bg-white dark:bg-card rounded-3xl p-6 md:p-10 mb-12 border border-slate-100 dark:border-white/10 shadow-sm relative overflow-hidden group">
                   <div className="absolute top-4 left-4">
-                    <Button variant="ghost" size="sm" onClick={handleBack} className="text-[9px] font-black uppercase tracking-widest gap-2 h-8 rounded-xl">
+                    <Button variant="ghost" size="sm" onClick={() => router.push('/guides')} className="text-[9px] font-black uppercase tracking-widest gap-2 h-8 rounded-xl">
                       <ChevronLeft className="w-3 h-3" /> Back
                     </Button>
                   </div>
@@ -206,9 +264,9 @@ function GuidesContent() {
                         className="group flex flex-col items-center gap-3 active:scale-95 transition-transform"
                       >
                         <div className="relative aspect-square w-full bg-white dark:bg-card border border-black/5 dark:border-white/10 rounded-[2rem] shadow-lg overflow-hidden p-6 flex items-center justify-center group-hover:border-primary/50 transition-all">
-                          {child.image?.thumbnail ? (
+                          {child.imageUrl ? (
                             <Image 
-                              src={child.image.thumbnail} 
+                              src={child.imageUrl} 
                               alt={child.title} 
                               fill 
                               className="object-contain p-4 group-hover:scale-110 transition-transform" 
@@ -233,47 +291,11 @@ function GuidesContent() {
                     <div className="h-px flex-grow bg-slate-100 dark:bg-white/5" />
                   </div>
 
-                  {sections.replacement.length > 0 && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between pl-4 border-l-4 border-primary">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Replacement Guides</h3>
-                        <span className="text-[8px] font-black text-primary uppercase opacity-40">{sections.replacement.length} manual(s)</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {sections.replacement.map((guide) => (
-                          <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {sections.teardowns.length > 0 && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between pl-4 border-l-4 border-amber-500">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Teardowns</h3>
-                        <span className="text-[8px] font-black text-amber-500 uppercase opacity-40">{sections.teardowns.length} manual(s)</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {sections.teardowns.map((guide) => (
-                          <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {sections.techniques.length > 0 && (
-                    <div className="space-y-6">
-                      <div className="flex items-center justify-between pl-4 border-l-4 border-emerald-500">
-                        <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Techniques</h3>
-                        <span className="text-[8px] font-black text-emerald-500 uppercase opacity-40">{sections.techniques.length} manual(s)</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {sections.techniques.map((guide) => (
-                          <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {globalGuides.map((guide) => (
+                      <RepairCard key={`guide-${guide.id}`} guide={guide} variant="compact" />
+                    ))}
+                  </div>
                 </div>
               )}
             </>
@@ -296,12 +318,9 @@ function GuidesContent() {
                     onClick={() => handleCategoryClick(cat.name)}
                     className="group relative bg-white dark:bg-card p-4 md:p-6 rounded-[1.5rem] md:rounded-[2.5rem] flex items-center gap-4 md:gap-6 shadow-md border border-transparent hover:border-primary/20 transition-all active:scale-95 text-left overflow-hidden h-24 md:h-28"
                   >
-                    {/* Ghost Background Icon */}
                     <div className="absolute -right-4 -bottom-4 opacity-[0.03] dark:opacity-[0.06] group-hover:opacity-[0.1] transition-opacity">
                       <CategoryIcon name={cat.icon} className="w-20 h-20 md:w-24 md:h-24" />
                     </div>
-
-                    {/* Main Content */}
                     <div className="relative z-10 w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-all shrink-0">
                       <CategoryIcon name={cat.icon} className="w-6 h-6 md:w-8 md:h-8" />
                     </div>
@@ -315,10 +334,17 @@ function GuidesContent() {
             </div>
           )}
 
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-24">
-              <Loader2 className="w-12 h-12 animate-spin text-primary mb-6" />
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
+          {isLoading && globalGuides.length === 0 ? (
+            <div className="space-y-12">
+               <div className="flex items-center gap-4 px-2">
+                  <Skeleton className="h-4 w-32" />
+                  <div className="h-px flex-grow bg-primary/10" />
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[...Array(6)].map((_, i) => (
+                  <RepairCardSkeleton key={i} />
+                ))}
+              </div>
             </div>
           ) : globalGuides.length > 0 ? (
             <div className="space-y-12">

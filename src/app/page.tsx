@@ -2,37 +2,55 @@
 
 import CategoryIcon from '@/components/repair/CategoryIcon';
 import RepairCard from '@/components/repair/RepairCard';
-import { PRIMARY_CATEGORIES, DIRECTORY_CATEGORIES } from '@/lib/repair-data';
+import RepairCardSkeleton from '@/components/repair/RepairCardSkeleton';
+import { PRIMARY_CATEGORIES } from '@/lib/repair-data';
 import { Button } from '@/components/ui/button';
-import { Activity, Cpu, Zap, ArrowRight, Globe, Loader2 } from 'lucide-react';
+import { Activity, Cpu, Zap, ArrowRight, Globe, Loader2, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
 import { useState, useEffect } from 'react';
-import { getTrendingGuides, mapIFixitToInternal } from '@/lib/ifixit-api';
+import { getTrendingGuides } from '@/lib/ifixit-api';
 
 export default function Home() {
-  const { t } = useLanguage();
+  const { t, isMounted } = useLanguage();
   const [trendingGuides, setTrendingGuides] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    if (!isMounted) return;
+
     async function fetchTrending() {
       setIsLoading(true);
+      setHasError(false);
       try {
         const trending = await getTrendingGuides(0, 6);
-        setTrendingGuides(trending.map(mapIFixitToInternal));
+        if (trending && trending.length > 0) {
+          setTrendingGuides(trending);
+        } else {
+          setHasError(true);
+        }
       } catch (error) {
         console.error("Failed to load trending guides", error);
+        setHasError(true);
       } finally {
         setIsLoading(false);
       }
     }
     fetchTrending();
-  }, []);
+  }, [isMounted]);
+
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary opacity-20" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section - Refined for Professional UI/UX */}
+      {/* Hero Section */}
       <section className="relative pt-24 pb-12 px-6">
         <div className="container mx-auto max-w-4xl">
           <div className="glass p-6 md:p-10 rounded-[2.5rem] border-primary/5 relative overflow-hidden group shadow-xl bg-card/30 backdrop-blur-xl">
@@ -71,7 +89,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Category Modules Section (MGA GAMIT) - 4 Columns (2 Lines) */}
+      {/* Category Modules */}
       <section className="container mx-auto px-6 mb-16">
         <div className="flex items-center justify-between mb-10 px-2 max-w-4xl mx-auto">
           <h2 className="text-[10px] font-black uppercase tracking-[0.6em] text-primary">{t('home_modules')}</h2>
@@ -94,33 +112,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Auxiliary Directory Section */}
-      <section className="container mx-auto px-6 mb-20">
-        <div className="flex items-center gap-6 mb-10 px-2 max-w-4xl mx-auto">
-          <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
-          <span className="text-[9px] font-black uppercase tracking-[0.4em] opacity-30">{t('home_auxiliary')}</span>
-          <div className="h-px flex-grow bg-black/5 dark:bg-white/10" />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 max-w-4xl mx-auto">
-           {DIRECTORY_CATEGORIES.map((item) => (
-             <Link key={item.name} href={`/guides?search=${item.name.toLowerCase()}`}>
-               <div className="glass h-12 rounded-xl flex items-center group transition-all hover:bg-primary/5 hover:border-primary/20 overflow-hidden shadow-sm border-primary/5">
-                  <div className="w-10 h-full flex items-center justify-center bg-primary/10 text-primary font-black text-[8px] border-r border-primary/5">
-                    {item.count}
-                  </div>
-                  <div className="px-4 flex items-center justify-between w-full">
-                    <span className="text-[8px] font-black uppercase tracking-widest group-hover:text-primary transition-colors truncate">
-                      {item.name}
-                    </span>
-                  </div>
-               </div>
-             </Link>
-           ))}
-        </div>
-      </section>
-
-      {/* Trending Protocols Section */}
+      {/* Trending Protocols */}
       <section className="container mx-auto px-6 pb-28">
         <div className="flex items-center justify-between mb-10 px-2 max-w-4xl mx-auto lg:max-w-none">
           <div className="flex items-center gap-3">
@@ -136,9 +128,10 @@ export default function Home() {
         
         <div className="max-w-4xl mx-auto lg:max-w-none">
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-primary/[0.02] rounded-3xl border border-dashed border-primary/10">
-              <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
-              <p className="text-[9px] font-black uppercase tracking-widest opacity-50">{t('common_syncing')}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[...Array(6)].map((_, i) => (
+                <RepairCardSkeleton key={i} />
+              ))}
             </div>
           ) : trendingGuides.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -146,12 +139,18 @@ export default function Home() {
                 <RepairCard key={guide.id} guide={guide} />
               ))}
             </div>
-          ) : (
-            <div className="p-16 glass rounded-3xl border-primary/5 text-center shadow-xl">
+          ) : hasError ? (
+            <div className="p-16 glass rounded-3xl border-primary/5 text-center shadow-xl bg-card">
+              <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-6 opacity-50" />
               <h2 className="text-xl font-black uppercase tracking-tighter mb-4">{t('common_error_link')}</h2>
-              <Button onClick={() => window.location.reload()} className="rounded-xl h-12 px-8 font-black uppercase tracking-widest text-[10px]">
+              <p className="text-muted-foreground mb-8 text-sm max-w-md mx-auto">{t('common_error_desc')}</p>
+              <Button onClick={() => window.location.reload()} className="rounded-xl h-12 px-8 font-black uppercase tracking-widest text-[10px] neon-glow">
                 {t('common_retry')}
               </Button>
+            </div>
+          ) : (
+            <div className="text-center py-20 opacity-30 italic text-[10px] uppercase font-black tracking-widest">
+               Walang nakitang protocols sa ngayon.
             </div>
           )}
         </div>
