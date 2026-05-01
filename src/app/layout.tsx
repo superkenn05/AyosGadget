@@ -10,6 +10,9 @@ import { LanguageProvider } from '@/components/providers/language-provider';
 export const metadata: Metadata = {
   title: 'AyosGadget | Neural Repair Engine',
   description: 'Ang modernong platform para sa pag-aayos ng iyong gadgets at appliances.',
+  icons: {
+    icon: '/favicon.svg',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
