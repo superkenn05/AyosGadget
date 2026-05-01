@@ -109,21 +109,126 @@ export async function getGuideWithAllSteps(id: string, visited = new Set<string>
   }
 }
 
+// Fallback sub-modules for flat categories that don't have them on iFixit
+const FALLBACK_SUBMODULES: Record<string, { title: string; image?: { thumbnail: string } }[]> = {
+  'Laptop': [
+    { title: 'Dell Laptop' },
+    { title: 'HP Laptop' },
+    { title: 'Lenovo Laptop' },
+    { title: 'ASUS Laptop' },
+    { title: 'Acer Laptop' },
+    { title: 'MSI Laptop' }
+  ],
+  'Headphones': [
+    { title: 'Apple Headphones' },
+    { title: 'Sony Headphones' },
+    { title: 'Beats Headphones' },
+    { title: 'Bose Headphones' },
+    { title: 'Sennheiser Headphones' },
+    { title: 'JBL Headphones' }
+  ],
+  'Desktop Computer': [
+    { title: 'Apple iMac' },
+    { title: 'Dell Desktop' },
+    { title: 'HP Desktop' },
+    { title: 'Lenovo Desktop' },
+    { title: 'Custom PC Build' }
+  ],
+  'Car': [
+    { title: 'Toyota' },
+    { title: 'Honda' },
+    { title: 'Ford' },
+    { title: 'Chevrolet' },
+    { title: 'BMW' },
+    { title: 'Tesla' }
+  ],
+  'Appliances': [
+    { title: 'Washing Machine' },
+    { title: 'Refrigerator' },
+    { title: 'Microwave' },
+    { title: 'Dishwasher' },
+    { title: 'Oven' },
+    { title: 'Dryer' }
+  ],
+  'Household Appliance': [
+    { title: 'Coffee Maker' },
+    { title: 'Toaster' },
+    { title: 'Vacuum Cleaner' },
+    { title: 'Iron' },
+    { title: 'Blender' },
+    { title: 'Hair Dryer' }
+  ]
+};
+
 export async function getIFixitWiki(categoryName: string): Promise<IFixitWiki | null> {
   try {
-    const mappedName = categoryName === 'Smartphones' ? 'Phone' : categoryName;
+    // Map category names to iFixit API category names (only include categories with sub-modules)
+    const categoryMapping: Record<string, string> = {
+      'Smartphones': 'Phone',
+      'Tablets': 'Tablet',
+      'Mac': 'Mac',
+      'Consoles': 'Game Console',
+      'Cameras': 'Camera',
+      'Power Tool': 'Power Tool',
+      'Electronics': 'Electronics',
+      // Categories without sub-modules still map to themselves as fallback
+      'Laptops': 'Laptop',
+      'Audio': 'Headphones',
+      'Desktop PCs': 'Desktop Computer',
+      'Car and Truck': 'Car',
+      'Appliances': 'Appliances',
+      'Household': 'Household Appliance',
+      'Medical Device': 'Medical Device',
+      'Skills': 'Skills',
+      'PC': 'PC'
+    };
+
+    const mappedName = categoryMapping[categoryName] || categoryName;
     const res = await fetch(`https://www.ifixit.com/api/2.0/wikis/CATEGORY/${encodeURIComponent(mappedName)}`);
-    if (!res.ok) return null;
+    
+    if (!res.ok) {
+      // If API fails, check if we have fallback sub-modules
+      const fallback = FALLBACK_SUBMODULES[mappedName];
+      if (fallback) {
+        return {
+          title: categoryName,
+          description: `Browse repair guides for ${categoryName}`,
+          image: { original: '' },
+          type: 'category',
+          children: fallback,
+        };
+      }
+      return null;
+    }
+
     const data = await res.json();
+    let children = data.children || [];
+    
+    // If API returned no children but we have fallback, use fallback
+    if ((!children || children.length === 0) && FALLBACK_SUBMODULES[mappedName]) {
+      children = FALLBACK_SUBMODULES[mappedName];
+    }
+
     return {
       title: data.title,
       description: stripHtml(data.description_rendered || data.description || ''),
       image: data.image,
       type: data.type || 'category',
-      children: data.children || [],
+      children: children,
     };
   } catch (error) {
     console.error('iFixit wiki error:', error);
+    // Try fallback if network error
+    const fallback = FALLBACK_SUBMODULES[categoryName];
+    if (fallback) {
+      return {
+        title: categoryName,
+        description: `Browse repair guides for ${categoryName}`,
+        image: { original: '' },
+        type: 'category',
+        children: fallback,
+      };
+    }
     return null;
   }
 }
@@ -199,7 +304,8 @@ function mapCategory(type: string): CategoryName {
   if (!type) return 'Appliances';
   const t = type.toLowerCase();
   if (t.includes('phone')) return 'Smartphones';
-  if (t.includes('laptop') || t.includes('macbook')) return 'Laptops';
+  if (t.includes('macbook') || t.includes('mac')) return 'Mac';
+  if (t.includes('laptop')) return 'Laptops';
   if (t.includes('tablet') || t.includes('ipad')) return 'Tablets';
   if (t.includes('console') || t.includes('switch') || t.includes('playstation') || t.includes('xbox') || t.includes('gaming')) return 'Consoles';
   if (t.includes('audio') || t.includes('headphone') || t.includes('speaker') || t.includes('earbud')) return 'Audio';
