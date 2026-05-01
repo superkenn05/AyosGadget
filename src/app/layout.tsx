@@ -12,7 +12,10 @@ export const metadata: Metadata = {
   description: 'Ang modernong platform para sa pag-aayos ng iyong gadgets at appliances.',
   icons: {
     icon: '/favicon.svg',
+    apple: '/favicon.svg',
+    shortcut: '/favicon.svg',
   },
+  manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
